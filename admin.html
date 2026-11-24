@@ -57,6 +57,35 @@
       <!-- Tests -->
       <section id="tab-tests" style="padding:0;display:none">
         <div class="panel">
+          <h2>⚡ Bulk import questions</h2>
+          <p class="sub" style="margin-bottom:14px">Paste all your questions (or choose a file). They are filled into the form below. Check them, then press <b>Save test</b>. Works with <b>text, JSON, CSV and HTML</b>.</p>
+          <details style="margin-bottom:14px"><summary style="cursor:pointer;color:var(--gold)">Show formats</summary>
+<pre style="white-space:pre-wrap;font-size:.8rem;color:var(--muted);margin:10px 0 0">TEXT / HTML (4 options A-D, then the answer):
+1. What is the capital of France?
+A) Berlin
+B) Paris
+C) Rome
+D) Madrid
+Answer: B
+
+(also fine: mark the right option with * or ✓ instead of an Answer line;
+ in HTML, a class="correct" on the right option works too)
+
+JSON:
+{"title":"Physics Mock 1","subject":"Physics","minutes":30,
+ "questions":[{"q":"2+2?","opts":["3","4","5","6"],"ans":1}]}
+(ans: 0-3 or "A"-"D"; keys question/options/answer also work)
+
+CSV (one question per row):
+question,A,B,C,D,answer
+"Capital of India?",Mumbai,Delhi,Goa,Pune,B</pre></details>
+          <div class="field"><textarea id="bi-text" rows="9" placeholder="Paste questions here..."></textarea></div>
+          <div class="field"><label for="bi-file">...or upload a file (.txt .json .csv .html)</label><input id="bi-file" type="file" accept=".txt,.json,.csv,.tsv,.html,.htm,.md,text/*,application/json"></div>
+          <label class="check"><input type="checkbox" id="bi-replace" checked><span>Replace the questions already in the form (untick to add after them)</span></label>
+          <div id="bi-msg" class="msg"></div>
+          <div class="acts"><button class="btn btn-gold" id="bi-go" type="button">Import into form</button><button class="btn btn-ghost" id="bi-clear" type="button">Clear</button></div>
+        </div>
+        <div class="panel">
           <h2 id="t-head">Create test</h2>
           <div class="field"><label for="t-title">Test title</label><input id="t-title" placeholder="e.g. Physics Mock Test 1"></div>
           <div class="field"><label for="t-subject">Subject</label><input id="t-subject" list="subjects" placeholder="e.g. Physics"></div>
@@ -117,6 +146,7 @@
 <script type="module">
   import { protectPage, adminDiag, fsList, fsRecent, fsSave, fsDelete, fsGroup, toMs, loadSite, saveSite } from "./auth.js?v=14";
   import { isSafeUrl, normalizeImgUrl } from "./player-utils.js?v=14";
+  import { parseQuestions } from "./qimport.js?v=14";
   import { uploadQuestionImage, hydrate, initLightbox } from "./media.js?v=14";
   initLightbox();
   import { materials as sample } from "./materials.js?v=14";
@@ -232,6 +262,33 @@
   $("t-qs").addEventListener("change", e => { if (e.target.dataset.a !== undefined) qs[+e.target.dataset.a].ans = +e.target.value; });
   $("t-qs").addEventListener("click", e => { const b = e.target.closest("[data-rm]"); if (b) { qs.splice(+b.dataset.rm, 1); renderQs(); } });
   $("t-addq").addEventListener("click", () => { qs.push(newQ()); renderQs(); });
+
+  /* ---------- bulk import ---------- */
+  let biName = "";
+  const biMsg = (t, type) => { $("bi-msg").className = "msg " + (type || "ok"); $("bi-msg").innerHTML = t; };
+  function runImport() {
+    const res = parseQuestions($("bi-text").value, biName);
+    const errs = res.errors.map(e => "• " + esc(e)).join("<br>");
+    if (!res.questions.length) return biMsg((errs || "No questions found."), "err");
+    const blank = qs.length === 1 && !qs[0].q.trim() && !qs[0].img && qs[0].opts.every(o => !o.trim());
+    const fresh = res.questions.map(q => ({ q: q.q, opts: [...q.opts], ans: q.ans, img: q.img ? (normalizeImgUrl(q.img) || "") : "", optImgs: [0, 1, 2, 3].map(k => ((q.optImgs || [])[k] ? (normalizeImgUrl(q.optImgs[k]) || "") : "")) }));
+    qs = ($("bi-replace").checked || blank) ? fresh : qs.concat(fresh);
+    const m = res.meta || {};
+    if (m.title && !$("t-title").value.trim()) $("t-title").value = m.title;
+    if (m.subject && !$("t-subject").value.trim()) $("t-subject").value = m.subject;
+    if (m.minutes !== undefined) $("t-min").value = m.minutes;
+    if (m.active !== undefined) $("t-active").checked = m.active;
+    renderQs();
+    biMsg("✅ " + res.questions.length + " question" + (res.questions.length > 1 ? "s" : "") + " imported. Check them below and press <b>Save test</b>." + (errs ? "<br><br>⚠️ Skipped " + res.errors.length + ":<br>" + errs : ""), errs ? "err" : "ok");
+    $("t-title").scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+  $("bi-go").addEventListener("click", () => { biName = ""; runImport(); });
+  $("bi-clear").addEventListener("click", () => { $("bi-text").value = ""; $("bi-file").value = ""; biName = ""; $("bi-msg").className = "msg"; });
+  $("bi-file").addEventListener("change", async () => {
+    const f = $("bi-file").files[0]; if (!f) return;
+    if (f.size > 2 * 1024 * 1024) return biMsg("That file is too large (2 MB max).", "err");
+    biName = f.name; $("bi-text").value = await f.text(); runImport();
+  });
 
   async function loadTests() {
     tests = (await fsList("tests")).sort((a, b) => (a.title || "").localeCompare(b.title || ""));

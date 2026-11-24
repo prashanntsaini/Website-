@@ -16,6 +16,7 @@ A static study-materials portal with Firebase Authentication. (The site name can
 - Reports page with summary cards, charts and CSV export
 - Built-in viewer (`player.html`): YouTube, Vimeo, Google Drive, MP4/HLS/audio and PDFs play inside the website. PDFs use PDF.js (sharp canvas rendering, zoom, night mode, page jump). Speed, quality, autoplay and resume-from-last-position follow your Settings
 - Settings page: profile photo, dark/light/system theme, English/Hindi, password and email change, active devices with remote logout (this device / others / all), notifications, player settings, data saver, clear local data, export my data (JSON) and delete account
+- **Bulk import of questions** (Admin → Tests → Bulk import): paste or upload many questions at once as text, JSON, CSV or HTML (`qimport.js`). They fill the test form for review, then you press Save test
 - Test questions and options can include images (upload from the admin panel or paste a link). Click an image in a test to enlarge it
 - Admin: Site tab (website name, logo letter, contact e-mail), Logins tab (recent devices of all students)
 - **Vector icons** (`icons.js`): all icons are inline SVG that follow the text colour and theme; any emoji icon added to a page later is converted automatically (put `data-keep` on an element to protect user-written text)
@@ -39,6 +40,7 @@ A static study-materials portal with Firebase Authentication. (The site name can
 | `verify.html` | 6-digit OTP email verification (set the EmailJS Public Key at the top) |
 | `admin.html` | Admin panel (only for UIDs listed in the Firestore `admins` collection) |
 | `tests.html` | Online tests for students |
+| `qimport.js` | Parser for bulk question import (text / JSON / CSV / HTML) |
 | `layout.js` | Shared left menu and consent popup |
 | `materials.js` | List of study materials (edit this) |
 | `reports.html` / `settings.html` | Reports and account settings |
