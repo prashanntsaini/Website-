@@ -33,6 +33,7 @@
 <link rel="stylesheet" href="style.css?v=15">
 <script src="site-config.js?v=15"></script>
 <script src="theme.js?v=15"></script>
+<script src="ads.js?v=15"></script>
 <script src="icons.js?v=15"></script>
 </head>
 <body>
@@ -56,6 +57,8 @@
     <div class="pl-stage" id="stage"></div>
     <div class="pl-bar" id="pl-bar"></div>
     <p class="pl-note" id="pl-note"></p>
+    <div id="ad-player" class="ad-slot"></div>
+    <script>if (window.GyaanAds) GyaanAds.banner(document.getElementById("ad-player"));</script>
   </div>
 </main>
 

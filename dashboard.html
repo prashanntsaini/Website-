@@ -33,6 +33,7 @@
 <link rel="stylesheet" href="style.css?v=15">
 <script src="site-config.js?v=15"></script>
 <script src="theme.js?v=15"></script>
+<script src="ads.js?v=15"></script>
 <script src="icons.js?v=15"></script>
 </head>
 <body>
@@ -75,6 +76,8 @@
       <h2 style="font-size:1.4rem;margin:8px 0 14px">📚 <span data-i18n="dash.material">Study Material</span></h2>
     </div>
     <div id="list" class="grid g3"></div>
+    <div id="ad-dash" class="ad-slot" style="display:none"></div>
+    <div id="list2" class="grid g3"></div>
     <div id="empty" class="empty" style="display:none" data-i18n="dash.empty">No results found. Try a different search term or filter.</div>
   </div>
 </main>
@@ -114,14 +117,14 @@
   }
 
   let filter = "all", q = "";
-  const list = document.getElementById("list"), empty = document.getElementById("empty"), count = document.getElementById("count");
+  const list = document.getElementById("list"), list2 = document.getElementById("list2"), adDash = document.getElementById("ad-dash"), empty = document.getElementById("empty"), count = document.getElementById("count");
 
   function render() {
     const rows = materials.filter(m =>
       (filter === "all" || m.type === filter) &&
       (m.t + " " + m.s).toLowerCase().includes(q.trim().toLowerCase()));
     const alerts = getPrefs().newAlerts;
-    list.innerHTML = rows.map(m => {
+    const cards = rows.map(m => {
       const direct = m.type === "Test" || m.external || !isSafeUrl(m.link);
       const href = direct ? safe(m.link) : playerHref(m.link, m.t, m.type);
       const isNew = alerts && m.created && Date.now() - m.created < NEW_MS;
@@ -131,7 +134,11 @@
         <h3>${esc(m.t)}${isNew ? `<span class="new-badge">${t("dash.new")}</span>` : ""}</h3>
         <div class="mat"><small>${esc(m.s)}</small><span class="tag" style="margin:0">${esc(m.type)}</span></div>
       </a>`;
-    }).join("");
+    });
+    list.innerHTML = cards.slice(0, 6).join("");        // banner sits after the 6th card
+    list2.innerHTML = cards.slice(6).join("");
+    adDash.style.display = rows.length ? "flex" : "none";
+    if (rows.length && window.GyaanAds) GyaanAds.banner(adDash);   // built once, not on every search/filter
     empty.style.display = rows.length ? "none" : "block";
     count.textContent = rows.length + " " + (rows.length === 1 ? t("dash.one") : t("dash.many"));
     const nn = getPrefs().newAlerts ? materials.filter(m => m.created && Date.now() - m.created < NEW_MS).length : 0;

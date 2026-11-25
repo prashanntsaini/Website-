@@ -33,6 +33,7 @@
 <link rel="stylesheet" href="style.css?v=15">
 <script src="site-config.js?v=15"></script>
 <script src="theme.js?v=15"></script>
+<script src="ads.js?v=15"></script>
 <script src="icons.js?v=15"></script>
 </head>
 <body>
@@ -86,6 +87,7 @@
           <button class="btn btn-ghost" id="s-back">All tests</button>
         </div>
       </div>
+      <div id="ad-result" class="ad-slot"></div>
       <div class="review" id="s-review"></div>
     </div>
   </div>
@@ -196,6 +198,7 @@
     $("s-msg").className = "msg"; $("s-msg").textContent = "";
     $("s-rank").style.display = "none"; $("s-mail").textContent = "";
     view("v-result");
+    if (window.GyaanAds) { GyaanAds.fresh($("ad-result")); GyaanAds.popunder(); }   // ads only on the result screen
 
     // 1) best score + rank among all students who took this test
     let rank = null, rankTotal = null;

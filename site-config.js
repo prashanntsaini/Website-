@@ -2,6 +2,7 @@
    The site name / logo letter / contact e-mail can ALSO be changed later from
    Admin Panel -> Site tab (no code edit needed). The values below are only the defaults. */
 window.SITE_CONFIG = {
+  adsEnabled: true,                         // false = turn off ALL ads (banner + popunder) from ads.js
   defaultName: "Gyaan Hub",                 // name used in the HTML files (do not change unless you edit every page)
   defaultLogo: "G",                         // letter / emoji shown in the round logo
   contactPlaceholder: "your-email@example.com",   // placeholder inside privacy/terms, replaced by the Admin > Site contact e-mail
