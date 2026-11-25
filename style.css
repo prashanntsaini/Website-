@@ -1250,3 +1250,64 @@ html .cta-box .btn-gold,html.light .cta-box .btn-gold{background:var(--yellow);c
 html .cta-box .btn-gold:hover{background:#ffcd55}
 @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr)}}
 @media(max-width:560px){.stats .stat{padding:16px 8px}.stats .stat b{font-size:1.45rem}}
+
+/* ===== v15: Instagram-style profile, photo viewer, send options, chat background ===== */
+.lp{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.lp img{-webkit-user-drag:none;pointer-events:none}
+.cm-head.ig{grid-template-columns:auto 1fr;gap:12px 18px;align-items:center;padding:20px 18px}
+.cm-head.ig .cm-ava{grid-column:1;grid-row:1;display:block;line-height:0}
+.cm-head.ig .cm-top{grid-column:2;grid-row:1;min-width:0;align-self:center}
+.cm-head.ig .cm-about{grid-column:1/-1;min-width:0}
+.cm-head.ig .cm-actions{grid-column:1/-1;display:flex;flex-wrap:nowrap;gap:8px;align-items:stretch}
+.cm-head.ig .avatar.xl{width:84px;height:84px;font-size:2rem}
+.cm-head.ig h1{font-size:1.3rem;line-height:1.25;margin:0 0 10px;padding-right:50px;gap:6px}
+.cm-head.ig .cm-handle{margin:0 0 4px}
+.cm-head.ig .cm-bio{margin:2px 0 10px;white-space:pre-line;color:var(--text);opacity:.9}
+.ig-stats{display:flex;justify-content:space-between;gap:6px;margin:0}
+.ig-stats > *{flex:1;display:flex;flex-direction:column;align-items:center;gap:0;line-height:1.2;background:none;border:0;padding:0;font:inherit;font-size:.78rem;color:var(--muted);cursor:default}
+.ig-stats button{cursor:pointer}
+.ig-stats b{font-size:1.15rem;color:var(--text);font-weight:800;margin:0}
+.cm-head.ig .cm-actions .btn{flex:1 1 0;min-width:0;width:auto;padding:9px 8px;font-size:.88rem;justify-content:center;text-align:center;white-space:nowrap}
+.cm-head.ig .cm-actions .cm-menu{flex:0 0 auto;display:flex}
+.cm-head.ig .cm-actions .cm-menu .btn{flex:0 0 auto;padding:9px 14px}
+.cm-head.ig .cm-actions .cm-menu .vi svg{width:20px;height:20px}
+.cm-menu-pop button{display:flex;align-items:center;gap:10px}
+.cm-menu-pop button .vi svg{width:18px;height:18px}
+@media(min-width:561px){.cm-head.ig .avatar.xl{width:112px;height:112px;font-size:2.6rem}.cm-head.ig{gap:14px 28px;padding:26px}}
+.cm-stats{grid-template-columns:repeat(3,1fr)}
+@media(max-width:560px){.cm-stats{grid-template-columns:repeat(3,1fr);gap:8px}.cm-stat{padding:12px 6px}.cm-stat b{font-size:1.2rem}.cm-stat span{font-size:.74rem}}
+
+/* profile picture viewer */
+.pv-ov{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;animation:pvIn .18s ease-out}
+@keyframes pvIn{from{opacity:0}to{opacity:1}}
+.pv-ov .avatar.pv{width:min(80vw,340px);height:min(80vw,340px);font-size:6rem;border:3px solid rgba(255,255,255,.22);box-shadow:0 10px 40px rgba(0,0,0,.5)}
+.pv-ov .avatar.pv .vi{width:50%;height:50%}
+.pv-name{color:#fff;font-weight:700;font-size:1.1rem;text-align:center}
+.pv-x{position:absolute;top:calc(14px + env(safe-area-inset-top));right:14px;width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:1rem;cursor:pointer}
+
+/* send options + chat background sheets */
+.sm-list{display:grid;gap:4px;margin-top:6px}
+.sm-list button{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:none;border:0;color:var(--text);font:inherit;font-size:1rem;padding:14px 10px;border-radius:8px;cursor:pointer}
+.sm-list button:hover,.sm-list button:active{background:rgba(127,127,127,.15)}
+.sm-list .vi svg{width:22px;height:22px}
+.bg-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:6px}
+.bg-sw{position:relative;aspect-ratio:3/4;border-radius:10px;border:2px solid var(--border);cursor:pointer;padding:0;overflow:hidden;color:#fff;font:inherit;-webkit-tap-highlight-color:transparent}
+.bg-sw span{position:absolute;left:0;right:0;bottom:0;font-size:.64rem;font-weight:700;padding:10px 2px 3px;text-align:center;background:linear-gradient(transparent,rgba(0,0,0,.55))}
+.bg-sw.bg-def{background:var(--bg2)}
+.bg-sw:active{transform:scale(.96)}
+.cm-msgs.has-bg .cm-sep{align-self:center;background:rgba(0,0,0,.38);color:#fff;padding:2px 10px;border-radius:10px}
+.cm-msgs.has-bg .cm-empty{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+
+/* Messages open on the whole screen: no empty strip above the header or below the box.
+   (The safe-area gap is only kept when the site is installed as an app.) */
+@media(max-width:860px){
+  .ig-lhead{padding-top:10px}
+  .cm-conv-head.ig-head{padding-top:8px}
+  .cm-compose.ig{margin-bottom:8px}
+  body.msg-page .cm-chat.in-conv{position:fixed;inset:0;height:100dvh!important;top:0;bottom:0}
+}
+@media(max-width:860px) and (display-mode:standalone){
+  .ig-lhead{padding-top:calc(10px + env(safe-area-inset-top))}
+  .cm-conv-head.ig-head{padding-top:calc(8px + env(safe-area-inset-top))}
+  .cm-compose.ig{margin-bottom:calc(8px + env(safe-area-inset-bottom))}
+}

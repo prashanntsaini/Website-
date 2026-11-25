@@ -1,8 +1,8 @@
 // Gyaan Hub - Student Community (profiles, follow, rank, messages, block / report)
 // Uses the SAME Firebase project and helpers as the rest of the site (auth.js). No new keys, no new services.
-import * as A from "./auth.js?v=14";
-import { squareAvatar } from "./media.js?v=14";
-import * as F from "./files.js?v=14";
+import * as A from "./auth.js?v=15";
+import { squareAvatar } from "./media.js?v=15";
+import * as F from "./files.js?v=15";
 
 export { A, squareAvatar, F };
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -416,3 +416,42 @@ export async function unrepost(me, p) {
 export async function savedIds(me) { try { return new Set((await A.fsListPath(["users", me, "saved"])).map(x => x.id)); } catch (e) { return new Set(); } }
 export const savePost = (me, id) => A.fsSetPath(["users", me, "saved", id], { ts: Date.now() });
 export const unsavePost = (me, id) => A.fsDeletePath(["users", me, "saved", id]);
+
+/* ---------- long press, profile picture viewer, share profile ---------- */
+// Calls fn(element, event) when the finger stays on an element matching sel for ~0.45 s. The tap that follows is swallowed.
+export function onLongPress(root, sel, fn, ms = 450) {
+  let t = null, sx = 0, sy = 0, fired = false;
+  const clear = () => { if (t) { clearTimeout(t); t = null; } };
+  root.addEventListener("pointerdown", e => {
+    if (e.pointerType === "mouse" && e.button !== 0) return;
+    const h = e.target.closest && e.target.closest(sel); if (!h) return;
+    fired = false; sx = e.clientX; sy = e.clientY; clear();
+    t = setTimeout(() => { t = null; fired = true; try { navigator.vibrate && navigator.vibrate(12); } catch (x) {} fn(h, e); }, ms);
+  });
+  root.addEventListener("pointermove", e => { if (t && Math.hypot(e.clientX - sx, e.clientY - sy) > 10) clear(); });
+  ["pointerup", "pointercancel"].forEach(ev => root.addEventListener(ev, clear));
+  root.addEventListener("scroll", clear, true);
+  root.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest(sel)) e.preventDefault(); });
+  root.addEventListener("click", e => { if (fired && e.target.closest && e.target.closest(sel)) { e.preventDefault(); e.stopPropagation(); } fired = false; }, true);
+}
+// Full-screen view of someone's profile picture (tap anywhere or press Esc to close)
+export function viewPhoto(p) {
+  if (!p) return;
+  document.querySelectorAll(".pv-ov").forEach(x => x.remove());
+  const o = document.createElement("div");
+  o.className = "pv-ov";
+  o.innerHTML = `<button class="pv-x" type="button" aria-label="Close">✕</button>${avatarHtml(p, "pv")}<div class="pv-name">${esc(p.name || "")}</div>`;
+  const close = () => { o.remove(); document.removeEventListener("keydown", key); };
+  const key = e => { if (e.key === "Escape") close(); };
+  o.addEventListener("click", close);
+  document.addEventListener("keydown", key);
+  document.body.appendChild(o);
+}
+// Share the profile link with the phone's share sheet (falls back to copying the link)
+export async function shareProfile(p, uid) {
+  const link = profileLink(p.username || p.code || studentCode(uid));
+  const data = { title: (p.name || "Student") + " on Gyaan Hub", text: "Follow " + (p.name || "this student") + " on Gyaan Hub", url: link };
+  if (navigator.share) { try { await navigator.share(data); return; } catch (e) { if (e && e.name === "AbortError") return; } }
+  try { await navigator.clipboard.writeText(link); toast("Profile link copied", 2200); }
+  catch (e) { window.prompt("Copy this link:", link); }
+}

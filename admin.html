@@ -30,10 +30,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=14">
-<script src="site-config.js?v=14"></script>
-<script src="theme.js?v=14"></script>
-<script src="icons.js?v=14"></script>
+<link rel="stylesheet" href="style.css?v=15">
+<script src="site-config.js?v=15"></script>
+<script src="theme.js?v=15"></script>
+<script src="icons.js?v=15"></script>
 </head>
 <body>
 <header class="nav">
@@ -170,12 +170,12 @@ question,A,B,C,D,answer
 </main>
 
 <script type="module">
-  import { protectPage, adminDiag, fsList, fsRecent, fsSave, fsDelete, fsGroup, toMs, loadSite, saveSite } from "./auth.js?v=14";
-  import { isSafeUrl, normalizeImgUrl } from "./player-utils.js?v=14";
-  import { parseQuestions } from "./qimport.js?v=14";
-  import { uploadQuestionImage, hydrate, initLightbox } from "./media.js?v=14";
+  import { protectPage, adminDiag, fsList, fsRecent, fsSave, fsDelete, fsGroup, toMs, loadSite, saveSite } from "./auth.js?v=15";
+  import { isSafeUrl, normalizeImgUrl } from "./player-utils.js?v=15";
+  import { parseQuestions } from "./qimport.js?v=15";
+  import { uploadQuestionImage, hydrate, initLightbox } from "./media.js?v=15";
   initLightbox();
-  import { materials as sample } from "./materials.js?v=14";
+  import { materials as sample } from "./materials.js?v=15";
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -459,6 +459,6 @@ question,A,B,C,D,answer
     catch (e) { note("Could not load data: " + (e.code || e.message) + ". Check that the Firestore rules are published.", "err"); }
   });
 </script>
-<script type="module" src="layout.js?v=14"></script>
+<script type="module" src="layout.js?v=15"></script>
 </body>
 </html>

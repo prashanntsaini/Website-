@@ -30,10 +30,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=14">
-<script src="site-config.js?v=14"></script>
-<script src="theme.js?v=14"></script>
-<script src="icons.js?v=14"></script>
+<link rel="stylesheet" href="style.css?v=15">
+<script src="site-config.js?v=15"></script>
+<script src="theme.js?v=15"></script>
+<script src="icons.js?v=15"></script>
 </head>
 <body>
 <header class="nav">
@@ -80,11 +80,11 @@
 </main>
 
 <script type="module">
-  import { protectPage, logout, fsList, fsListFresh, cacheGet, listProgress, toMs } from "./auth.js?v=14";
-  import { materials as sample, iconFor } from "./materials.js?v=14";
-  import { getPrefs } from "./prefs.js?v=14";
-  import { t, applyI18n } from "./i18n.js?v=14";
-  import { isSafeUrl } from "./player-utils.js?v=14";
+  import { protectPage, logout, fsList, fsListFresh, cacheGet, listProgress, toMs } from "./auth.js?v=15";
+  import { materials as sample, iconFor } from "./materials.js?v=15";
+  import { getPrefs } from "./prefs.js?v=15";
+  import { t, applyI18n } from "./i18n.js?v=15";
+  import { isSafeUrl } from "./player-utils.js?v=15";
 
   let materials = sample;
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -191,6 +191,6 @@
     applyI18n();
   });
 </script>
-<script type="module" src="layout.js?v=14"></script>
+<script type="module" src="layout.js?v=15"></script>
 </body>
 </html>

@@ -32,18 +32,18 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=14">
-<link rel="modulepreload" href="community.js?v=14">
-<link rel="modulepreload" href="media.js?v=14">
-<link rel="modulepreload" href="files.js?v=14">
-<link rel="modulepreload" href="player-utils.js?v=14">
+<link rel="modulepreload" href="auth.js?v=15">
+<link rel="modulepreload" href="community.js?v=15">
+<link rel="modulepreload" href="media.js?v=15">
+<link rel="modulepreload" href="files.js?v=15">
+<link rel="modulepreload" href="player-utils.js?v=15">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=14">
-<script src="site-config.js?v=14"></script>
-<script src="theme.js?v=14"></script>
-<script src="icons.js?v=14"></script>
+<link rel="stylesheet" href="style.css?v=15">
+<script src="site-config.js?v=15"></script>
+<script src="theme.js?v=15"></script>
+<script src="icons.js?v=15"></script>
 </head>
 <body>
 <header class="nav">
@@ -61,9 +61,9 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=14";
-  import * as C from "./community.js?v=14";
-  import { initLightbox } from "./media.js?v=14";
+  import { protectPage } from "./auth.js?v=15";
+  import * as C from "./community.js?v=15";
+  import { initLightbox } from "./media.js?v=15";
   initLightbox();
   const $ = id => document.getElementById(id);
   const { esc } = C;
@@ -106,7 +106,7 @@
         : `<button class="btn btn-ghost" data-act="punfollow" data-id="${esc(p.id)}">${st === "pending" ? "Requested" : "Following"}</button>`;
       if (quickMsg(p)) btns += `<a class="btn btn-ghost" href="messages.html?to=${enc}">${ic("chat")} Message</a>`;
     }
-    return `<div class="cm-row"><a href="profile.html?u=${enc}">${C.avatarHtml(p, "sm")}</a>
+    return `<div class="cm-row"><a class="lp" data-lp="${esc(p.id)}" href="profile.html?u=${enc}">${C.avatarHtml(p, "sm")}</a>
       <div class="grow"><a href="profile.html?u=${enc}"><b>${esc(p.name)}</b></a><small>${[C.handleOf(p), p.isPrivate ? ic("lock") + " Private" : "", followsMe && !you ? "Follows you" : "", note].filter(Boolean).join(" · ")}</small><small class="cm-mf" data-mf="${esc(p.id)}"></small></div>${btns}</div>`;
   }
   // "Mutual friends": students I follow who also follow this person (shown by name)
@@ -200,32 +200,33 @@
 
   /* ---------- header ---------- */
   function actionsHtml() {
-    if (isMe) return `<button class="btn btn-gold" data-act="edit">${ic("pencil")} Edit profile</button>`;
+    if (isMe) return `<button class="btn btn-gold" data-act="edit">${ic("pencil")} Edit profile</button><button class="btn btn-ghost" data-act="share">${ic("share")} Share profile</button>`;
     if (blocked) return `<span class="cm-chip">${ic("ban")} You blocked this student</span><button class="btn btn-ghost" data-act="unblock">Unblock</button>`;
     let f;
     if (!rel) f = `<button class="btn btn-gold" data-act="follow">${ic(prof.isPrivate ? "lock" : "user-plus")} ${prof.isPrivate ? "Request to follow" : (theirRel && theirRel.status === "accepted" ? "Follow back" : "Follow")}</button>`;
     else if (rel.status === "pending") f = `<button class="btn btn-ghost" data-act="unfollow">${ic("hourglass")} Requested (cancel)</button>`;
     else f = `<button class="btn btn-ghost" data-act="unfollow">${ic("check")} Following</button>`;
     const m = msgOk.ok ? `<a class="btn btn-ghost" href="messages.html?to=${encodeURIComponent(uid)}">${ic("chat")} Message</a>` : `<button class="btn btn-ghost" disabled title="${esc(msgOk.why || "")}">${ic("chat")} Message</button>`;
-    return `${f}${m}<div class="cm-menu"><button class="btn btn-ghost" data-act="menu" aria-label="More">⋯</button><div class="cm-menu-pop" id="pop"><button data-act="report">${ic("flag")} Report</button><button data-act="block">${ic("ban")} Block</button></div></div>`;
+    return `${f}${m}<div class="cm-menu"><button class="btn btn-ghost" data-act="menu" aria-label="More options">${ic("more")}</button><div class="cm-menu-pop" id="pop"><button data-act="share">${ic("share")} Share profile</button><button data-act="viewpic">${ic("image")} View profile picture</button><button data-act="report">${ic("flag")} Report</button><button data-act="block">${ic("ban")} Block</button></div></div>`;
   }
   function render(canSee) {
     const code = prof.code || C.studentCode(uid);
     const pend = [...myFollowers.values()].filter(f => f.status === "pending").length;
     const gear = isMe ? `<a class="cm-gear" href="settings.html" aria-label="Settings" title="Settings">${ic("gear")}</a>` : "";
-    const head = `<div class="panel cm-head">${gear}
-      ${C.avatarHtml(prof, "xl")}
-      <div class="cm-info">
-        <h1><span data-keep>${esc(prof.name)}</span> ${prof.isPrivate ? `<span title="Private profile" class="cm-chip">${ic("lock")} Private</span>` : ""}</h1>
+    const head = `<div class="panel cm-head ig">${gear}
+      <div class="cm-ava lp" data-lp="__prof" title="Hold to view photo">${C.avatarHtml(prof, "xl")}</div>
+      <div class="cm-top">
+        <h1><span data-keep>${esc(prof.name)}</span>${prof.isPrivate ? ` <span title="Private profile" class="cm-chip">${ic("lock")} Private</span>` : ""}</h1>
+        ${canSee ? `<div class="ig-stats"><button type="button" data-tab="followers"><b>${fers ? fers.length : "–"}</b><span>Followers</span></button><button type="button" data-tab="following"><b>${fing ? fing.length : "–"}</b><span>Following</span></button>${stats ? `<div><b>${stats.tests || 0}</b><span>Tests</span></div>` : ""}</div>` : ""}
+      </div>
+      <div class="cm-about">
         <div class="cm-handle">${C.handleOf(prof)}</div>
-        ${canSee ? `<div class="cm-mini"><button data-tab="followers"><b>${fers ? fers.length : "–"}</b> Followers</button><button data-tab="following"><b>${fing ? fing.length : "–"}</b> Following</button>${stats ? `<span><b>${stats.tests || 0}</b> Tests</span>` : ""}</div>` : ""}
         ${canSee && stats && stats.bio ? `<p class="cm-bio">${esc(stats.bio)}</p>` : ""}
         <div class="cm-chips">
           <span id="rk" style="display:contents">${rank ? `<span class="cm-chip gold">${ic("trophy")} Rank #${rank}</span>` : ""}</span>
           ${canSee && stats && stats.course ? `<span class="cm-chip">${ic("cap")} ${esc(stats.course)}</span>` : ""}
           ${!isMe && theirRel && theirRel.status === "accepted" ? `<span class="cm-chip">Follows you</span>` : ""}
           ${isMe && prof.hideRank ? `<span class="cm-chip">${ic("eye-off")} Rank hidden from others</span>` : ""}
-          <button class="cm-chip" data-act="copyid" title="Copy username" style="cursor:pointer;color:inherit;font-family:inherit">${ic("copy")} ${C.handleOf(prof)}</button>
         </div>
       </div>
       <div class="cm-actions">${actionsHtml()}</div>
@@ -273,8 +274,6 @@
     const rankTxt = rank ? "#" + rank : (isMe || !prof.hideRank ? "–" : ic("lock"));
     const code = prof.code || C.studentCode(uid);
     let out = `<div class="cm-stats">
-      <button class="cm-stat" data-tab="followers"><b>${fers ? fers.length : "–"}</b><span>Followers</span></button>
-      <button class="cm-stat" data-tab="following"><b>${fing ? fing.length : "–"}</b><span>Following</span></button>
       <div class="cm-stat"><b>${s.tests}</b><span>Tests taken</span></div>
       <div class="cm-stat"><b>${s.bestPercent}%</b><span>Best score</span></div>
       <div class="cm-stat"><b>${s.streak} ${ic("flame")}</b><span>Day streak</span></div></div>
@@ -608,6 +607,8 @@
     try {
       if (act === "menu") pop.classList.toggle("open");
       else if (act === "edit") openEdit(false);
+      else if (act === "share") { if (pop) pop.classList.remove("open"); await C.shareProfile(prof, uid); }
+      else if (act === "viewpic") { if (pop) pop.classList.remove("open"); C.viewPhoto(prof); }
       else if (act === "uname") openUsername();
       else if (act === "openreel") openReel(b.dataset.id);
       else if (act === "rcomment") { const c = curBox("rl-cm"); if (c) { c.hidden = !c.hidden; if (!c.hidden) curBox("rl-ci").focus(); } }
@@ -655,6 +656,7 @@
     window.scrollTo(0, scroll);
   }
 
+  C.onLongPress(document, "[data-lp]", el => { const id = el.dataset.lp; C.viewPhoto(id === "__prof" ? prof : (people[id] || null)); });
   document.addEventListener("keydown", e => { if (e.key === "Enter" && e.target && e.target.id === "rl-ci") { e.preventDefault(); sendComment().catch(err => C.toast(C.errText(err), 4000)); } });
 
   protectPage(async (user, demo) => {
@@ -676,6 +678,6 @@
     }
   });
 </script>
-<script type="module" src="layout.js?v=14"></script>
+<script type="module" src="layout.js?v=15"></script>
 </body>
 </html>

@@ -32,18 +32,18 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=14">
-<link rel="modulepreload" href="community.js?v=14">
-<link rel="modulepreload" href="media.js?v=14">
-<link rel="modulepreload" href="files.js?v=14">
-<link rel="modulepreload" href="player-utils.js?v=14">
+<link rel="modulepreload" href="auth.js?v=15">
+<link rel="modulepreload" href="community.js?v=15">
+<link rel="modulepreload" href="media.js?v=15">
+<link rel="modulepreload" href="files.js?v=15">
+<link rel="modulepreload" href="player-utils.js?v=15">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=14">
-<script src="site-config.js?v=14"></script>
-<script src="theme.js?v=14"></script>
-<script src="icons.js?v=14"></script>
+<link rel="stylesheet" href="style.css?v=15">
+<script src="site-config.js?v=15"></script>
+<script src="theme.js?v=15"></script>
+<script src="icons.js?v=15"></script>
 </head>
 <body class="msg-page">
 <header class="nav">
@@ -71,13 +71,14 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=14";
-  import * as C from "./community.js?v=14";
-  import { initLightbox } from "./media.js?v=14";
-  import * as CALL from "./calls.js?v=14";
+  import { protectPage } from "./auth.js?v=15";
+  import * as C from "./community.js?v=15";
+  import { initLightbox } from "./media.js?v=15";
+  import * as CALL from "./calls.js?v=15";
   const $ = id => document.getElementById(id);
   const { esc, F } = C;
   const ic = n => window.ic ? window.ic(n) : "";
+  const profCache = {};
   let me, myProf, chats = [], cur = null /* {uid, prof, cid} */, unsub = null, msgs = [], lastSend = 0, pendFile = null, sending = false;
   const attCache = {};      // message id -> attachment html (so a re-render does not reload the file)
   initLightbox();
@@ -104,30 +105,34 @@
     try { chats = await C.listChats(me.uid); } catch (e) { $("list").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; return; }
     const ps = await Promise.all(chats.map(c => C.getProfile(C.otherOf(c, me.uid)).catch(() => null)));
     $("list").innerHTML = chats.length ? chats.map((c, i) => {
-      const o = C.otherOf(c, me.uid), p = ps[i] || { name: "Student" };
+      const o = C.otherOf(c, me.uid), p = ps[i] || { name: "Student" }; profCache[o] = p;
       const un = C.isUnread(c, me.uid) && !(cur && cur.uid === o);
-      return `<div class="cm-row ${cur && cur.uid === o ? "on" : ""} ${un ? "unread" : ""}" data-open="${esc(o)}">${C.avatarHtml(p, "sm")}<div class="grow"><b>${esc(p.name)}</b><small data-keep>${c.lastFrom === me.uid ? "You: " : ""}${esc(c.lastText || "")}</small></div><span class="cm-time">${ago(c.lastTs)}</span>${un ? '<span class="cm-dot"></span>' : ""}</div>`;
+      return `<div class="cm-row ${cur && cur.uid === o ? "on" : ""} ${un ? "unread" : ""}" data-open="${esc(o)}"><span class="lp" data-lp="${esc(o)}">${C.avatarHtml(p, "sm")}</span><div class="grow"><b>${esc(p.name)}</b><small data-keep>${c.lastFrom === me.uid ? "You: " : ""}${esc(c.lastText || "")}</small></div><span class="cm-time">${ago(c.lastTs)}</span>${un ? '<span class="cm-dot"></span>' : ""}</div>`;
     }).join("") : `<div class="empty">No conversations yet.</div>`;
   }
 
   async function open(otherUid) {
     if (unsub) { unsub(); unsub = null; }
-    const prof = await C.getProfile(otherUid, true).catch(() => null);
-    if (!prof) { C.toast("This student has no community profile."); return; }
+    // the chat covers the whole screen straight away; the details are filled in as they arrive
+    $("chat").classList.add("in-conv"); document.body.classList.add("msg-in-conv");
+    $("conv").innerHTML = `<div class="cm-conv-head ig-head"><button class="ig-hb cm-back" id="back0" type="button" aria-label="Back">${backIc}</button></div><div class="cm-msgs"><div class="cm-empty">Opening chat...</div></div>`;
+    $("back0").addEventListener("click", () => { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); cur = null; loadList(); });
+    const prof = await C.getProfile(otherUid, true).catch(() => profCache[otherUid] || null);
+    if (!prof) { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); C.toast("This student has no community profile."); return; }
+    profCache[otherUid] = prof;
     cur = { uid: otherUid, prof, cid: C.chatId(me.uid, otherUid) };
     msgs = [];
-    const blocked = await C.isBlocked(me.uid, otherUid);
+    const [blocked, exists] = await Promise.all([C.isBlocked(me.uid, otherUid), C.chatExists(cur.cid)]);
     const can = blocked ? { ok: false, why: "You blocked this student." } : await C.canMessage(me.uid, otherUid, prof).catch(() => ({ ok: true }));
-    const exists = await C.chatExists(cur.cid);
-    $("chat").classList.add("in-conv"); document.body.classList.add("msg-in-conv"); fitChat();
+    fitChat();
     const pl = encodeURIComponent(otherUid);
     $("conv").innerHTML = `
       <div class="cm-conv-head ig-head"><button class="ig-hb cm-back" id="back" type="button" aria-label="Back">${backIc}</button>
-        <a class="ig-ava" href="profile.html?u=${pl}">${C.avatarHtml(prof, "sm")}</a>
-        <a class="grow ig-who" href="profile.html?u=${pl}"><b>${esc(prof.name)}</b><small>View profile</small></a>
+        <a class="ig-ava lp" data-lp="__cur" href="profile.html?u=${pl}">${C.avatarHtml(prof, "sm")}</a>
+        <a class="grow ig-who lp" data-lp="__cur" href="profile.html?u=${pl}"><b>${esc(prof.name)}</b><small>View profile</small></a>
         ${can.ok ? `<button class="ig-hb" id="call-a" type="button" aria-label="Voice call" title="Voice call">${ic("call")}</button><button class="ig-hb" id="call-v" type="button" aria-label="Video call" title="Video call">${ic("video")}</button>` : ""}
         <div class="cm-menu"><button class="ig-hb" id="menu" type="button" aria-label="More options">${ic("more")}</button>
-          <div class="cm-menu-pop" id="pop"><button id="m-report">🚩 Report</button><button id="m-block">${blocked ? "✅ Unblock" : "🚫 Block"}</button></div></div></div>
+          <div class="cm-menu-pop" id="pop"><button id="m-profile" type="button">${ic("user")} View profile</button><button id="m-pic" type="button">${ic("image")} View profile picture</button><button id="m-share" type="button">${ic("share")} Share profile</button><button id="m-bg" type="button">${ic("sparkles")} Chat background</button><button id="m-report" type="button">${ic("flag")} Report</button><button id="m-block" type="button">${ic(blocked ? "check" : "ban")} ${blocked ? "Unblock" : "Block"}</button></div></div></div>
       <div class="cm-msgs" id="msgs"><div class="cm-empty">${exists ? "Loading..." : "Say hello 👋 Ask a study doubt or share notes."}</div></div>
       ${can.ok ? `<div class="cm-pend" id="pend" hidden></div>
         <div class="cm-compose ig" id="compose">
@@ -155,6 +160,11 @@
       } catch (e) { C.toast(C.errText(e), 6000); }
     });
     $("m-report").addEventListener("click", () => { $("pop").classList.remove("open"); report(); });
+    $("m-profile").addEventListener("click", () => { location.href = "profile.html?u=" + pl; });
+    $("m-pic").addEventListener("click", () => { $("pop").classList.remove("open"); C.viewPhoto(prof); });
+    $("m-share").addEventListener("click", () => { $("pop").classList.remove("open"); C.shareProfile(prof, otherUid); });
+    $("m-bg").addEventListener("click", () => { $("pop").classList.remove("open"); openBg(); });
+    applyBg();
     if (can.ok) {
       $("send").addEventListener("click", send);
       $("txt").addEventListener("keydown", e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } });
@@ -221,7 +231,7 @@
     const same = x => x && x.from === m.from && !x.call && !m.call && Math.abs((x.ts || 0) - (m.ts || 0)) < 120000;
     const gp = !sep && same(prev), gn = same(next) && (next.ts - m.ts) <= 900000;
     const pos = !gp && !gn ? "single" : !gp ? "first" : !gn ? "last" : "mid";
-    const av = (mine || m.call) ? "" : (pos === "single" || pos === "last") ? `<span class="cm-r-av">${C.avatarHtml(cur.prof, "sm")}</span>` : `<span class="cm-r-av gap"></span>`;
+    const av = (mine || m.call) ? "" : (pos === "single" || pos === "last") ? `<span class="cm-r-av lp" data-lp="__cur">${C.avatarHtml(cur.prof, "sm")}</span>` : `<span class="cm-r-av gap"></span>`;
     const row = inner => `${sep ? `<div class="cm-sep">${sepFmt(m.ts || Date.now())}</div>` : ""}<div class="cm-r ${mine ? "mine" : "theirs"} ${pos} ${m.call ? "is-call" : ""}">${av}${inner}</div>`;
     if (m.deleted) return row(`<div class="cm-bubble unsent ${mine ? "mine" : ""}">${mine ? "You unsent this message" : "This message was unsent"}</div>`);
     if (m.call) {
@@ -361,6 +371,33 @@
     loadList();
   }
   setInterval(runSched, 15000);
+  function queueSched(text, at) {
+    const a = sLoad(); a.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), to: cur.uid, name: cur.prof.name, text, at }); sSave(a);
+    const ta = $("txt"); if (ta && ta.value.trim() === text) { ta.value = ""; syncCompose(); }
+    C.toast("Scheduled for " + new Date(at).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }), 3000);
+  }
+  /* ---------- long press on Send: send now / schedule ---------- */
+  function openSendMenu() {
+    const ta = $("txt"); if (!ta || !cur) return;
+    const text = ta.value.trim(); if (!text && !pendFile) return;
+    const md = document.createElement("div");
+    md.className = "cm-modal sheet";
+    const t8 = new Date(); t8.setDate(t8.getDate() + 1); t8.setHours(8, 0, 0, 0);
+    md.innerHTML = `<div class="cm-card"><h2>Send options<button class="cm-x" aria-label="Close">✕</button></h2>
+      <div class="sm-list"><button type="button" data-a="now">${ic("send")} Send now</button>
+      ${pendFile ? `<p class="cm-sub" style="font-size:.85rem;margin:8px 4px 0">Photos and files cannot be scheduled. Remove the file to schedule a text message.</p>` : `<button type="button" data-a="h1">${ic("hourglass")} Send in 1 hour</button><button type="button" data-a="t8">${ic("moon")} Send tomorrow at 8:00 AM</button><button type="button" data-a="pick">${ic("pencil")} Pick date and time...</button>`}</div></div>`;
+    document.body.appendChild(md);
+    const close = () => md.remove();
+    md.addEventListener("click", e => {
+      if (e.target === md || e.target.closest(".cm-x")) return close();
+      const b = e.target.closest("[data-a]"); if (!b) return;
+      close();
+      if (b.dataset.a === "now") send();
+      else if (b.dataset.a === "h1") queueSched(text, Date.now() + 3600000);
+      else if (b.dataset.a === "t8") queueSched(text, t8.getTime());
+      else openSched();
+    });
+  }
   function openSched() {
     const ta = $("txt");
     const md = document.createElement("div");
@@ -392,9 +429,7 @@
       m.className = "cm-msg err";
       if (!text) { m.textContent = "Write a message first."; return; }
       if (!at || at < Date.now() + 30000) { m.textContent = "Pick a time at least a minute from now."; return; }
-      const a = sLoad(); a.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), to: cur.uid, name: cur.prof.name, text, at }); sSave(a);
-      if (ta.value.trim() === text) { ta.value = ""; syncCompose(); }
-      C.toast("Scheduled for " + new Date(at).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }), 3000);
+      queueSched(text, at);
       close();
     });
   }
@@ -431,10 +466,92 @@
       if (q.trim().length < 2) { $("nres").innerHTML = ""; return; }
       try {
         const res = (await C.searchStudents(q)).filter(p => p.id !== me.uid).slice(0, 6);
-        $("nres").innerHTML = res.length ? res.map(p => `<div class="cm-row" data-open="${esc(p.id)}">${C.avatarHtml(p, "sm")}<div class="grow"><b>${esc(p.name)}</b><small>${p.byId ? "Found by username" : "Start a chat"}</small></div></div>`).join("") : `<div class="empty" style="padding:10px">No student found.</div>`;
+        $("nres").innerHTML = res.length ? res.map(p => { profCache[p.id] = p; return `<div class="cm-row" data-open="${esc(p.id)}"><span class="lp" data-lp="${esc(p.id)}">${C.avatarHtml(p, "sm")}</span><div class="grow"><b>${esc(p.name)}</b><small>${p.byId ? "Found by username" : "Start a chat"}</small></div></div>`; }).join("") : `<div class="empty" style="padding:10px">No student found.</div>`;
       } catch (e) { $("nres").innerHTML = `<div class="empty" style="padding:10px">${esc(C.errText(e))}</div>`; }
     }, 350);
   });
+
+  /* ---------- chat background (kept on this phone, only you see it) ---------- */
+  const BG_PRESETS = [
+    ["Midnight", "#0b1020"], ["Graphite", "#1c1d22"], ["Forest", "linear-gradient(160deg,#0f2d24,#1d5b45)"], ["Ocean", "linear-gradient(160deg,#08203e,#1b6ca8)"],
+    ["Sunset", "linear-gradient(160deg,#42275a,#e0636b)"], ["Violet", "linear-gradient(160deg,#1e1450,#6a4bd8)"], ["Rose", "linear-gradient(160deg,#4a1330,#c9486f)"], ["Sand", "#efe6d6"], ["Sky", "linear-gradient(160deg,#cfe8ff,#ffffff)"]
+  ];
+  const BG_ONE = () => "gyaan_chatbg_" + me.uid + "_" + cur.cid, BG_ALL = () => "gyaan_chatbg_all_" + me.uid;
+  const IMG_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/;
+  const bgRead = k => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
+  function bgGet() {
+    const b = bgRead(BG_ONE()) || bgRead(BG_ALL());
+    if (!b || b.k === "none") return null;
+    if (b.k === "img" && IMG_OK.test(b.v || "")) return b;
+    if (b.k === "css" && BG_PRESETS.some(p => p[1] === b.v)) return b;
+    return null;
+  }
+  function applyBg() {
+    const box = $("msgs"); if (!box) return;
+    const b = bgGet();
+    box.classList.toggle("has-bg", !!b);
+    if (!b) { box.style.background = ""; return; }
+    if (b.k === "img") { const d = Math.max(0, Math.min(70, +b.dim || 0)) / 100; box.style.background = `linear-gradient(rgba(0,0,0,${d}),rgba(0,0,0,${d})) center/cover no-repeat, url("${b.v}") center/cover no-repeat`; }
+    else box.style.background = b.v;
+  }
+  function bgFromFile(f) {
+    return new Promise((res, rej) => {
+      if (!/^image\//.test(f.type)) return rej(new Error("Please choose a photo."));
+      const url = URL.createObjectURL(f), im = new Image();
+      im.onload = () => {
+        URL.revokeObjectURL(url);
+        const sc = Math.min(1, 1280 / Math.max(im.width, im.height)), c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(im.width * sc)); c.height = Math.max(1, Math.round(im.height * sc));
+        c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+        let q = .78, out = c.toDataURL("image/jpeg", q);
+        while (out.length > 1400000 && q > .35) { q -= .1; out = c.toDataURL("image/jpeg", q); }
+        res(out);
+      };
+      im.onerror = () => { URL.revokeObjectURL(url); rej(new Error("Could not read that photo.")); };
+      im.src = url;
+    });
+  }
+  function openBg() {
+    const md = document.createElement("div");
+    md.className = "cm-modal sheet";
+    const b0 = bgGet();
+    md.innerHTML = `<div class="cm-card"><h2>Chat background<button class="cm-x" aria-label="Close">✕</button></h2>
+      <div class="bg-grid" id="bg-g"><button type="button" class="bg-sw bg-def" data-i="-1" aria-label="Default"><span>Default</span></button>${BG_PRESETS.map((p, i) => `<button type="button" class="bg-sw" data-i="${i}" style="background:${p[1]}" aria-label="${p[0]}"><span>${p[0]}</span></button>`).join("")}</div>
+      <div class="cm-actions" style="margin:14px 0 6px"><button class="btn btn-ghost" id="bg-up" type="button">${ic("image")} Choose your own photo</button><input type="file" id="bg-file" accept="image/*" hidden></div>
+      <div class="cm-field" id="bg-dw" ${b0 && b0.k === "img" ? "" : "hidden"}><label for="bg-dim">Darken photo</label><input id="bg-dim" type="range" min="0" max="70" step="5" value="${b0 && b0.k === "img" ? (+b0.dim || 0) : 20}"></div>
+      <label class="check"><input type="checkbox" id="bg-all"><span>Use this for all my chats</span></label>
+      <div class="cm-msg" id="bg-m"></div>
+      <p class="gif-by" style="text-align:left">The background is saved on this phone only. The other student does not see it.</p></div>`;
+    document.body.appendChild(md);
+    const q = id => md.querySelector("#" + id), close = () => md.remove();
+    md.addEventListener("click", e => { if (e.target === md || e.target.closest(".cm-x")) close(); });
+    const save = obj => {
+      const all = q("bg-all").checked;
+      try {
+        if (obj.k === "none" && all) { localStorage.removeItem(BG_ONE()); localStorage.removeItem(BG_ALL()); }
+        else if (all) { localStorage.setItem(BG_ALL(), JSON.stringify(obj)); localStorage.removeItem(BG_ONE()); }
+        else localStorage.setItem(BG_ONE(), JSON.stringify(obj));
+        q("bg-m").className = "cm-msg"; q("bg-m").textContent = "";
+      } catch (e) { q("bg-m").className = "cm-msg err"; q("bg-m").textContent = "Could not save. The phone storage is full, try a smaller photo."; return; }
+      applyBg();
+    };
+    q("bg-g").addEventListener("click", e => {
+      const b = e.target.closest("[data-i]"); if (!b) return;
+      const i = +b.dataset.i; q("bg-dw").hidden = true;
+      save(i < 0 ? { k: "none" } : { k: "css", v: BG_PRESETS[i][1] });
+    });
+    q("bg-up").addEventListener("click", () => q("bg-file").click());
+    q("bg-file").addEventListener("change", async e => {
+      const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+      q("bg-m").className = "cm-msg"; q("bg-m").textContent = "Preparing photo...";
+      try { const v = await bgFromFile(f); q("bg-dw").hidden = false; save({ k: "img", v, dim: +q("bg-dim").value }); }
+      catch (err) { q("bg-m").className = "cm-msg err"; q("bg-m").textContent = err.message || "Could not use that photo."; }
+    });
+    q("bg-dim").addEventListener("input", () => { const b = bgGet(); if (b && b.k === "img") save({ k: "img", v: b.v, dim: +q("bg-dim").value }); });
+  }
+
+  C.onLongPress(document, "[data-lp]", el => { const id = el.dataset.lp; C.viewPhoto(id === "__cur" ? (cur && cur.prof) : profCache[id]); });
+  C.onLongPress(document, "#send", () => openSendMenu());
 
   document.addEventListener("click", e => {
     const cb = e.target.closest("[data-callback]");
@@ -447,7 +564,7 @@
     const ed = e.target.closest("[data-edit]"), un = e.target.closest("[data-unsend]");
     if (ed || un) { const m = msgs.find(x => x.id === (ed || un).dataset[ed ? "edit" : "unsend"]); document.querySelectorAll(".cm-bpop.open").forEach(p => p.classList.remove("open")); if (m) (ed ? editMsg(m) : unsendMsg(m)); return; }
     const pop = $("pop"); if (pop && !e.target.closest(".cm-menu")) pop.classList.remove("open");
-    const r = e.target.closest("[data-open]"); if (r) { open(r.dataset.open); $("nq").value = ""; $("nres").innerHTML = ""; }
+    const r = e.target.closest("[data-open]"); if (r) { open(r.dataset.open).catch(err => C.toast(C.errText(err) || "Could not open this chat.", 5000)); $("nq").value = ""; $("nres").innerHTML = ""; }
   });
 
   protectPage(async (user, demo) => {
@@ -457,11 +574,11 @@
       myProf = (await C.ensureMyProfile(user)).profile;
       await loadList();
       const to = new URLSearchParams(location.search).get("to");
-      if (to && to !== user.uid) open(to);
+      if (to && to !== user.uid) await open(to).catch(err => C.toast(C.errText(err) || "Could not open this chat.", 5000));
       setInterval(() => { if (!document.hidden) loadList(); }, 20000);
     } catch (e) { $("list").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; }
   });
 </script>
-<script type="module" src="layout.js?v=14"></script>
+<script type="module" src="layout.js?v=15"></script>
 </body>
 </html>

@@ -3,8 +3,8 @@
 //  - initCalls(user)                    : listen for incoming calls on every page (called from layout.js)
 // Needs: HTTPS (or localhost), the "calls" rules from firestore.rules, microphone / camera permission.
 // Both students must have the website open to receive a call (there are no push notifications on a static site).
-import * as A from "./auth.js?v=14";
-import * as C from "./community.js?v=14";
+import * as A from "./auth.js?v=15";
+import * as C from "./community.js?v=15";
 
 const ICE = (window.SITE_CONFIG && window.SITE_CONFIG.iceServers) || [
   { urls: ["stun:stun.l.google.com:19302", "stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"] }

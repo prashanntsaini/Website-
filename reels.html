@@ -32,16 +32,16 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=14">
-<link rel="modulepreload" href="community.js?v=14">
-<link rel="modulepreload" href="files.js?v=14">
+<link rel="modulepreload" href="auth.js?v=15">
+<link rel="modulepreload" href="community.js?v=15">
+<link rel="modulepreload" href="files.js?v=15">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="style.css?v=14">
-<script src="site-config.js?v=14"></script>
-<script src="theme.js?v=14"></script>
-<script src="icons.js?v=14"></script>
+<link rel="stylesheet" href="style.css?v=15">
+<script src="site-config.js?v=15"></script>
+<script src="theme.js?v=15"></script>
+<script src="icons.js?v=15"></script>
 <style>
   html,body{height:100%;overflow:hidden;background:#000}
   body{background-image:none}
@@ -131,8 +131,8 @@
 </div>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=14";
-  import * as C from "./community.js?v=14";
+  import { protectPage } from "./auth.js?v=15";
+  import * as C from "./community.js?v=15";
   const $ = id => document.getElementById(id);
   const { esc } = C;
   const ic = (n, c) => window.ic ? window.ic(n, c) : "";
@@ -406,7 +406,7 @@
 
   protectPage(async u => {
     me = u;
-    import("./calls.js?v=14").then(m => m.initCalls(u)).catch(() => {});
+    import("./calls.js?v=15").then(m => m.initCalls(u)).catch(() => {});
     await loadFollowing();
     build("explore");
   });
