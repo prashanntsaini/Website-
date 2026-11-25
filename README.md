@@ -33,6 +33,8 @@ A static study-materials portal with Firebase Authentication. (The site name can
 - **Reels:** live like / comment / repost counters, Instagram-style heart, next 3 reels are preloaded
 - Responsive dark design with no build step
 
+- **Subscriptions + blue tick** (`sub.js`): Basic ₹19, Plus ₹29, Premium ₹49 (30 days). All plans get the same blue tick next to the name (profile, chats, posts, reels, leaderboard). Students pick a plan in Settings and send a UPI reference; in Admin → Subscribers you approve it, or **gift a blue tick for N days** (default 3) that removes itself. Premium gets a "Chat with the owner" link (set it with *Use my account for Premium chat support*). Publish the updated `firestore.rules` (new `subs` and `subRequests`). Online payment (Razorpay) is not connected yet: requests are confirmed by hand.
+
 ## Project structure
 | File | Purpose |
 |------|---------|

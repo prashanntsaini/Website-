@@ -93,7 +93,7 @@
     return `<a class="cm-row ${mine ? "me" : ""}" href="profile.html?u=${encodeURIComponent(r.uid)}">
       <div class="cm-rank">${i < 3 ? ["🥇", "🥈", "🥉"][i] : "#" + (i + 1)}</div>
       ${C.avatarHtml(r)}
-      <div class="grow"><b>${esc(r.name)}${mine ? " (you)" : ""}</b><small>${esc(r.course || "")}${r.streak >= 2 ? " · 🔥 " + r.streak + " days" : ""}</small></div>
+      <div class="grow"><b>${esc(r.name)}${C.tk(r.uid)}${mine ? " (you)" : ""}</b><small>${esc(r.course || "")}${r.streak >= 2 ? " · 🔥 " + r.streak + " days" : ""}</small></div>
       <div class="cm-pts">${r.points}<small>${r.tests} test${r.tests === 1 ? "" : "s"} · ${r.avgPercent}% avg</small></div>
     </a>`;
   }
@@ -135,7 +135,7 @@
       if (q.trim().length < 2) { $("found").innerHTML = ""; return; }
       try {
         const res = (await C.searchStudents(q)).filter(p => p.id !== me.uid).slice(0, 30);
-        $("found").innerHTML = res.length ? res.map(p => `<a class="cm-row" href="profile.html?u=${encodeURIComponent(p.id)}">${C.avatarHtml(p)}<div class="grow"><b>${esc(p.name)}</b><small>${p.isPrivate ? "Private profile · " : ""}${p.byId ? "Found by username" : ""}</small></div><span class="btn btn-ghost">View</span></a>`).join("") : `<div class="empty">No student found.</div>`;
+        $("found").innerHTML = res.length ? res.map(p => `<a class="cm-row" href="profile.html?u=${encodeURIComponent(p.id)}">${C.avatarHtml(p)}<div class="grow"><b>${esc(p.name)}${C.tk(p.id)}</b><small>${p.isPrivate ? "Private profile · " : ""}${p.byId ? "Found by username" : ""}</small></div><span class="btn btn-ghost">View</span></a>`).join("") : `<div class="empty">No student found.</div>`;
       } catch (e) { $("found").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; }
     }, 350);
   });

@@ -56,6 +56,7 @@
         <button class="tab" data-t="tests">Tests</button>
         <button class="tab" data-t="results">Results</button>
         <button class="tab" data-t="logins">Logins</button>
+        <button class="tab" data-t="subs">Subscribers</button>
         <button class="tab" data-t="site">Site</button>
       </div>
 
@@ -134,6 +135,31 @@ question,A,B,C,D,answer
         </div>
       </section>
 
+      <!-- Subscribers -->
+      <section id="tab-subs" style="padding:0;display:none">
+        <div class="panel">
+          <h2>Payment requests <span id="rq-n" class="badge"></span></h2>
+          <p class="sub" style="margin-bottom:12px">Students send a request with their UPI transaction ID. Check your UPI app, then approve to turn on their blue tick for 30 days.</p>
+          <div id="rq-list"><p class="sub">Open this tab to load.</p></div>
+        </div>
+        <div class="panel">
+          <h2>Gift a blue tick</h2>
+          <p class="sub" style="margin-bottom:12px">Give a free user a temporary blue tick. It removes itself when the days end.</p>
+          <div class="toolbar" style="margin:0 0 12px"><input id="g-q" type="search" placeholder="Search student by name or @username"><input id="g-days" type="number" min="1" max="365" value="3" style="max-width:90px" aria-label="Days"><button class="btn btn-gold btn-sm" id="g-find">Search</button></div>
+          <div id="g-res"></div>
+        </div>
+        <div class="panel">
+          <h2>Active blue ticks (<span id="ac-n">0</span>)</h2>
+          <div id="ac-list"></div>
+        </div>
+        <div class="panel">
+          <h2>Payment &amp; support settings</h2>
+          <div class="field"><label for="sb-upi">Your UPI ID (shown to students)</label><input id="sb-upi" maxlength="60" placeholder="name@bank"></div>
+          <div class="acts"><button class="btn btn-gold" id="sb-save">Save</button><button class="btn btn-ghost" id="sb-me">Use my account for Premium chat support</button></div>
+          <p class="hint" id="sb-hint"></p>
+        </div>
+      </section>
+
       <!-- Site -->
       <section id="tab-site" style="padding:0;display:none">
         <div class="panel">
@@ -176,6 +202,8 @@ question,A,B,C,D,answer
   import { uploadQuestionImage, hydrate, initLightbox } from "./media.js?v=15";
   initLightbox();
   import { materials as sample } from "./materials.js?v=15";
+  import * as SUB from "./sub.js?v=15";
+  import * as C from "./community.js?v=15";
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -189,10 +217,11 @@ question,A,B,C,D,answer
   $("tabs").addEventListener("click", e => {
     const b = e.target.closest(".tab"); if (!b) return;
     document.querySelectorAll(".tab").forEach(t => t.classList.toggle("on", t === b));
-    ["materials", "tests", "results", "logins", "site"].forEach(n => $("tab-" + n).style.display = n === b.dataset.t ? "block" : "none");
+    ["materials", "tests", "results", "logins", "subs", "site"].forEach(n => $("tab-" + n).style.display = n === b.dataset.t ? "block" : "none");
     if (b.dataset.t === "results") loadResults();
     if (b.dataset.t === "logins") loadLogins();
     if (b.dataset.t === "site") loadSiteForm();
+    if (b.dataset.t === "subs") loadSubs();
   });
 
   /* ---------- materials ---------- */
@@ -308,6 +337,51 @@ question,A,B,C,D,answer
   $("t-qs").addEventListener("change", e => { if (e.target.dataset.a !== undefined) qs[+e.target.dataset.a].ans = +e.target.value; });
   $("t-qs").addEventListener("click", e => { const b = e.target.closest("[data-rm]"); if (b) { qs.splice(+b.dataset.rm, 1); renderQs(); } });
   $("t-addq").addEventListener("click", () => { qs.push(newQ()); renderQs(); });
+
+
+  /* ---------- subscribers / blue tick ---------- */
+  let adminUid = "", subNames = {};
+  const nm = id => esc(subNames[id] || "Student") + ' <small style="color:var(--muted)">@' + esc(String(id).slice(0, 6)) + '…</small>';
+  async function loadSubs() {
+    try {
+      const [rq, all] = await Promise.all([SUB.listRequests(), SUB.listAll()]);
+      const act = all.filter(r => SUB.isActive(r)).sort((a, b) => a.until - b.until);
+      const ids = [...new Set(act.map(r => r.id))].filter(id => !subNames[id]);
+      (await C.profilesOf(ids, 100)).forEach(p => { subNames[p.id] = p.name; });
+      rq.forEach(r => { subNames[r.id] = r.name; });
+      const pend = rq.filter(r => r.status === "pending").sort((a, b) => b.ts - a.ts);
+      $("rq-n").textContent = pend.length || "";
+      $("rq-list").innerHTML = pend.length ? pend.map(r => `<div class="row"><div class="info"><b>${esc(r.name)} · ${esc(SUB.planName(r.plan))} ₹${(SUB.PLANS[r.plan] || {}).price || ""}</b><small>${esc(r.email || "")} · Ref: ${esc(r.note || "-")} · ${new Date(r.ts).toLocaleString()}</small></div><div class="acts"><button class="btn btn-gold btn-sm" data-ok="${esc(r.id)}" data-plan="${esc(r.plan)}">Approve 30 days</button><button class="btn btn-ghost btn-sm" data-no="${esc(r.id)}">Reject</button></div></div>`).join("") : '<p class="sub" style="margin:0">No pending requests.</p>';
+      $("ac-n").textContent = act.length;
+      $("ac-list").innerHTML = act.length ? act.map(r => `<div class="row"><div class="info"><b>${nm(r.id)} <span class="badge">${r.gift ? "Gift" : esc(SUB.planName(r.plan))}</span></b><small>Until ${SUB.fmtDate(r.until)} · ${SUB.daysLeft(r)} day(s) left</small></div><div class="acts"><button class="btn btn-ghost btn-sm" data-ext="${esc(r.id)}" data-plan="${esc(r.plan)}" data-gift="${r.gift ? 1 : 0}">+${r.gift ? 3 : 30} days</button><button class="btn btn-ghost btn-sm" data-rev="${esc(r.id)}">Remove tick</button></div></div>`).join("") : '<p class="sub" style="margin:0">No active blue ticks.</p>';
+      const site = (await loadSite()) || {};
+      $("sb-upi").value = site.upi || "";
+      $("sb-hint").textContent = site.supportUid ? "Premium chat support goes to: " + (site.supportUid === adminUid ? "your account" : "another account") : "Premium chat support is not set yet.";
+    } catch (e) { note("Could not load subscribers: " + (e.message || e.code), "err"); }
+  }
+  $("tab-subs").addEventListener("click", async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    try {
+      if (b.dataset.ok) { await SUB.grant(b.dataset.ok, b.dataset.plan, SUB.PLAN_DAYS, false); await SUB.dropRequest(b.dataset.ok); note("Approved. Blue tick is on."); }
+      else if (b.dataset.no) { await SUB.dropRequest(b.dataset.no); note("Request rejected."); }
+      else if (b.dataset.rev) { await SUB.revoke(b.dataset.rev); note("Blue tick removed."); }
+      else if (b.dataset.ext) { const g = b.dataset.gift === "1", add = (g ? 3 : 30) * SUB.DAY; const cur = (await SUB.listAll()).find(x => x.id === b.dataset.ext); if (cur) { await C.A.fsSetPath(["subs", cur.id], { until: Math.max(Number(cur.until), Date.now()) + add }, true); SUB.resetCache(); } note("Extended."); }
+      else if (b.dataset.give) { const d = Math.max(1, Math.min(365, parseInt($("g-days").value, 10) || 3)); const r = await SUB.grant(b.dataset.give, "basic", d, true); note(SUB.isActive(r) && !r.gift ? "That student already has a paid plan." : "Blue tick given for " + d + " day(s)."); }
+      else if (b.id === "sb-save") { await saveSite({ upi: $("sb-upi").value.trim() }); note("Saved."); return; }
+      else if (b.id === "sb-me") { await saveSite({ supportUid: adminUid }); note("Premium chat support now comes to you."); }
+      else if (b.id === "g-find") { return findGift(); }
+      else return;
+      loadSubs();
+    } catch (err) { note("Failed: " + (err.message || err.code), "err"); }
+  });
+  async function findGift() {
+    const q = $("g-q").value.trim();
+    $("g-res").innerHTML = '<p class="sub">Searching...</p>';
+    const res = await C.searchStudents(q).catch(() => []);
+    res.forEach(p => { subNames[p.id] = p.name; });
+    $("g-res").innerHTML = res.length ? res.slice(0, 15).map(p => `<div class="row"><div class="info"><b>${esc(p.name)}</b><small>${esc(C.handleOf(p))}</small></div><div class="acts"><button class="btn btn-gold btn-sm" data-give="${esc(p.id)}">Give blue tick</button></div></div>`).join("") : '<p class="sub" style="margin:0">No student found. Private profiles are found only by exact @username.</p>';
+  }
+  $("g-q").addEventListener("keydown", e => { if (e.key === "Enter") findGift(); });
 
   /* ---------- bulk import ---------- */
   let biName = "";
@@ -458,6 +532,7 @@ question,A,B,C,D,answer
 
   /* ---------- start ---------- */
   protectPage(async user => {
+    adminUid = user.uid;
     $("who").textContent = user.email;
     $("deny").className = "msg ok"; $("deny").textContent = "Checking admin access...";
     const diag = await adminDiag(user);

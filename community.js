@@ -3,8 +3,11 @@
 import * as A from "./auth.js?v=15";
 import { squareAvatar } from "./media.js?v=15";
 import * as F from "./files.js?v=15";
+import * as S from "./sub.js?v=15";
 
-export { A, squareAvatar, F };
+export { A, squareAvatar, F, S };
+export const tk = S.tk;                 // blue tick placeholder: ${C.tk(uid)} next to a name
+if (typeof document !== "undefined") { if (document.body) S.watchTicks(); else addEventListener("DOMContentLoaded", S.watchTicks); }
 export const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 // Vector avatars (id -> icon + gradient). Stored in the profile as "preset:<id>".
 export const AVATARS = {

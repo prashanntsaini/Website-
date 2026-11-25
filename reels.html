@@ -198,7 +198,7 @@
       </div>
       <div class="rv-info">
         <div class="rv-by"><a class="rv-ava" href="profile.html?u=${encodeURIComponent(p.uid)}" aria-label="Profile">${C.avatarHtml(a)}</a>
-          <a class="rv-who" href="profile.html?u=${encodeURIComponent(p.uid)}"><b class="rv-name" data-keep>${esc(a.name || "Student")}</b></a>
+          <a class="rv-who" href="profile.html?u=${encodeURIComponent(p.uid)}"><b class="rv-name" data-keep>${esc(a.name || "Student")}</b>${C.tk(p.uid)}</a>
           ${canFollow ? `<button class="rv-fol" data-act="follow" data-u="${esc(p.uid)}">Follow</button>` : ""}</div>
         ${p.caption ? `<div class="rv-cap" data-act="cap" data-keep>${esc(p.caption)}</div>` : ""}
       </div>
@@ -381,7 +381,7 @@
     if (!m.cm.length) { list.innerHTML = `<div class="empty" style="padding:14px">No comments yet. Be the first.</div>`; return; }
     const ps = await C.profilesOf([...new Set(m.cm.map(c => c.uid))]); const pm = Object.fromEntries(ps.map(x => [x.id, x]));
     const p = items.find(x => x.id === sheetId);
-    list.innerHTML = m.cm.map(c => `<div class="rl-c"><a href="profile.html?u=${encodeURIComponent(c.uid)}">${C.avatarHtml(pm[c.uid] || { name: "Student" }, "sm")}</a><div class="grow"><b data-keep>${esc((pm[c.uid] || {}).name || "Student")}</b> <span data-keep>${esc(c.text)}</span></div>${c.uid === me.uid || p.uid === me.uid ? `<button class="cm-x2" data-cdel="${esc(c.id)}" aria-label="Delete comment">✕</button>` : ""}</div>`).join("");
+    list.innerHTML = m.cm.map(c => `<div class="rl-c"><a href="profile.html?u=${encodeURIComponent(c.uid)}">${C.avatarHtml(pm[c.uid] || { name: "Student" }, "sm")}</a><div class="grow"><b data-keep>${esc((pm[c.uid] || {}).name || "Student")}</b>${C.tk(c.uid)} <span data-keep>${esc(c.text)}</span></div>${c.uid === me.uid || p.uid === me.uid ? `<button class="cm-x2" data-cdel="${esc(c.id)}" aria-label="Delete comment">✕</button>` : ""}</div>`).join("");
     list.scrollTop = list.scrollHeight;
   }
   function openSheet(id) {

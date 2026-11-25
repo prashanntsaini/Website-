@@ -58,6 +58,20 @@ service cloud.firestore {
       allow read: if signedIn() && request.auth.uid == id;
       allow write: if false;
     }
+    // ---- subscriptions: students can READ the list (to show blue ticks) but only admins can write it ----
+    match /subs/{uid} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+    match /subRequests/{uid} {              // a student asks for a plan; an admin approves it
+      allow read, delete: if isOwner(uid) || isAdmin();
+      allow create, update: if isOwner(uid)
+          && request.resource.data.keys().hasOnly(["uid", "name", "email", "plan", "note", "status", "ts", "updatedAt"])
+          && request.resource.data.uid == uid
+          && request.resource.data.plan in ["basic", "plus", "premium"]
+          && request.resource.data.status == "pending"
+          && request.resource.data.get("note", "").size() <= 120;
+    }
     match /users/{uid} {                    // profile photo, preferences, devices, learning progress
       allow read, write: if isOwner(uid);
       match /{sub=**} {
