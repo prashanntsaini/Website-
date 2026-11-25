@@ -7,7 +7,7 @@ const D = {
     "nav.privacy": "Privacy Policy", "nav.terms": "Terms of Use", "nav.cookies": "Cookie preferences",
     "nav.signin": "Sign In", "nav.signup": "Sign Up", "nav.logout": "Logout", "nav.signedAs": "Signed in as",
 
-    "dash.welcome": "Welcome,", "dash.sub": "What would you like to study today? Pick your material below.",
+    "dash.welcome": "Welcome,", "dash.sub": "Pick what you want to study.",
     "dash.search": "Search by title or subject, e.g. Calculus, Physics, DBMS...",
     "dash.all": "All", "dash.notes": "Notes", "dash.papers": "Papers", "dash.videos": "Videos", "dash.mock": "Mock Tests",
     "dash.onlineTests": "Online Tests", "dash.material": "Study Material", "dash.continue": "Continue learning",

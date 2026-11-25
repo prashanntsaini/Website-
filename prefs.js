@@ -1,7 +1,7 @@
 // Gyaan Hub - user preferences (kept on this device instantly, synced to the account by layout.js)
 const KEY = "gyaan_prefs";
 export const DEFAULTS = {
-  theme: "dark",          // dark | light | system
+  theme: "light",         // dark | light | system
   lang: "en",             // en | hi
   emailResults: true,     // e-mail me my test result
   newAlerts: true,        // show "NEW" badges + banner for new study material

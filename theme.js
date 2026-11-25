@@ -7,7 +7,7 @@
   var prefs = read("gyaan_prefs") || {};
 
   function paint() {
-    var th = prefs.theme || "dark";
+    var th = prefs.theme || "light";
     var light = th === "light" || (th === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches);
     de.classList.toggle("light", !!light);
     de.setAttribute("data-theme", light ? "light" : "dark");
