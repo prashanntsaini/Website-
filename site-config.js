@@ -11,6 +11,10 @@ window.SITE_CONFIG = {
   // If empty, Drive PDFs open in Google's own preview (works, but quality is Google's).
   driveApiKey: "",
 
+  // GIF button in chats. Get a free key at https://developers.giphy.com (create an app -> API key) and paste it here.
+  // If empty, the GIF button opens but says GIFs are not set up.
+  giphyKey: "",
+
   // Show city/country of each login in "Active devices" (uses https://ipapi.co, see Privacy Policy). Set false to turn off.
   locationLookup: true,
 

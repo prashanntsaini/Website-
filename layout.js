@@ -2,7 +2,9 @@
 import { getPrefs, savePrefs, mergeRemote } from "./prefs.js?v=14";
 import { t, applyI18n } from "./i18n.js?v=14";
 const KEY = "gyaan_consent";
-const page = location.pathname.split("/").pop() || "index.html";
+let page = location.pathname.split("/").pop() || "index.html";
+if (!/\.html?$/i.test(page)) page += ".html";          // clean URLs: /messages -> messages.html
+const linkSel = h => `a[href="${h}"], a[href="${h.replace(/\.html$/, "")}"]`;
 const onLegalPage = ["privacy.html", "terms.html"].includes(page);
 
 const getConsent = () => { try { return JSON.parse(localStorage.getItem(KEY) || "null"); } catch (e) { return null; } };
@@ -99,16 +101,16 @@ function buildMenu() {
     }
     if (!a.isDemo()) import("./community.js?v=14").then(async c => {
       const [unread, reqs] = await Promise.all([c.unreadCount(u.uid), a.fsWhere("follows", [["target", "==", u.uid], ["status", "==", "pending"]]).then(r => r.length).catch(() => 0)]);
-      const badge = (href, n) => { const el = n && drawer.querySelector(`.drawer-nav a[href="${href}"]`); if (el && !el.querySelector(".nav-badge")) el.insertAdjacentHTML("beforeend", `<i class="nav-badge">${n > 9 ? "9+" : n}</i>`); };
+      const badge = (href, n) => { const el = n && drawer.querySelector(".drawer-nav " + linkSel(href).replace(", a[", ", .drawer-nav a[")); if (el && !el.querySelector(".nav-badge")) el.insertAdjacentHTML("beforeend", `<i class="nav-badge">${n > 9 ? "9+" : n}</i>`); };
       badge("messages.html", unread); badge("profile.html", reqs);
-      const tb = (href, n) => { const el = n && document.querySelector(`.tabbar a[href="${href}"]`); if (el && !el.querySelector(".nav-badge")) el.insertAdjacentHTML("beforeend", `<i class="nav-badge">${n > 9 ? "9+" : n}</i>`); };
+      const tb = (href, n) => { const el = n && document.querySelector(".tabbar " + linkSel(href).replace(", a[", ", .tabbar a[")); if (el && !el.querySelector(".nav-badge")) el.insertAdjacentHTML("beforeend", `<i class="nav-badge">${n > 9 ? "9+" : n}</i>`); };
       tb("messages.html", unread);
     }).catch(() => {});
     // incoming voice / video calls ring on every page
     if (!a.isDemo()) import("./calls.js?v=14").then(m => m.initCalls(u)).catch(() => {});
     a.checkAdmin(u).then(ok => {
-      const s = drawer.querySelector('a[href="settings.html"]');
-      if (ok && s && !drawer.querySelector('a[href="admin.html"]')) s.insertAdjacentHTML("afterend", `<a href="admin.html" class="${page === "admin.html" ? "active" : ""}"><span>${window.ic("tools")}</span><em data-i18n="nav.admin">${t("nav.admin")}</em></a><a href="moderation.html" class="${page === "moderation.html" ? "active" : ""}"><span>${window.ic("flag")}</span><em>Community reports</em></a>`);
+      const s = drawer.querySelector(linkSel("settings.html"));
+      if (ok && s && !drawer.querySelector(linkSel("admin.html"))) s.insertAdjacentHTML("afterend", `<a href="admin.html" class="${page === "admin.html" ? "active" : ""}"><span>${window.ic("tools")}</span><em data-i18n="nav.admin">${t("nav.admin")}</em></a><a href="moderation.html" class="${page === "moderation.html" ? "active" : ""}"><span>${window.ic("flag")}</span><em>Community reports</em></a>`);
     });
   })).catch(signedOut);
 }

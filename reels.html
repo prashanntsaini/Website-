@@ -1,9 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="clean-url.js"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Reels | Gyaan Hub</title>
+<meta name="description" content="Watch short study reels shared by students on Gyaan Hub.">
+<link rel="canonical" href="https://prashantsaini.runs-on.dev/reels">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#5a4bda">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Gyaan Hub">
+<meta property="og:title" content="Reels | Gyaan Hub">
+<meta property="og:description" content="Watch short study reels shared by students on Gyaan Hub.">
+<meta property="og:url" content="https://prashantsaini.runs-on.dev/reels">
+<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Gyaan Hub - notes, previous year papers, video lectures and mock tests">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Reels | Gyaan Hub">
+<meta name="twitter:description" content="Watch short study reels shared by students on Gyaan Hub.">
+<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
@@ -12,6 +35,9 @@
 <link rel="modulepreload" href="auth.js?v=14">
 <link rel="modulepreload" href="community.js?v=14">
 <link rel="modulepreload" href="files.js?v=14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="style.css?v=14">
 <script src="site-config.js?v=14"></script>
 <script src="theme.js?v=14"></script>
@@ -66,7 +92,7 @@
   .rv-by .rv-who b{font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46vw}
   .rv-by .rv-who small{font-size:.72rem;opacity:.8;font-weight:500}
   .rv-by .rv-name{color:#fff}
-  .rv-fol{border:1px solid rgba(255,255,255,.9);background:rgba(255,255,255,.12);backdrop-filter:blur(4px);color:#fff;border-radius:8px;font:inherit;font-weight:700;font-size:.8rem;padding:5px 14px;cursor:pointer;margin-left:2px}
+  .rv-fol{border:1px solid #2f6fe0;background:#2f6fe0;color:#fff;border-radius:8px;font:inherit;font-weight:700;font-size:.8rem;padding:5px 14px;cursor:pointer;margin-left:2px}
   .rv-fol[disabled]{opacity:.6}
   .rv-cap{font-size:.92rem;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;cursor:pointer}
   .rv-cap.open{-webkit-line-clamp:unset;max-height:30vh;overflow:auto;display:block}
@@ -312,7 +338,7 @@
     } catch (e) { C.toast(C.errText(e), 3500); }
   }
   async function share(id) {
-    const p = items.find(x => x.id === id), link = new URL("reels.html?reel=" + encodeURIComponent(id), location.href).href;
+    const p = items.find(x => x.id === id), link = new URL("reels?reel=" + encodeURIComponent(id), location.href).href;
     if (navigator.share) { try { await navigator.share({ title: "Reel on Gyaan Hub", text: (p.caption || "").slice(0, 80), url: link }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
     try { await navigator.clipboard.writeText(link); C.toast("Link copied", 2000); } catch (e) { C.toast(link, 6000); }
   }

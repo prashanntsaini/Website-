@@ -1,9 +1,32 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="clean-url.js"></script>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Messages | Gyaan Hub</title>
+<meta name="description" content="Chat with other students on Gyaan Hub.">
+<link rel="canonical" href="https://prashantsaini.runs-on.dev/messages">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#5a4bda">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Gyaan Hub">
+<meta property="og:title" content="Messages | Gyaan Hub">
+<meta property="og:description" content="Chat with other students on Gyaan Hub.">
+<meta property="og:url" content="https://prashantsaini.runs-on.dev/messages">
+<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Gyaan Hub - notes, previous year papers, video lectures and mock tests">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Messages | Gyaan Hub">
+<meta name="twitter:description" content="Chat with other students on Gyaan Hub.">
+<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
@@ -14,6 +37,9 @@
 <link rel="modulepreload" href="media.js?v=14">
 <link rel="modulepreload" href="files.js?v=14">
 <link rel="modulepreload" href="player-utils.js?v=14">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="style.css?v=14">
 <script src="site-config.js?v=14"></script>
 <script src="theme.js?v=14"></script>
@@ -69,9 +95,6 @@
   }
   // On phones the open chat covers the whole screen; keep it exactly as tall as the visible area (keyboard open / closed)
   function fitChat() {
-    const c = $("chat"), vv = window.visualViewport; if (!c) return;
-    if (innerWidth <= 860 && c.classList.contains("in-conv") && vv) { c.style.height = vv.height + "px"; c.style.top = vv.offsetTop + "px"; c.style.bottom = "auto"; }
-    else { c.style.height = ""; c.style.top = ""; c.style.bottom = ""; }
     const box = $("msgs"); if (box && box.dataset.stick) box.scrollTop = box.scrollHeight;
   }
   if (window.visualViewport) { visualViewport.addEventListener("resize", fitChat); visualViewport.addEventListener("scroll", fitChat); }
@@ -110,7 +133,8 @@
         <div class="cm-compose ig" id="compose">
           <button class="ig-cam" id="cam" type="button" aria-label="Take a photo">${ic("camera")}</button>
           <textarea id="txt" maxlength="1000" placeholder="Message..." rows="1" enterkeyhint="send"></textarea>
-          <span class="ig-tools"><button class="ig-ico" id="gal" type="button" aria-label="Photo or video">${ic("image")}</button><button class="ig-ico" id="attach" type="button" aria-label="Send a PDF, APK or any file">${ic("paperclip")}</button></span>
+          <button class="ig-ico" id="sched" type="button" aria-label="Schedule message" title="Schedule message"><span class="vi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span></button>
+          <span class="ig-tools"><button class="ig-ico ig-gif" id="gif" type="button" aria-label="Send a GIF">GIF</button><button class="ig-ico" id="gal" type="button" aria-label="Photo or video">${ic("image")}</button><button class="ig-ico" id="attach" type="button" aria-label="Send a PDF, APK or any file">${ic("paperclip")}</button></span>
           <button class="ig-send" id="send" type="button">Send</button>
           <input type="file" id="file" hidden><input type="file" id="file-gal" accept="image/*,video/*" hidden><input type="file" id="file-cam" accept="image/*" capture="environment" hidden>
         </div>`
@@ -137,6 +161,8 @@
       $("attach").addEventListener("click", () => $("file").click());
       $("gal").addEventListener("click", () => $("file-gal").click());
       $("cam").addEventListener("click", () => $("file-cam").click());
+      $("gif").addEventListener("click", openGif);
+      $("sched").addEventListener("click", openSched);
       ["file", "file-gal", "file-cam"].forEach(id => $(id).addEventListener("change", e => { const f = e.target.files[0]; e.target.value = ""; if (f) setPending(f); }));
       $("txt").addEventListener("input", syncCompose);
       $("txt").addEventListener("focus", () => setTimeout(() => { const b = $("msgs"); if (b) b.scrollTop = b.scrollHeight; }, 250));
@@ -204,7 +230,7 @@
     }
     let att = "";
     if (m.att) {
-      if (!attCache[m.id] && m.att.store === "st") attCache[m.id] = attHtml(m.att, m.att.url);
+      if (!attCache[m.id] && (m.att.store === "st" || m.att.store === "gif")) attCache[m.id] = attHtml(m.att, m.att.url);
       att = `<div class="cm-att" data-mid="${esc(m.id)}">${attCache[m.id] || `<div class="cm-att-load">${m.att.kind === "file" ? esc(m.att.name) : "Loading..."}</div>`}</div>`;
     }
     const menu = mine ? `<button class="cm-bm" data-bm="${esc(m.id)}" aria-label="Message options" type="button">${ic("more")}</button><div class="cm-bpop" data-bpop="${esc(m.id)}"><button data-edit="${esc(m.id)}" type="button">${ic("pencil")} Edit</button><button data-unsend="${esc(m.id)}" type="button">${ic("trash")} Unsend</button></div>` : "";
@@ -275,6 +301,104 @@
     sending = false; btn.disabled = false; $("attach").disabled = false; ta.focus();
   }
 
+  /* ---------- GIF (Giphy) ---------- */
+  function openGif() {
+    const key = (window.SITE_CONFIG && window.SITE_CONFIG.giphyKey) || "";
+    const md = document.createElement("div");
+    md.className = "cm-modal sheet";
+    md.innerHTML = `<div class="cm-card"><h2>Send a GIF<button class="cm-x" aria-label="Close">✕</button></h2>
+      <div class="cm-field"><input id="gq" type="search" placeholder="Search GIFs" autocomplete="off"></div>
+      <div class="gif-grid" id="gg"></div>
+      <p class="cm-msg" id="gm"></p><p class="gif-by">Powered by GIPHY</p></div>`;
+    document.body.appendChild(md);
+    const close = () => md.remove();
+    md.addEventListener("click", e => { if (e.target === md) close(); });
+    md.querySelector(".cm-x").addEventListener("click", close);
+    const gg = md.querySelector("#gg"), gm = md.querySelector("#gm"), gq = md.querySelector("#gq");
+    if (!key) { gm.textContent = "GIFs are not set up yet. Put a free Giphy API key in site-config.js (giphyKey)."; gq.disabled = true; return; }
+    let t, token = 0;
+    async function load(q) {
+      const my = ++token; gm.textContent = "Loading...";
+      const url = "https://api.giphy.com/v1/gifs/" + (q ? "search" : "trending") + "?api_key=" + encodeURIComponent(key) + "&limit=24&rating=g" + (q ? "&q=" + encodeURIComponent(q) : "");
+      try {
+        const r = await fetch(url); const j = await r.json(); if (my !== token) return;
+        const list = (j.data || []).map(g => ({ prev: g.images && (g.images.fixed_width_small || g.images.fixed_width) , full: g.images && (g.images.fixed_height || g.images.original), title: g.title })).filter(g => g.prev && g.full);
+        gg.innerHTML = list.map((g, i) => `<button type="button" class="gif-it" data-i="${i}"><img src="${esc(g.prev.url)}" alt="${esc(g.title || "GIF")}" loading="lazy" referrerpolicy="no-referrer"></button>`).join("");
+        gm.textContent = list.length ? "" : "No GIFs found.";
+        gg.onclick = async e => {
+          const b = e.target.closest(".gif-it"); if (!b) return;
+          const g = list[+b.dataset.i]; let host = ""; try { host = new URL(g.full.url).hostname; } catch (x) {}
+          if (!/(^|\.)giphy\.com$/.test(host)) return;
+          close();
+          try {
+            await C.sendMessage(me.uid, cur.uid, "", { store: "gif", kind: "image", name: "GIF", url: g.full.url });
+            loadList();
+          } catch (err) { C.toast(C.errText(err) || "Could not send the GIF.", 5000); }
+        };
+      } catch (e) { if (my === token) gm.textContent = "Could not load GIFs. Check the API key and your internet."; }
+    }
+    gq.addEventListener("input", () => { clearTimeout(t); t = setTimeout(() => load(gq.value.trim()), 400); });
+    load("");
+  }
+
+  /* ---------- scheduled messages (kept on this device, sent while the site is open) ---------- */
+  const SKEY = () => "gyaan_sched_" + (me ? me.uid : "x");
+  const sLoad = () => { try { return JSON.parse(localStorage.getItem(SKEY()) || "[]"); } catch (e) { return []; } };
+  const sSave = a => { try { localStorage.setItem(SKEY(), JSON.stringify(a)); } catch (e) {} };
+  const pad = n => String(n).padStart(2, "0");
+  const localInput = d => d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()) + "T" + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  async function runSched() {
+    if (!me) return;
+    const all = sLoad(), due = all.filter(x => x.at <= Date.now());
+    if (!due.length) return;
+    sSave(all.filter(x => x.at > Date.now()));
+    for (const x of due) {
+      try {
+        await C.sendMessage(me.uid, x.to, x.text, null);
+        C.toast("Scheduled message sent to " + x.name, 3000);
+      } catch (e) { C.toast("Scheduled message to " + x.name + " could not be sent.", 5000); }
+    }
+    loadList();
+  }
+  setInterval(runSched, 15000);
+  function openSched() {
+    const ta = $("txt");
+    const md = document.createElement("div");
+    md.className = "cm-modal sheet";
+    const min = new Date(Date.now() + 60000);
+    const def = new Date(Date.now() + 3600000);
+    md.innerHTML = `<div class="cm-card"><h2>Schedule a message<button class="cm-x" aria-label="Close">✕</button></h2>
+      <p class="cm-sub" style="font-size:.88rem">To: <b>${esc(cur.prof.name)}</b></p>
+      <div class="cm-field"><label>Message</label><textarea id="sc-t" maxlength="1000" rows="3" placeholder="Type your message"></textarea></div>
+      <div class="cm-field"><label>Send at</label><input id="sc-d" type="datetime-local"></div>
+      <div class="cm-msg" id="sc-m"></div>
+      <div class="cm-actions"><button class="btn btn-gold" id="sc-go" type="button">Schedule</button><button class="btn btn-ghost cm-x" type="button">Cancel</button></div>
+      <div id="sc-list"></div>
+      <p class="gif-by" style="text-align:left">It is sent from this phone/browser at that time, so the site must be open (even in the background) then. If it was closed, it is sent the next time you open Messages.</p></div>`;
+    document.body.appendChild(md);
+    const close = () => md.remove();
+    md.addEventListener("click", e => { if (e.target === md) close(); });
+    md.querySelectorAll(".cm-x").forEach(b => b.addEventListener("click", close));
+    const t = md.querySelector("#sc-t"), d = md.querySelector("#sc-d"), m = md.querySelector("#sc-m");
+    t.value = ta.value; d.min = localInput(min); d.value = localInput(def);
+    const list = () => {
+      const mine = sLoad().filter(x => x.to === cur.uid).sort((a, b) => a.at - b.at);
+      md.querySelector("#sc-list").innerHTML = mine.length ? `<h3 style="font-size:1rem;margin:16px 0 6px">Waiting to be sent</h3>` + mine.map(x => `<div class="sc-row"><div class="grow"><b data-keep>${esc(x.text)}</b><small>${new Date(x.at).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small></div><button class="btn btn-ghost btn-sm" data-cancel="${esc(x.id)}" type="button">Cancel</button></div>`).join("") : "";
+    };
+    list();
+    md.querySelector("#sc-list").addEventListener("click", e => { const b = e.target.closest("[data-cancel]"); if (!b) return; sSave(sLoad().filter(x => x.id !== b.dataset.cancel)); list(); });
+    md.querySelector("#sc-go").addEventListener("click", () => {
+      const text = t.value.trim(), at = new Date(d.value).getTime();
+      m.className = "cm-msg err";
+      if (!text) { m.textContent = "Write a message first."; return; }
+      if (!at || at < Date.now() + 30000) { m.textContent = "Pick a time at least a minute from now."; return; }
+      const a = sLoad(); a.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), to: cur.uid, name: cur.prof.name, text, at }); sSave(a);
+      if (ta.value.trim() === text) { ta.value = ""; syncCompose(); }
+      C.toast("Scheduled for " + new Date(at).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }), 3000);
+      close();
+    });
+  }
+
   function report() {
     const m = document.createElement("div");
     m.className = "cm-modal";
@@ -327,7 +451,7 @@
   });
 
   protectPage(async (user, demo) => {
-    me = user;
+    me = user; setTimeout(runSched, 1500);
     if (demo || C.A.isDemo()) { $("list").innerHTML = `<div class="empty">Messages need a real account (not demo mode).</div>`; return; }
     try {
       myProf = (await C.ensureMyProfile(user)).profile;

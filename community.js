@@ -102,7 +102,7 @@ export function normCode(q) {
   return c;
 }
 export const looksLikeCode = q => /^[0-9A-Za-z]{4}[-\s]?[0-9A-Za-z]{4}$/.test(String(q).trim().replace(/^@/, "").replace(/^gh[-\s]?/i, ""));
-export const profileLink = code => new URL("profile.html?c=" + code, location.href).href;
+export const profileLink = code => new URL("profile?c=" + code, location.href).href;
 export async function findByCode(q) {
   const raw = String(q || "").trim().replace(/^@/, "").toLowerCase();
   const out = new Map();

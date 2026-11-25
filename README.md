@@ -16,6 +16,9 @@ A static study-materials portal with Firebase Authentication. (The site name can
 - Reports page with summary cards, charts and CSV export
 - Built-in viewer (`player.html`): YouTube, Vimeo, Google Drive, MP4/HLS/audio and PDFs play inside the website. PDFs use PDF.js (sharp canvas rendering, zoom, night mode, page jump). Speed, quality, autoplay and resume-from-last-position follow your Settings
 - Settings page: profile photo, dark/light/system theme, English/Hindi, password and email change, active devices with remote logout (this device / others / all), notifications, player settings, data saver, clear local data, export my data (JSON) and delete account
+- **Design (v15)**: clean ed-tech look (white cards, indigo + yellow, Inter font). Colours are CSS variables at the top of the "v15 design" block at the end of `style.css`; light is the default, dark is in Settings
+- **Link previews**: every page has Open Graph / Twitter tags, so WhatsApp, Instagram, Telegram etc. show `og-image.png`, the title and a description. Icons: `favicon.ico`, `icon-192.png`, `icon-512.png`, `apple-touch-icon.png`, `site.webmanifest`. If the domain changes, update `https://prashantsaini.runs-on.dev` in the meta tags
+- **Clean URLs**: the address bar shows `/messages` instead of `/messages.html` (`clean-url.js`, first script in every page's `<head>`). Add that one line to any new page
 - **Bulk import of questions** (Admin → Tests → Bulk import): paste or upload many questions at once as text, JSON, CSV or HTML (`qimport.js`). They fill the test form for review, then you press Save test
 - Test questions and options can include images (upload from the admin panel or paste a link). Click an image in a test to enlarge it
 - Admin: Site tab (website name, logo letter, contact e-mail), Logins tab (recent devices of all students)
