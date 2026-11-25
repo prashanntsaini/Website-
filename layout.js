@@ -115,17 +115,60 @@ function buildMenu() {
   })).catch(signedOut);
 }
 
-/* ---------- Bottom tab bar (phones): quick access to the main pages ---------- */
+/* ---------- Bottom tab bar (phones): floating pill with a sliding highlight ----------
+   Tap a tab, or press and drag along the bar: the highlight follows your finger and the page opens on release. */
 function buildTabBar() {
   const skip = ["reels.html", "login.html", "signup.html", "verify.html", "player.html", "privacy.html", "terms.html"];
   if (skip.includes(page) || !document.querySelector(".nav")) return;
   const tabs = [["index.html", "home", "nav.home"], ["dashboard.html", "library", "nav.dashboard"], ["reels.html", "film", "nav.reels"], ["messages.html", "chat", "nav.messages"], ["profile.html", "user", "nav.profile"]];
+  const cur = tabs.findIndex(x => x[0] === page);
   const bar = document.createElement("nav");
-  bar.className = "tabbar";
+  bar.className = "tabbar" + (cur < 0 ? " no-active" : "");
   bar.setAttribute("aria-label", "Quick navigation");
-  bar.innerHTML = tabs.map(([h, i, k]) => `<a href="${h}" class="${h === page ? "active" : ""}"><span>${window.ic ? window.ic(i) : ""}</span><em data-i18n="${k}">${t(k)}</em></a>`).join("");
+  bar.innerHTML = '<i class="tb-pill" aria-hidden="true"></i>' + tabs.map(([h, i, k]) => `<a href="${h}" class="${h === page ? "active" : ""}"><span>${window.ic ? window.ic(i) : ""}</span><em data-i18n="${k}">${t(k)}</em></a>`).join("");
   document.body.appendChild(bar);
   document.body.classList.add("has-tabbar");
+
+  // Start the highlight where it was on the previous page, then slide it to this page's tab.
+  let prev = cur;
+  try { const p = parseInt(sessionStorage.getItem("gyaan_tab"), 10); if (p >= 0 && p < tabs.length) prev = p; if (cur >= 0) sessionStorage.setItem("gyaan_tab", String(cur)); } catch (e) {}
+  bar.style.setProperty("--i", Math.max(prev, 0));
+  bar.classList.add("tb-init");
+  requestAnimationFrame(() => requestAnimationFrame(() => { bar.classList.remove("tb-init"); bar.style.setProperty("--i", Math.max(cur, 0)); }));
+
+  const links = [...bar.querySelectorAll("a")], pill = bar.querySelector(".tb-pill");
+  let down = false, moved = false, startX = 0, pid = null, hover = -1, swallow = false;
+  const geo = () => { const r = bar.getBoundingClientRect(), pad = 6, slot = (r.width - pad * 2) / tabs.length; return { r, pad, slot }; };
+  const idxAt = x => { const { r, pad, slot } = geo(); return Math.max(0, Math.min(tabs.length - 1, Math.floor((x - r.left - pad) / slot))); };
+  bar.addEventListener("pointerdown", e => { if (e.pointerType === "mouse" && e.button !== 0) return; down = true; moved = false; startX = e.clientX; pid = e.pointerId; bar.classList.add("pressing"); });
+  bar.addEventListener("pointermove", e => {
+    if (!down) return;
+    if (!moved && Math.abs(e.clientX - startX) > 8) { moved = true; bar.classList.add("dragging"); bar.classList.remove("no-active"); try { bar.setPointerCapture(pid); } catch (x) {} }
+    if (!moved) return;
+    const { r, pad, slot } = geo();
+    const x = Math.max(0, Math.min(slot * (tabs.length - 1), e.clientX - r.left - pad - slot / 2));
+    pill.style.transform = `translateX(${x}px)`;
+    const h = idxAt(e.clientX);
+    if (h !== hover) { hover = h; links.forEach((a, n) => a.classList.toggle("peek", n === h)); if (navigator.vibrate) navigator.vibrate(8); }
+  });
+  const end = e => {
+    if (!down) return; down = false; bar.classList.remove("pressing");
+    if (!moved) return;
+    swallow = true; setTimeout(() => { swallow = false; }, 400);
+    const n = idxAt(e.clientX);
+    bar.classList.remove("dragging"); pill.style.transform = ""; links.forEach(a => a.classList.remove("peek")); hover = -1;
+    bar.style.setProperty("--i", n);
+    if (n === cur || e.type === "pointercancel") { bar.style.setProperty("--i", Math.max(cur, 0)); if (cur < 0) bar.classList.add("no-active"); return; }
+    setTimeout(() => { location.href = tabs[n][0]; }, 170);
+  };
+  bar.addEventListener("pointerup", end);
+  bar.addEventListener("pointercancel", end);
+  bar.addEventListener("click", e => {
+    if (swallow) { e.preventDefault(); e.stopPropagation(); return; }
+    const a = e.target.closest("a"); if (!a) return;
+    const n = links.indexOf(a);
+    if (n >= 0 && n !== cur) { bar.classList.remove("no-active"); bar.style.setProperty("--i", n); links.forEach((l, k) => l.classList.toggle("active", k === n)); }
+  }, true);
 }
 
 /* ---------- Consent popup ---------- */
