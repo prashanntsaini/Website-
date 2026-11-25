@@ -58,7 +58,7 @@
 </div>
 
 <script type="module">
-  import { onUser, isVerified, markVerified, logout } from "./auth.js?v=15";
+  import { onUser, isVerified, markVerified, logout, takeNext } from "./auth.js?v=15";
 
   // ---- EmailJS settings ----
   const EMAILJS = {
@@ -137,7 +137,7 @@
       markVerified(user);
       localStorage.removeItem(kOtp());
       msg("Email verified! Redirecting...", "ok");
-      setTimeout(() => location.href = "dashboard.html", 700);
+      setTimeout(() => location.href = takeNext(), 700);
     } else {
       rec.tries++; write(kOtp(), rec);
       msg("Incorrect code. " + Math.max(MAX_ATTEMPTS - rec.tries, 0) + " attempt(s) left.");
@@ -168,7 +168,7 @@
       document.querySelector(".alt").innerHTML = '<a href="login.html" class="btn btn-gold btn-block">Go to Sign In</a>';
       return;
     }
-    if (isVerified(u)) { location.href = "dashboard.html"; return; }
+    if (isVerified(u)) { location.href = takeNext(); return; }
     user = u;
     $("sub").textContent = "Enter the code we emailed to " + u.email;
     const rec = read(kOtp());

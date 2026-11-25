@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /moderation
+Disallow: /reports
+Disallow: /messages
+Disallow: /settings
+Disallow: /verify
+
+Sitemap: https://prashantsaini.runs-on.dev/sitemap.xml

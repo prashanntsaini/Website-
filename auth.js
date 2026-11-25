@@ -81,9 +81,17 @@ export function friendly(err) {
   return map[err.code] || err.message || "Something went wrong. Please try again.";
 }
 
+// After login / signup go to the page the visitor wanted (saved by explore.html), else the dashboard.
+// Only plain page names on this site are accepted (no external URLs).
+export function takeNext() {
+  let n = "";
+  try { n = sessionStorage.getItem("gyaan_next") || ""; sessionStorage.removeItem("gyaan_next"); } catch (e) {}
+  return /^[a-z0-9_-]+\.html(\?[a-zA-Z0-9_=&%.-]*)?$/i.test(n) ? n : "dashboard.html";
+}
+
 function demoLogin(email) {
   localStorage.setItem(DEMO_KEY, JSON.stringify({ email, displayName: email.split("@")[0] }));
-  location.href = "dashboard.html";
+  location.href = takeNext();
 }
 
 function wireForm(handler) {
@@ -101,13 +109,13 @@ function wireForm(handler) {
     try {
       if (DEMO) return demoLogin("demo.google@example.com");
       await signInWithPopup(auth, new GoogleAuthProvider());
-      location.href = "dashboard.html";
+      location.href = takeNext();
     } catch (err) { showMsg(friendly(err)); }
   });
 }
 
 export function setupLogin() {
-  if (!DEMO) onAuthStateChanged(auth, u => { if (u) location.href = "dashboard.html"; });
+  if (!DEMO) onAuthStateChanged(auth, u => { if (u) location.href = takeNext(); });
   const reset = document.getElementById("reset");
   if (reset) reset.addEventListener("click", async e => {
     e.preventDefault();
@@ -122,12 +130,12 @@ export function setupLogin() {
   wireForm(async (email, password) => {
     if (DEMO) return demoLogin(email);
     await signInWithEmailAndPassword(auth, email, password);
-    location.href = "dashboard.html";
+    location.href = takeNext();
   });
 }
 
 export function setupSignup() {
-  if (!DEMO) onAuthStateChanged(auth, u => { if (u) location.href = "dashboard.html"; });
+  if (!DEMO) onAuthStateChanged(auth, u => { if (u) location.href = takeNext(); });
   wireForm(async (email, password) => {
     if (DEMO) return demoLogin(email);
     const name = (document.getElementById("name")?.value || "").trim();

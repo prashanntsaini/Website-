@@ -196,7 +196,27 @@ question,A,B,C,D,answer
   });
 
   /* ---------- materials ---------- */
+  // Public catalog (shown on explore.html before login): ONLY titles / subjects / counts.
+  // Never links, questions or answers. Rebuilt automatically after every change in this panel.
+  let catTimer = null;
+  function syncCatalog() {
+    clearTimeout(catTimer);
+    catTimer = setTimeout(async () => {
+      try {
+        const [m, t] = await Promise.all([fsList("materials"), fsList("tests")]);
+        const tests = t.filter(x => x.active !== false && Array.isArray(x.questions) && x.questions.length)
+          .sort((a, b) => (a.title || "").localeCompare(b.title || "")).slice(0, 300)
+          .map(x => ({ id: x.id, t: String(x.title || "").slice(0, 120), s: String(x.subject || "General").slice(0, 60), n: x.questions.length, m: x.minutes || 0 }));
+        const materials = m.filter(x => x.active !== false)
+          .sort((a, b) => (a.t || "").localeCompare(b.t || "")).slice(0, 300)
+          .map(x => ({ t: String(x.t || "").slice(0, 120), s: String(x.s || "").slice(0, 60), type: String(x.type || "").slice(0, 20) }));
+        await fsSave("settings", "publicCatalog", { tests, materials });
+      } catch (e) { console.warn("Public catalog not updated:", e); }
+    }, 1200);
+  }
+
   async function loadMaterials() {
+    syncCatalog();
     mats = (await fsList("materials")).sort((a, b) => (a.t || "").localeCompare(b.t || ""));
     $("m-count").textContent = mats.length;
     $("m-seed").style.display = mats.length ? "none" : "inline-flex";
@@ -317,6 +337,7 @@ question,A,B,C,D,answer
   });
 
   async function loadTests() {
+    syncCatalog();
     tests = (await fsList("tests")).sort((a, b) => (a.title || "").localeCompare(b.title || ""));
     $("t-count").textContent = tests.length;
     $("t-list").innerHTML = tests.length ? tests.map(t => `

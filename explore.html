@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="clean-url.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Free Online Tests & Study Material | Gyaan Hub</title>
+<meta name="description" content="See the free online mock tests and study material (notes, previous year papers, video lectures) on Gyaan Hub. Sign in to start.">
+<link rel="canonical" href="https://prashantsaini.runs-on.dev/explore">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#5a4bda">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Gyaan Hub">
+<meta property="og:title" content="Free Online Tests & Study Material | Gyaan Hub">
+<meta property="og:description" content="See the free online mock tests and study material (notes, previous year papers, video lectures) on Gyaan Hub. Sign in to start.">
+<meta property="og:url" content="https://prashantsaini.runs-on.dev/explore">
+<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta property="og:image:type" content="image/png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Gyaan Hub - notes, previous year papers, video lectures and mock tests">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Free Online Tests & Study Material | Gyaan Hub">
+<meta name="twitter:description" content="See the free online mock tests and study material (notes, previous year papers, video lectures) on Gyaan Hub. Sign in to start.">
+<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="style.css?v=15">
+<script src="site-config.js?v=15"></script>
+<script src="theme.js?v=15"></script>
+<script src="icons.js?v=15"></script>
+</head>
+<body>
+<header class="nav">
+  <div class="container">
+    <a href="index.html" class="logo"><i>G</i> Gyaan Hub</a>
+    <nav class="links">
+      <a href="index.html">Home</a>
+      <a href="#tests">Online Tests</a>
+      <a href="#material">Study Material</a>
+    </nav>
+    <div class="nav-cta">
+      <a href="login.html" class="btn btn-ghost">Sign In</a>
+      <a href="signup.html" class="btn btn-gold">Sign Up</a>
+    </div>
+  </div>
+</header>
+
+<main>
+  <section class="hero" style="padding-bottom:30px">
+    <div class="container">
+      <span class="eyebrow">Free for students</span>
+      <h1>Free online tests and <mark>study material</mark></h1>
+      <p style="max-width:640px;margin-top:14px">Here is what is inside Gyaan Hub right now. Timed mock tests with an instant score, plus notes, previous year papers and video lectures. Pick one and sign in (it is free) to open it.</p>
+    </div>
+  </section>
+
+  <section id="tests">
+    <div class="container">
+      <div class="sec-head"><h2>Online tests</h2><p>Answer within the time limit and see your score and wrong answers at the end.</p></div>
+      <div id="tests-list" class="grid g3"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+      <p id="tests-empty" class="empty" style="display:none">New tests are coming soon.</p>
+    </div>
+  </section>
+
+  <section id="material">
+    <div class="container">
+      <div class="sec-head"><h2>Study material</h2><p>Notes, previous year papers and videos for your exam preparation.</p></div>
+      <div class="toolbar"><input id="search" type="search" placeholder="Search by title or subject..."></div>
+      <div id="mat-list" class="grid g3"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>
+      <p id="mat-empty" class="empty" style="display:none">New material is coming soon.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="cta-box">
+        <h2>Ready to start?</h2>
+        <p>Make a free account with your email or Google, then open any test or file.</p>
+        <a href="signup.html" class="btn btn-gold">Create account</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="container">
+    <span>© 2026 Gyaan Hub</span>
+    <span><a href="privacy.html">Privacy Policy</a> · <a href="terms.html">Terms of Use</a> · <a href="login.html">Sign In</a> · <a href="signup.html">Sign Up</a></span>
+  </div>
+</footer>
+
+<script type="module">
+  import { fsGet, onUser } from "./auth.js?v=15";
+  const $ = id => document.getElementById(id);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  let signedIn = false, tests = [], mats = [];
+
+  // Click on a card: signed-in users go straight there, others sign in first and then land on the same page.
+  function go(next) {
+    if (signedIn) { location.href = next; return; }
+    try { sessionStorage.setItem("gyaan_next", next); } catch (e) {}
+    location.href = "login.html";
+  }
+
+  function renderTests() {
+    $("tests-empty").style.display = tests.length ? "none" : "block";
+    $("tests-list").innerHTML = tests.map(t => `
+      <div class="card">
+        <div class="ico">🎯</div>
+        <h3>${esc(t.t)}</h3>
+        <p>${esc(t.s || "General")}</p>
+        <p style="margin-top:6px">${+t.n || 0} questions${t.m ? " · " + (+t.m) + " min" : ""}</p>
+        <button class="btn btn-gold btn-block" style="margin-top:16px" data-next="tests.html?start=${encodeURIComponent(t.id)}">${signedIn ? "Start test" : "Sign in to start"}</button>
+      </div>`).join("");
+  }
+  function renderMats() {
+    const q = $("search").value.trim().toLowerCase();
+    const rows = mats.filter(m => (m.t + " " + m.s).toLowerCase().includes(q));
+    $("mat-empty").style.display = rows.length ? "none" : "block";
+    $("mat-list").innerHTML = rows.map(m => `
+      <div class="card" style="cursor:pointer" data-next="dashboard.html">
+        <h3>${esc(m.t)}</h3>
+        <div class="mat"><small>${esc(m.s)}</small><span class="tag" style="margin:0">${esc(m.type)}</span></div>
+        <small style="color:var(--muted);display:block;margin-top:10px">${signedIn ? "Open" : "Sign in to open"}</small>
+      </div>`).join("");
+  }
+  document.addEventListener("click", e => {
+    const el = e.target.closest("[data-next]"); if (el) go(el.dataset.next);
+  });
+  $("search").addEventListener("input", renderMats);
+  onUser(u => { signedIn = !!u; renderTests(); renderMats(); });
+
+  (async () => {
+    try {
+      const d = await fsGet("settings", "publicCatalog");
+      tests = (d && d.tests) || []; mats = (d && d.materials) || [];
+    } catch (e) { tests = []; mats = []; }
+    renderTests(); renderMats();
+  })();
+</script>
+<script type="module" src="layout.js?v=15"></script>
+</body>
+</html>
