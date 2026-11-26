@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=18"></script>
+  <script src="clean-url.js?v=19"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sign In | Gyaan Hub</title>
@@ -27,10 +27,10 @@
 <meta name="twitter:title" content="Sign In | Gyaan Hub">
 <meta name="twitter:description" content="Sign in to Gyaan Hub to open your notes, papers and tests.">
 <meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
-<link rel="stylesheet" href="style.css?v=18">
-<script src="site-config.js?v=18"></script>
-<script src="theme.js?v=18"></script>
-<script src="icons.js?v=18"></script>
+<link rel="stylesheet" href="style.css?v=19">
+<script src="site-config.js?v=19"></script>
+<script src="theme.js?v=19"></script>
+<script src="icons.js?v=19"></script>
 </head>
 <body>
 <div class="auth-wrap">
@@ -38,6 +38,7 @@
     <a href="index.html" class="logo"><i>G</i> Gyaan Hub</a>
     <h1>Sign in</h1>
     <p class="sub">Enter your email and password.</p>
+    <div id="add-banner" class="acc-banner" hidden><span data-i18n="acc.adding">Adding another account. Sign in or sign up with a different email.</span> <a href="#" id="add-cancel" data-i18n="acc.cancel">Cancel</a></div>
     <div id="msg" class="msg"></div>
     <form id="form">
       <div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" placeholder="you@example.com" required autocomplete="email"></div>
@@ -66,12 +67,16 @@
   });
 </script>
 <script type="module">
-  import { setupLogin } from "./auth.js?v=18";
+  import { setupLogin, isAddingAccount, cancelAddAccount } from "./auth.js?v=19";
   setupLogin();
+  if (isAddingAccount()) {
+    document.getElementById("add-banner").hidden = false;
+    document.getElementById("add-cancel").addEventListener("click", e => { e.preventDefault(); cancelAddAccount(); });
+  }
   const why = new URLSearchParams(location.search).get("reason");
   const texts = { revoked: "You were signed out because the account was logged out from all devices.", removed: "This device was logged out from another device.", all: "You were signed out from all devices.", deleted: "Your account and its data were deleted." };
   if (why && texts[why]) { const m = document.getElementById("msg"); m.className = "msg ok"; m.textContent = texts[why]; }
 </script>
-<script type="module" src="layout.js?v=18"></script>
+<script type="module" src="layout.js?v=19"></script>
 </body>
 </html>

@@ -23,9 +23,23 @@ const firebaseConfig = {
 };
 
 const DEMO = firebaseConfig.apiKey.startsWith("YOUR_");
+
+// ---- several accounts on one device (Instagram style) ----
+// Every saved account lives in its own "slot". A slot is a separate Firebase app instance with its own
+// saved login, so switching accounts needs no password. Slot 0 is the normal/default app, so people who
+// are already signed in stay signed in.
+const ACC_KEY = "gyaan_accounts", SLOT_KEY = "gyaan_slot", ADD_KEY = "gyaan_add_slot", MAX_ACC = 5;
+const onAuthPg = /\/(login|signup)(\.html)?\/?$/i.test(location.pathname);
+const readAccs = () => { try { const a = JSON.parse(localStorage.getItem(ACC_KEY) || "[]"); return Array.isArray(a) ? a.filter(x => x && Number.isInteger(x.slot)) : []; } catch (e) { return []; } };
+const writeAccs = a => { try { localStorage.setItem(ACC_KEY, JSON.stringify(a)); } catch (e) {} };
+const readSlot = () => { let s = 0; try { s = parseInt(localStorage.getItem(SLOT_KEY), 10); } catch (e) {} return s >= 0 && s < MAX_ACC ? s : 0; };
+const addSlot = () => { if (!onAuthPg) return -1; try { const s = parseInt(sessionStorage.getItem(ADD_KEY), 10); return s >= 0 && s < MAX_ACC ? s : -1; } catch (e) { return -1; } };
+const ACTIVE = addSlot() >= 0 ? addSlot() : readSlot();   // fixed for the life of this page
+const clearCaches = () => { try { Object.keys(localStorage).filter(k => k.startsWith("gyaan_cache_")).forEach(k => localStorage.removeItem(k)); } catch (e) {} };
+
 let app, auth, dbMain, dbAlt;
 if (!DEMO) {
-  app = initializeApp(firebaseConfig);
+  app = ACTIVE === 0 ? initializeApp(firebaseConfig) : initializeApp(firebaseConfig, "acct" + ACTIVE);
   auth = getAuth(app);
   dbMain = getFirestore(app);
   dbAlt = getFirestore(app, "default");   // fallback if the database was created with the ID "default"
@@ -43,6 +57,54 @@ if (!DEMO) {
   };
   startAnalytics();
   window.addEventListener("consent-changed", startAnalytics);
+}
+
+// Remember who is signed in on this slot (name, email) so the account list can show it.
+function rememberAccount(u) {
+  if (!u) return;
+  const list = readAccs(), adding = addSlot();
+  const dup = list.find(a => a.uid === u.uid && a.slot !== ACTIVE);
+  if (dup) {   // this account is already saved in another slot: use that one instead of keeping two copies
+    try { sessionStorage.removeItem(ADD_KEY); localStorage.setItem(SLOT_KEY, String(dup.slot)); } catch (e) {}
+    signOut(auth).catch(() => {}).finally(() => { location.href = "dashboard.html"; });
+    return;
+  }
+  const rec = { slot: ACTIVE, uid: u.uid, email: u.email || "", name: u.displayName || "" };
+  const i = list.findIndex(a => a.slot === ACTIVE);
+  if (i >= 0) list[i] = { ...list[i], ...rec }; else list.push(rec);
+  writeAccs(list);
+  if (adding >= 0) { try { localStorage.setItem(SLOT_KEY, String(ACTIVE)); sessionStorage.removeItem(ADD_KEY); } catch (e) {} }
+}
+if (!DEMO) onAuthStateChanged(auth, rememberAccount);   // registered first, so it runs before any page redirect
+
+export const getAccounts = () => readAccs().sort((a, b) => a.slot - b.slot);
+export const accountSlot = () => ACTIVE;
+export const maxAccounts = () => MAX_ACC;
+export const isAddingAccount = () => addSlot() >= 0;
+export function switchAccount(slot) {
+  clearCaches();
+  try { sessionStorage.removeItem(ADD_KEY); localStorage.setItem(SLOT_KEY, String(slot)); } catch (e) {}
+  if (onAuthPg) location.href = "dashboard.html"; else location.reload();
+}
+export function startAddAccount() {
+  const used = new Set(readAccs().map(a => a.slot)); used.add(ACTIVE);
+  let s = -1; for (let i = 0; i < MAX_ACC; i++) if (!used.has(i)) { s = i; break; }
+  if (s < 0) return false;
+  try { sessionStorage.setItem(ADD_KEY, String(s)); } catch (e) {}
+  location.href = "login.html";
+  return true;
+}
+export function cancelAddAccount() {
+  try { sessionStorage.removeItem(ADD_KEY); } catch (e) {}
+  location.href = getAccounts().length ? "dashboard.html" : "index.html";
+}
+// After this slot is signed out: open another saved account if there is one, else the login page.
+function leaveSlot(reason) {
+  const rest = readAccs().filter(a => a.slot !== ACTIVE);
+  writeAccs(rest);
+  clearCaches();
+  try { localStorage.setItem(SLOT_KEY, String(rest.length ? rest.sort((a, b) => a.slot - b.slot)[0].slot : 0)); sessionStorage.removeItem(ADD_KEY); } catch (e) {}
+  location.href = rest.length ? "dashboard.html" : "login.html" + (reason ? "?reason=" + reason : "");
 }
 
 export const getFbApp = () => app;   // used by files.js for Firebase Storage
@@ -242,9 +304,9 @@ export async function logout() {
     }
   } catch (e) {}
   try { Object.keys(localStorage).filter(k => k.startsWith("gyaan_cache_")).forEach(k => localStorage.removeItem(k)); } catch (e) {}
-  if (DEMO) localStorage.removeItem(DEMO_KEY);
-  else await signOut(auth);
-  location.href = "login.html";
+  if (DEMO) { localStorage.removeItem(DEMO_KEY); location.href = "login.html"; return; }
+  await signOut(auth);
+  leaveSlot("");          // only THIS account is logged out; another saved account opens if there is one
 }
 
 // ---------- Firestore helpers (admin panel, tests, materials) ----------
@@ -446,10 +508,7 @@ function forceSignOut(reason) {
   const uid = auth.currentUser && auth.currentUser.uid;
   stopWatching();
   try { if (uid) localStorage.removeItem(REG_KEY(uid)); } catch (e) {}
-  signOut(auth).catch(() => {}).finally(() => {
-    try { Object.keys(localStorage).filter(k => k.startsWith("gyaan_cache_")).forEach(k => localStorage.removeItem(k)); } catch (e) {}
-    location.href = "login.html?reason=" + reason;
-  });
+  signOut(auth).catch(() => {}).finally(() => leaveSlot(reason));
 }
 async function bootSession(user) {
   if (DEMO || sessionBooted) return;
@@ -504,8 +563,7 @@ export async function logoutEverywhere(uid) {
   for (const d of await fsListPath(["users", uid, "devices"])) { try { await fsDeletePath(["users", uid, "devices", d.id]); } catch (e) {} }
   try { localStorage.removeItem(REG_KEY(uid)); } catch (e) {}
   await signOut(auth);
-  try { Object.keys(localStorage).filter(k => k.startsWith("gyaan_cache_")).forEach(k => localStorage.removeItem(k)); } catch (e) {}
-  location.href = "login.html?reason=all";
+  leaveSlot("all");
 }
 
 // ---- profile / preferences stored in users/{uid} ----
@@ -541,6 +599,8 @@ export async function deleteAccount(password) {
   for (const f of ["follower", "target"]) { try { for (const r of await fsQuery("follows", f, uid)) await fsDelete("follows", r.id); } catch (e) {} }
   try { await fsDeletePath(["users", uid]); } catch (e) {}
   await deleteUser(u);
+  writeAccs(readAccs().filter(a => a.slot !== ACTIVE));
+  try { const r = readAccs(); localStorage.setItem(SLOT_KEY, String(r.length ? r[0].slot : 0)); } catch (e) {}
   try { Object.keys(localStorage).filter(k => k.includes(uid) || k.startsWith("gyaan_cache_") || k === "gyaan_prefs").forEach(k => localStorage.removeItem(k)); } catch (e) {}
 }
 

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=18"></script>
+  <script src="clean-url.js?v=19"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Settings | Gyaan Hub</title>
@@ -27,10 +27,10 @@
 <meta name="twitter:title" content="Settings | Gyaan Hub">
 <meta name="twitter:description" content="Manage your Gyaan Hub account, privacy and preferences.">
 <meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
-<link rel="stylesheet" href="style.css?v=18">
-<script src="site-config.js?v=18"></script>
-<script src="theme.js?v=18"></script>
-<script src="icons.js?v=18"></script>
+<link rel="stylesheet" href="style.css?v=19">
+<script src="site-config.js?v=19"></script>
+<script src="theme.js?v=19"></script>
+<script src="icons.js?v=19"></script>
 </head>
 <body class="st-page">
 <header class="nav">
@@ -75,6 +75,7 @@
       <section class="st-sec"><h3 data-i18n="set.grpData">Your data and login</h3><div class="st-list">
         <a class="st-item" href="#yourdata" data-q="your data"><span class="st-ic"><span class="vi" data-ic="file"></span></span><span class="t"><span data-i18n="set.yourData">Your data</span></span><span class="chev"><span class="vi" data-ic="chevron"></span></span></a>
         <a class="st-item danger" href="#delete" data-q="delete account danger"><span class="st-ic"><span class="vi" data-ic="trash"></span></span><span class="t" data-i18n="set.delete">Delete my account</span><span class="chev"><span class="vi" data-ic="chevron"></span></span></a>
+        <button class="st-item" id="st-accounts" type="button" data-q="switch add account accounts"><span class="st-ic"><span class="vi" data-ic="users"></span></span><span class="t" data-i18n="acc.switch">Switch account</span><span class="chev"><span class="vi" data-ic="chevron"></span></span></button>
         <button class="st-item danger" id="st-logout" type="button" data-q="log out logout sign out"><span class="st-ic"><span class="vi" data-ic="logout"></span></span><span class="t" data-i18n="set.logoutRow">Log out</span></button>
       </div></section>
       <p class="st-none" id="st-none" hidden data-i18n="set.noMatch">No settings found.</p>
@@ -249,12 +250,12 @@
 
 <script type="module">
   import { protectPage, logout, friendly, currentUser, isDemo, hasPassword, isGoogleUser, setDisplayName, saveUserDoc,
-           listDevices, sessionReady, removeDevice, logoutOthers, logoutEverywhere, deviceId, changePassword, changeEmail, deleteAccount, exportData, toMs, withdrawConsent } from "./auth.js?v=18";
-  import { getPrefs, savePrefs } from "./prefs.js?v=18";
-  import { t, applyI18n, lang } from "./i18n.js?v=18";
-  import { squareAvatar } from "./media.js?v=18";
-  import * as SUB from "./sub.js?v=18";
-  import { loadSite } from "./auth.js?v=18";
+           listDevices, sessionReady, removeDevice, logoutOthers, logoutEverywhere, deviceId, changePassword, changeEmail, deleteAccount, exportData, toMs, withdrawConsent } from "./auth.js?v=19";
+  import { getPrefs, savePrefs } from "./prefs.js?v=19";
+  import { t, applyI18n, lang } from "./i18n.js?v=19";
+  import { squareAvatar } from "./media.js?v=19";
+  import * as SUB from "./sub.js?v=19";
+  import { loadSite } from "./auth.js?v=19";
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -486,6 +487,7 @@
     $("st-none").hidden = any;
   });
   $("st-logout").addEventListener("click", logout);
+  $("st-accounts").addEventListener("click", () => import("./accounts-ui.js?v=19").then(m => m.openAccountSheet()));
 
   /* ---------- page start ---------- */
   $("s-logout").addEventListener("click", logout);
@@ -567,6 +569,6 @@
   applyI18n();
   route();
 </script>
-<script type="module" src="layout.js?v=18"></script>
+<script type="module" src="layout.js?v=19"></script>
 </body>
 </html>

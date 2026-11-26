@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=18"></script>
+  <script src="clean-url.js?v=19"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Messages | Gyaan Hub</title>
@@ -32,15 +32,15 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=18">
-<link rel="modulepreload" href="community.js?v=18">
-<link rel="modulepreload" href="media.js?v=18">
-<link rel="modulepreload" href="files.js?v=18">
-<link rel="modulepreload" href="player-utils.js?v=18">
-<link rel="stylesheet" href="style.css?v=18">
-<script src="site-config.js?v=18"></script>
-<script src="theme.js?v=18"></script>
-<script src="icons.js?v=18"></script>
+<link rel="modulepreload" href="auth.js?v=19">
+<link rel="modulepreload" href="community.js?v=19">
+<link rel="modulepreload" href="media.js?v=19">
+<link rel="modulepreload" href="files.js?v=19">
+<link rel="modulepreload" href="player-utils.js?v=19">
+<link rel="stylesheet" href="style.css?v=19">
+<script src="site-config.js?v=19"></script>
+<script src="theme.js?v=19"></script>
+<script src="icons.js?v=19"></script>
 </head>
 <body class="msg-page">
 <header class="nav">
@@ -58,7 +58,7 @@
     <h1 class="msg-title">💬 Messages</h1>
     <div class="cm-chat" id="chat">
       <aside class="cm-side">
-        <div class="ig-lhead"><a class="ig-hb" href="index.html" aria-label="Home"><span class="vi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></span></a><h2>Messages</h2><button class="ig-hb" id="newchat" type="button" aria-label="New chat"></button></div>
+        <div class="ig-lhead"><a class="ig-hb" href="index.html" aria-label="Home"><span class="vi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></span></a><h2><button class="ig-acc" id="accbtn" type="button" aria-label="Switch account"><span id="accname">Messages</span><span class="vi ig-acc-ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></button></h2><button class="ig-hb" id="newchat" type="button" aria-label="New chat"></button></div>
         <div class="ig-lsearch"><input class="cm-search" id="nq" type="search" placeholder="Search students to chat" maxlength="40" autocomplete="off"></div>
         <div class="cm-list" id="nres" style="padding-bottom:0"></div>
         <div class="cm-list" id="list"><div class="skel"></div></div></aside>
@@ -68,10 +68,10 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=18";
-  import * as C from "./community.js?v=18";
-  import { initLightbox } from "./media.js?v=18";
-  import * as CALL from "./calls.js?v=18";
+  import { protectPage } from "./auth.js?v=19";
+  import * as C from "./community.js?v=19";
+  import { initLightbox } from "./media.js?v=19";
+  import * as CALL from "./calls.js?v=19";
   const $ = id => document.getElementById(id);
   const { esc, F } = C;
   const ic = n => window.ic ? window.ic(n) : "";
@@ -93,8 +93,12 @@
   }
   // On phones the open chat covers the whole screen; keep it exactly as tall as the visible area (keyboard open / closed)
   function fitChat() {
+    const vv = window.visualViewport, st = document.documentElement.style;
+    if (document.body.classList.contains("msg-in-conv") && vv && vv.scale <= 1.01) { st.setProperty("--app-h", vv.height + "px"); st.setProperty("--app-top", vv.offsetTop + "px"); }
+    else { st.removeProperty("--app-h"); st.removeProperty("--app-top"); }
     const box = $("msgs"); if (box && box.dataset.stick) box.scrollTop = box.scrollHeight;
   }
+  new MutationObserver(fitChat).observe(document.body, { attributes: true, attributeFilter: ["class"] });
   if (window.visualViewport) { visualViewport.addEventListener("resize", fitChat); visualViewport.addEventListener("scroll", fitChat); }
   addEventListener("resize", fitChat);
   const sepFmt = ms => { const d = new Date(ms), t = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); return d.toDateString() === new Date().toDateString() ? "Today " + t : d.toLocaleDateString([], { day: "numeric", month: "short" }) + ", " + t; };
@@ -620,6 +624,10 @@
 
   protectPage(async (user, demo) => {
     me = user; setTimeout(runSched, 1500);
+    import("./accounts-ui.js?v=19").then(m => {
+      const nm = m.currentAccountName(); if (nm) $("accname").textContent = nm;
+      $("accbtn").addEventListener("click", m.openAccountSheet);
+    });
     if (demo || C.A.isDemo()) { $("list").innerHTML = `<div class="empty">Messages need a real account (not demo mode).</div>`; return; }
     try {
       myProf = (await C.ensureMyProfile(user)).profile;
@@ -630,6 +638,6 @@
     } catch (e) { $("list").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; }
   });
 </script>
-<script type="module" src="layout.js?v=18"></script>
+<script type="module" src="layout.js?v=19"></script>
 </body>
 </html>

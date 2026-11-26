@@ -3,7 +3,7 @@
      subs/{uid}         { plan: "basic"|"plus"|"premium", until: <ms>, gift: true|false }   (written ONLY by admins)
      subRequests/{uid}  { uid, name, plan, note, status: "pending", ts }                    (written by the student)
    The tick shows while until > now, so a 3-day gift / an expired plan removes itself - no timer needed. */
-import * as A from "./auth.js?v=18";
+import * as A from "./auth.js?v=19";
 
 export const DAY = 86400000;
 export const PLANS = {

@@ -1,5 +1,5 @@
 /* Gyaan Hub - clean URLs: shows /messages instead of /messages.html (and / instead of /index.html).
-   Load as a plain <script src="clean-url.js?v=18"></script> at the top of <head> on every page.
+   Load as a plain <script src="clean-url.js?v=19"></script> at the top of <head> on every page.
    Needs a host that serves /messages for messages.html (GitHub Pages, Netlify, Vercel, Firebase Hosting do). */
 (function () {
   var EXT = /\.html?$/i;

@@ -1,11 +1,13 @@
 // Gyaan Hub - English / Hindi UI text. Add more keys here; use data-i18n="key" in HTML or t("key") in JS.
-import { getPrefs } from "./prefs.js?v=18";
+import { getPrefs } from "./prefs.js?v=19";
 
 const D = {
   en: {
     "nav.home": "Home", "nav.dashboard": "Dashboard", "nav.tests": "Tests", "nav.community": "Community", "nav.profile": "Profile", "nav.messages": "Messages", "nav.reports": "Reports", "nav.reels": "Reels", "nav.settings": "Settings", "nav.free": "Free Tests", "nav.admin": "Admin",
     "nav.privacy": "Privacy Policy", "nav.terms": "Terms of Use", "nav.cookies": "Cookie preferences",
     "nav.signin": "Sign In", "nav.signup": "Sign Up", "nav.logout": "Logout", "nav.signedAs": "Signed in as",
+    "acc.title": "Accounts", "acc.add": "Add account", "acc.switch": "Switch account", "acc.logoutThis": "Log out of this account", "acc.close": "Close", "acc.max": "You can keep up to 5 accounts on this device.",
+    "acc.adding": "Adding another account. Sign in or sign up with a different email.", "acc.cancel": "Cancel", "acc.createNew": "Create new account",
 
     "dash.welcome": "Welcome,", "dash.sub": "Pick what you want to study.",
     "dash.search": "Search by title or subject, e.g. Calculus, Physics, DBMS...",
@@ -57,6 +59,8 @@ const D = {
     "nav.home": "होम", "nav.dashboard": "डैशबोर्ड", "nav.tests": "टेस्ट", "nav.community": "कम्युनिटी", "nav.profile": "प्रोफ़ाइल", "nav.messages": "संदेश", "nav.reports": "रिपोर्ट", "nav.reels": "रील्स", "nav.settings": "सेटिंग्स", "nav.free": "फ्री टेस्ट", "nav.admin": "एडमिन",
     "nav.privacy": "प्राइवेसी पॉलिसी", "nav.terms": "उपयोग की शर्तें", "nav.cookies": "कुकी प्राथमिकताएँ",
     "nav.signin": "साइन इन", "nav.signup": "साइन अप", "nav.logout": "लॉगआउट", "nav.signedAs": "साइन इन:",
+    "acc.title": "अकाउंट", "acc.add": "अकाउंट जोड़ें", "acc.switch": "अकाउंट बदलें", "acc.logoutThis": "इस अकाउंट से लॉगआउट", "acc.close": "बंद करें", "acc.max": "इस डिवाइस पर ज़्यादा से ज़्यादा 5 अकाउंट रख सकते हैं।",
+    "acc.adding": "दूसरा अकाउंट जोड़ रहे हैं। किसी दूसरी ईमेल से साइन इन या साइन अप करें।", "acc.cancel": "रद्द करें", "acc.createNew": "नया अकाउंट बनाएं",
 
     "dash.welcome": "स्वागत है,", "dash.sub": "आज आप क्या पढ़ना चाहेंगे? नीचे से सामग्री चुनें।",
     "dash.search": "शीर्षक या विषय से खोजें, जैसे Calculus, Physics, DBMS...",

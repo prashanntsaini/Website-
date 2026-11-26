@@ -1557,3 +1557,71 @@ html:not(.light) .cs-txt a,html:not(.light) .cs-hint a{color:var(--gold2)}
 #c-go:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
 .cs-hint{margin:14px 0 0;font-size:.8rem;color:var(--muted);text-align:center;line-height:1.5}
 #consent-step[hidden],#otp-step[hidden]{display:none}
+
+/* =====================================================================================
+   v19 - Messages is a true full-screen app in every browser and screen size,
+   plus the account switcher (several accounts on one device)
+   ===================================================================================== */
+body.msg-page{overflow:hidden}
+body.msg-page .nav,body.msg-page .msg-title{display:none}
+body.msg-page .cm-wrap{padding:0}
+body.msg-page .cm-wrap .container{padding:0;max-width:none;width:100%}
+body.msg-page.has-tabbar{padding-bottom:0}
+/* explicit top/left/right/bottom (no 100vh, no inset shorthand): works in old and new browsers, with or without the URL bar */
+body.msg-page .cm-chat.cm-chat{position:fixed;top:0;left:0;right:0;bottom:0;width:auto;height:auto!important;min-height:0;margin:0;border:0;border-radius:0;z-index:20;background:var(--bg);
+  grid-template-columns:minmax(300px,380px) minmax(0,1fr);padding-left:env(safe-area-inset-left);padding-right:env(safe-area-inset-right);box-sizing:border-box}
+body.msg-page .cm-chat.cm-chat.in-conv{z-index:75}
+body.msg-page .cm-side,body.msg-page .cm-conv{height:100%;min-height:0;min-width:0}
+body.msg-page .cm-side .cm-list#list{flex:1;min-height:0}
+/* JS (messages.html) sets --app-h to the visible height, so the box stays above the on-screen keyboard (iOS Safari, Firefox...) */
+body.msg-page .cm-chat.cm-chat.in-conv{top:var(--app-top,0px);height:var(--app-h,auto)!important}
+@media(min-width:861px){
+  body.msg-page .cm-chat.cm-chat{border-radius:0}
+  body.msg-page .cm-side{border-right:1px solid var(--border)}
+  body.msg-page .cm-chat.in-conv .cm-side{display:flex}
+  body.msg-page .cm-chat:not(.in-conv) .cm-conv{display:flex}
+  body.msg-page .cm-side .cm-list#list{padding:0 8px}
+  .ig-lhead .ig-hb:first-child{display:grid}
+}
+@media(max-width:860px){
+  body.msg-page .cm-chat.cm-chat{grid-template-columns:minmax(0,1fr)}
+  body.msg-page .cm-chat.cm-chat:not(.in-conv){bottom:0}
+  body.msg-page .cm-chat.in-conv .cm-side{display:none}
+  body.msg-page .cm-chat:not(.in-conv) .cm-conv{display:none}
+  body.msg-page.msg-in-conv .tabbar{display:none}
+}
+@media(max-width:760px){
+  body.msg-page .cm-chat.cm-chat:not(.in-conv){bottom:calc(88px + env(safe-area-inset-bottom))}
+}
+
+/* account name + arrow in the chat list header (Instagram style) */
+.ig-lhead h2{min-width:0}
+.ig-acc{display:inline-flex;align-items:center;gap:6px;max-width:100%;background:none;border:0;padding:6px 8px 6px 4px;margin:0;color:var(--text);font:inherit;font-weight:800;cursor:pointer;border-radius:12px}
+.ig-acc:hover{background:rgba(127,127,127,.12)}
+.ig-acc #accname{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ig-acc-ch svg{width:16px;height:16px}
+
+/* account sheet */
+.acc-ov{position:fixed;top:0;left:0;right:0;bottom:0;z-index:300;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+.acc-card{width:100%;max-width:440px;max-height:88%;overflow:auto;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:26px 26px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));animation:accUp .22s ease-out}
+@keyframes accUp{from{transform:translateY(40px);opacity:0}to{transform:none;opacity:1}}
+.acc-grab{width:42px;height:4px;border-radius:4px;background:var(--border);margin:2px auto 10px}
+.acc-card h3{margin:0 0 8px;font-size:1.1rem;text-align:center}
+.acc-list{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.acc-row{display:flex;align-items:center;gap:12px;width:100%;padding:10px 8px;border:0;border-radius:16px;background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer}
+.acc-row:hover{background:rgba(127,127,127,.12)}
+.acc-row .avatar{width:48px;height:48px;flex:none;border-radius:50%;object-fit:cover;display:grid;place-items:center;background:var(--accent);color:#fff;font-weight:700}
+.acc-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.acc-t b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-t small{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.acc-radio{width:22px;height:22px;border-radius:50%;border:2px solid var(--border);flex:none;box-sizing:border-box}
+.acc-row.on .acc-radio{border-color:var(--accent);background:radial-gradient(circle,var(--accent) 0 45%,transparent 50%)}
+.acc-add,.acc-out{margin-top:8px}
+.acc-note{margin:8px 0 0;color:var(--muted);font-size:.8rem;text-align:center}
+.acc-close{display:block;margin:12px auto 0;background:none;border:0;color:var(--muted);font:inherit;cursor:pointer;padding:8px 16px}
+@media(min-width:600px){.acc-ov{align-items:center}.acc-card{border-radius:26px;padding-bottom:18px}}
+
+/* "adding another account" banner on the login / sign-up pages */
+.acc-banner{margin:0 0 14px;padding:10px 14px;border-radius:12px;background:rgba(90,75,218,.14);border:1px solid rgba(90,75,218,.35);font-size:.88rem;line-height:1.45}
+.acc-banner[hidden]{display:none}
+.acc-banner a{font-weight:700;margin-left:6px;white-space:nowrap}
