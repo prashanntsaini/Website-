@@ -14,7 +14,7 @@ window.SITE_CONFIG = {
 
   // GIF button in chats. Get a free key at https://developers.giphy.com (create an app -> API key) and paste it here.
   // If empty, the GIF button opens but says GIFs are not set up.
-  giphyKey: "",
+  giphyKey: "Djyiawt7ncSi3oWYWSLzEz9vFWV3VNgO",
 
   // Show city/country of each login in "Active devices" (uses https://ipapi.co, see Privacy Policy). Set false to turn off.
   locationLookup: true,
