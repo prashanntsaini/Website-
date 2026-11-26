@@ -28,9 +28,9 @@
 <meta name="twitter:description" content="Notes, previous year papers, video lectures and mock tests, all in one place.">
 <meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
 <link rel="stylesheet" href="style.css?v=16">
-<script src="site-config.js?v=15"></script>
-<script src="theme.js?v=15"></script>
-<script src="icons.js?v=15"></script>
+<script src="site-config.js?v=16"></script>
+<script src="theme.js?v=16"></script>
+<script src="icons.js?v=16"></script>
 </head>
 <body>
 <header class="nav">
@@ -50,8 +50,8 @@
 </main>
 
 <script type="module">
-  import { protectPage, checkAdmin, fsRecent, fsSetPath, fsDelete, toMs } from "./auth.js?v=15";
-  import { esc, errText, toast } from "./community.js?v=15";
+  import { protectPage, checkAdmin, fsRecent, fsSetPath, fsDelete, toMs } from "./auth.js?v=16";
+  import { esc, errText, toast } from "./community.js?v=16";
   const $ = id => document.getElementById(id);
   let rows = [], filter = "open";
 
@@ -100,6 +100,6 @@
     catch (e) { $("out").innerHTML = `<div class="empty">${esc(errText(e))}</div>`; }
   });
 </script>
-<script type="module" src="layout.js?v=15"></script>
+<script type="module" src="layout.js?v=16"></script>
 </body>
 </html>

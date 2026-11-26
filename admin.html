@@ -28,9 +28,9 @@
 <meta name="twitter:description" content="Notes, previous year papers, video lectures and mock tests, all in one place.">
 <meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
 <link rel="stylesheet" href="style.css?v=16">
-<script src="site-config.js?v=15"></script>
-<script src="theme.js?v=15"></script>
-<script src="icons.js?v=15"></script>
+<script src="site-config.js?v=16"></script>
+<script src="theme.js?v=16"></script>
+<script src="icons.js?v=16"></script>
 </head>
 <body>
 <header class="nav">
@@ -62,7 +62,9 @@
         <div class="panel">
           <h2 id="m-head">Add material</h2>
           <div class="field"><label for="m-t">Title</label><input id="m-t" placeholder="e.g. Calculus Complete Notes"></div>
-          <div class="field"><label for="m-s">Subject</label><input id="m-s" list="subjects" placeholder="e.g. Mathematics"><datalist id="subjects"></datalist></div>
+          <div class="field"><label for="m-s">Subject</label><input id="m-s" list="subjects" placeholder="e.g. Mathematics"><datalist id="subjects"></datalist><datalist id="chapters"></datalist></div>
+          <div class="field"><label for="m-cls">Class</label><select id="m-cls"><option value="">Not set (General)</option><option value="6">Class 6</option><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option><option value="Other">Other</option></select></div>
+          <div class="field"><label for="m-ch">Chapter</label><input id="m-ch" list="chapters" placeholder="e.g. Cell Cycle and Cell Division"></div>
           <div class="field"><label for="m-type">Type</label>
             <select id="m-type"><option value="Notes">Notes</option><option value="Papers">Papers</option><option value="Video">Video</option><option value="Test">Mock Test</option></select></div>
           <div class="field"><label for="m-link">Link (YouTube, Google Drive, PDF, MP4, Vimeo...)</label><input id="m-link" placeholder="https://...  or  files/notes.pdf"></div>
@@ -96,7 +98,7 @@ Answer: B
  in HTML, a class="correct" on the right option works too)
 
 JSON:
-{"title":"Physics Mock 1","subject":"Physics","minutes":30,
+{"title":"Physics Mock 1","subject":"Physics","minutes":30,"class":11,"chapter":"Units and Measurements",
  "questions":[{"q":"2+2?","opts":["3","4","5","6"],"ans":1}]}
 (ans: 0-3 or "A"-"D"; keys question/options/answer also work)
 
@@ -113,6 +115,8 @@ question,A,B,C,D,answer
           <h2 id="t-head">Create test</h2>
           <div class="field"><label for="t-title">Test title</label><input id="t-title" placeholder="e.g. Physics Mock Test 1"></div>
           <div class="field"><label for="t-subject">Subject</label><input id="t-subject" list="subjects" placeholder="e.g. Physics"></div>
+          <div class="field"><label for="t-cls">Class</label><select id="t-cls"><option value="">Not set (General)</option><option value="6">Class 6</option><option value="7">Class 7</option><option value="8">Class 8</option><option value="9">Class 9</option><option value="10">Class 10</option><option value="11">Class 11</option><option value="12">Class 12</option><option value="Other">Other</option></select></div>
+          <div class="field"><label for="t-ch">Chapter</label><input id="t-ch" list="chapters" placeholder="e.g. Units and Measurements"></div>
           <div class="field"><label for="t-min">Time limit in minutes (0 = no limit)</label><input id="t-min" type="number" min="0" max="300" value="30"></div>
           <div id="t-qs"></div>
           <div class="acts" style="margin-bottom:16px"><button class="btn btn-ghost" id="t-addq" type="button">+ Add question</button></div>
@@ -193,14 +197,14 @@ question,A,B,C,D,answer
 </main>
 
 <script type="module">
-  import { protectPage, adminDiag, fsList, fsRecent, fsSave, fsDelete, fsGroup, toMs, loadSite, saveSite } from "./auth.js?v=15";
-  import { isSafeUrl, normalizeImgUrl } from "./player-utils.js?v=15";
-  import { parseQuestions } from "./qimport.js?v=15";
-  import { uploadQuestionImage, hydrate, initLightbox } from "./media.js?v=15";
+  import { protectPage, adminDiag, fsList, fsRecent, fsSave, fsDelete, fsGroup, toMs, loadSite, saveSite } from "./auth.js?v=16";
+  import { isSafeUrl, normalizeImgUrl } from "./player-utils.js?v=16";
+  import { parseQuestions } from "./qimport.js?v=16";
+  import { uploadQuestionImage, hydrate, initLightbox } from "./media.js?v=16";
   initLightbox();
-  import { materials as sample } from "./materials.js?v=15";
-  import * as SUB from "./sub.js?v=15";
-  import * as C from "./community.js?v=15";
+  import { materials as sample } from "./materials.js?v=16";
+  import * as SUB from "./sub.js?v=16";
+  import * as C from "./community.js?v=16";
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -241,24 +245,25 @@ question,A,B,C,D,answer
     }, 1200);
   }
 
+  function fillChapters() { const el = $("chapters"); if (el) el.innerHTML = [...new Set([...mats.map(m => m.chapter), ...tests.map(t => t.chapter)].filter(Boolean))].sort().map(c => `<option value="${esc(c)}">`).join(""); }
   async function loadMaterials() {
     syncCatalog();
     mats = (await fsList("materials")).sort((a, b) => (a.t || "").localeCompare(b.t || ""));
-    $("m-count").textContent = mats.length;
+    $("m-count").textContent = mats.length; fillChapters();
     $("m-seed").style.display = mats.length ? "none" : "inline-flex";
     $("subjects").innerHTML = [...new Set([...mats.map(m => m.s), ...tests.map(t => t.subject)].filter(Boolean))].map(s => `<option value="${esc(s)}">`).join("");
     $("m-list").innerHTML = mats.length ? mats.map(m => `
       <div class="row"><div class="info"><b>${esc(m.t)} <span class="badge ${m.active === false ? "off" : ""}">${m.active === false ? "Hidden" : "Live"}</span></b>
-        <small>${esc(m.s)} · ${esc(m.type)}${m.external ? " · new tab" : ""}</small></div>
+        <small>${esc(m.s)}${m.cls ? " · Class " + esc(m.cls) : ""}${m.chapter ? " · " + esc(m.chapter) : ""} · ${esc(m.type)}${m.external ? " · new tab" : ""}</small></div>
         <div class="acts"><button class="btn btn-ghost btn-sm" data-a="edit" data-id="${esc(m.id)}">Edit</button>
         <button class="btn btn-ghost btn-sm" data-a="toggle" data-id="${esc(m.id)}">${m.active === false ? "Show" : "Hide"}</button>
         <button class="btn btn-ghost btn-sm" data-a="del" data-id="${esc(m.id)}">Delete</button></div></div>`).join("")
       : '<p class="sub" style="margin:0">No materials yet. Add one above, or import the samples.</p>';
   }
-  function resetM() { editM = null; $("m-head").textContent = "Add material"; ["m-t", "m-s", "m-link"].forEach(i => $(i).value = ""); $("m-type").value = "Notes"; $("m-active").checked = true; $("m-ext").checked = false; $("m-cancel").style.display = "none"; }
+  function resetM() { editM = null; $("m-head").textContent = "Add material"; ["m-t", "m-s", "m-link", "m-ch"].forEach(i => $(i).value = ""); $("m-cls").value = ""; $("m-type").value = "Notes"; $("m-active").checked = true; $("m-ext").checked = false; $("m-cancel").style.display = "none"; }
   $("m-cancel").addEventListener("click", resetM);
   $("m-save").addEventListener("click", async () => {
-    const data = { t: $("m-t").value.trim(), s: $("m-s").value.trim(), type: $("m-type").value, link: $("m-link").value.trim(), external: $("m-ext").checked, active: $("m-active").checked };
+    const data = { t: $("m-t").value.trim(), s: $("m-s").value.trim(), cls: $("m-cls").value, chapter: $("m-ch").value.trim(), type: $("m-type").value, link: $("m-link").value.trim(), external: $("m-ext").checked, active: $("m-active").checked };
     if (!data.t || !data.s) return note("Title and subject are required.", "err");
     if (data.link && !isSafeUrl(data.link)) return note("The link must start with http:// or https://, or be a file path like files/notes.pdf", "err");
     try { await fsSave("materials", editM, data); note("Material saved."); resetM(); await loadMaterials(); }
@@ -270,7 +275,7 @@ question,A,B,C,D,answer
     try {
       if (b.dataset.a === "edit") {
         editM = m.id; $("m-head").textContent = "Edit material";
-        $("m-t").value = m.t || ""; $("m-s").value = m.s || ""; $("m-type").value = m.type || "Notes"; $("m-link").value = m.link || ""; $("m-ext").checked = m.external === true; $("m-active").checked = m.active !== false;
+        $("m-t").value = m.t || ""; $("m-s").value = m.s || ""; $("m-cls").value = m.cls || ""; $("m-ch").value = m.chapter || ""; $("m-type").value = m.type || "Notes"; $("m-link").value = m.link || ""; $("m-ext").checked = m.external === true; $("m-active").checked = m.active !== false;
         $("m-cancel").style.display = "inline-flex"; window.scrollTo(0, 0);
       } else if (b.dataset.a === "toggle") { await fsSave("materials", m.id, { active: m.active === false }); await loadMaterials(); }
       else if (b.dataset.a === "del" && confirm('Delete "' + m.t + '"?')) { await fsDelete("materials", m.id); note("Deleted."); await loadMaterials(); }
@@ -393,6 +398,8 @@ question,A,B,C,D,answer
     const m = res.meta || {};
     if (m.title && !$("t-title").value.trim()) $("t-title").value = m.title;
     if (m.subject && !$("t-subject").value.trim()) $("t-subject").value = m.subject;
+    if (m.chapter && !$("t-ch").value.trim()) $("t-ch").value = m.chapter;
+    if (m.cls && !$("t-cls").value) { const cn = String(m.cls).replace(/^class\s*/i, "").trim(); $("t-cls").value = /^\d+$/.test(cn) ? cn : "Other"; }
     if (m.minutes !== undefined) $("t-min").value = m.minutes;
     if (m.active !== undefined) $("t-active").checked = m.active;
     renderQs();
@@ -410,16 +417,16 @@ question,A,B,C,D,answer
   async function loadTests() {
     syncCatalog();
     tests = (await fsList("tests")).sort((a, b) => (a.title || "").localeCompare(b.title || ""));
-    $("t-count").textContent = tests.length;
+    $("t-count").textContent = tests.length; fillChapters();
     $("t-list").innerHTML = tests.length ? tests.map(t => `
       <div class="row"><div class="info"><b>${esc(t.title)} <span class="badge ${t.active === false ? "off" : ""}">${t.active === false ? "Hidden" : "Live"}</span></b>
-        <small>${esc(t.subject || "General")} · ${(t.questions || []).length} questions · ${t.minutes ? t.minutes + " min" : "no limit"}</small></div>
+        <small>${esc(t.subject || "General")}${t.cls ? " · Class " + esc(t.cls) : ""}${t.chapter ? " · " + esc(t.chapter) : ""} · ${(t.questions || []).length} questions · ${t.minutes ? t.minutes + " min" : "no limit"}</small></div>
         <div class="acts"><button class="btn btn-ghost btn-sm" data-a="edit" data-id="${esc(t.id)}">Edit</button>
         <button class="btn btn-ghost btn-sm" data-a="toggle" data-id="${esc(t.id)}">${t.active === false ? "Show" : "Hide"}</button>
         <button class="btn btn-ghost btn-sm" data-a="del" data-id="${esc(t.id)}">Delete</button></div></div>`).join("")
       : '<p class="sub" style="margin:0">No tests yet. Create your first test above.</p>';
   }
-  function resetT() { editT = null; $("t-head").textContent = "Create test"; $("t-title").value = ""; $("t-subject").value = ""; $("t-min").value = 30; $("t-active").checked = true; qs = [newQ()]; renderQs(); $("t-cancel").style.display = "none"; }
+  function resetT() { editT = null; $("t-head").textContent = "Create test"; $("t-title").value = ""; $("t-subject").value = ""; $("t-cls").value = ""; $("t-ch").value = ""; $("t-min").value = 30; $("t-active").checked = true; qs = [newQ()]; renderQs(); $("t-cancel").style.display = "none"; }
   $("t-cancel").addEventListener("click", resetT);
   $("t-save").addEventListener("click", async () => {
     const title = $("t-title").value.trim();
@@ -428,7 +435,7 @@ question,A,B,C,D,answer
       if (!qs[i].q.trim() && !qs[i].img) return note("Question " + (i + 1) + " needs text or an image.", "err");
       if (qs[i].opts.some((o, j) => !o.trim() && !qs[i].optImgs[j])) return note("Question " + (i + 1) + ": every option needs text or an image.", "err");
     }
-    const data = { title, subject: $("t-subject").value.trim(), minutes: Math.max(0, parseInt($("t-min").value, 10) || 0), active: $("t-active").checked,
+    const data = { title, subject: $("t-subject").value.trim(), cls: $("t-cls").value, chapter: $("t-ch").value.trim(), minutes: Math.max(0, parseInt($("t-min").value, 10) || 0), active: $("t-active").checked,
       questions: qs.map(q => ({ q: q.q.trim(), opts: q.opts.map(o => o.trim()), ans: q.ans, ...(q.img ? { img: q.img } : {}), ...(q.optImgs.some(Boolean) ? { optImgs: q.optImgs } : {}) })) };
     try { await fsSave("tests", editT, data); note("Test saved."); resetT(); await loadTests(); }
     catch (e) { note("Could not save: " + (e.code || e.message), "err"); }
@@ -438,7 +445,7 @@ question,A,B,C,D,answer
     const t = tests.find(x => x.id === b.dataset.id); if (!t) return;
     try {
       if (b.dataset.a === "edit") {
-        editT = t.id; $("t-head").textContent = "Edit test"; $("t-title").value = t.title || ""; $("t-subject").value = t.subject || ""; $("t-min").value = t.minutes || 0; $("t-active").checked = t.active !== false;
+        editT = t.id; $("t-head").textContent = "Edit test"; $("t-title").value = t.title || ""; $("t-subject").value = t.subject || ""; $("t-cls").value = t.cls || ""; $("t-ch").value = t.chapter || ""; $("t-min").value = t.minutes || 0; $("t-active").checked = t.active !== false;
         qs = (t.questions || []).map(q => ({ q: q.q, opts: [...q.opts], ans: q.ans, img: q.img || "", optImgs: [0, 1, 2, 3].map(k => (q.optImgs || [])[k] || "") })); if (!qs.length) qs = [newQ()];
         renderQs(); $("t-cancel").style.display = "inline-flex"; $("t-head").scrollIntoView();
       } else if (b.dataset.a === "toggle") { await fsSave("tests", t.id, { active: t.active === false }); await loadTests(); }
@@ -552,6 +559,6 @@ question,A,B,C,D,answer
     catch (e) { note("Could not load data: " + (e.code || e.message) + ". Check that the Firestore rules are published.", "err"); }
   });
 </script>
-<script type="module" src="layout.js?v=15"></script>
+<script type="module" src="layout.js?v=16"></script>
 </body>
 </html>

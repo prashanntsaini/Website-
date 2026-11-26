@@ -1,5 +1,5 @@
 // Gyaan Hub - English / Hindi UI text. Add more keys here; use data-i18n="key" in HTML or t("key") in JS.
-import { getPrefs } from "./prefs.js?v=15";
+import { getPrefs } from "./prefs.js?v=16";
 
 const D = {
   en: {
@@ -13,6 +13,7 @@ const D = {
     "dash.onlineTests": "Online Tests", "dash.material": "Study Material", "dash.continue": "Continue learning",
     "dash.one": "resource available", "dash.many": "resources available", "dash.empty": "No results found. Try a different search term or filter.",
     "dash.new": "NEW", "dash.start": "Start", "dash.newBanner": "new item(s) added in the last 7 days.", "dash.resume": "Resume",
+    "dash.allSubjects": "All subjects", "dash.pickSubject": "Choose a subject", "dash.pickClass": "Choose your class", "dash.tests": "tests", "dash.test1": "test", "dash.mats": "materials", "dash.mat1": "material", "dash.open": "Open", "dash.general": "General", "dash.class": "Class", "dash.other": "Other", "dash.noChapter": "General", "dash.results": "Search results",
 
     "set.title": "Settings", "set.sub": "Manage your profile, security, devices and how the site works for you.",
     "set.profile": "Profile", "set.photo": "Profile photo", "set.photoHint": "JPG or PNG. It is resized on your device before saving.",
@@ -61,6 +62,7 @@ const D = {
     "dash.onlineTests": "ऑनलाइन टेस्ट", "dash.material": "अध्ययन सामग्री", "dash.continue": "जहाँ छोड़ा था वहीं से",
     "dash.one": "संसाधन उपलब्ध", "dash.many": "संसाधन उपलब्ध", "dash.empty": "कोई परिणाम नहीं मिला। कोई और शब्द या फ़िल्टर आज़माएँ।",
     "dash.new": "नया", "dash.start": "शुरू करें", "dash.newBanner": "नई सामग्री पिछले 7 दिनों में जोड़ी गई।", "dash.resume": "जारी रखें",
+    "dash.allSubjects": "सभी विषय", "dash.pickSubject": "विषय चुनें", "dash.pickClass": "अपनी कक्षा चुनें", "dash.tests": "टेस्ट", "dash.test1": "टेस्ट", "dash.mats": "सामग्री", "dash.mat1": "सामग्री", "dash.open": "खोलें", "dash.general": "सामान्य", "dash.class": "कक्षा", "dash.other": "अन्य", "dash.noChapter": "सामान्य", "dash.results": "खोज परिणाम",
 
     "set.title": "सेटिंग्स", "set.sub": "अपनी प्रोफ़ाइल, सुरक्षा, डिवाइस और साइट का व्यवहार यहाँ से संभालें।",
     "set.profile": "प्रोफ़ाइल", "set.photo": "प्रोफ़ाइल फ़ोटो", "set.photoHint": "JPG या PNG। सेव करने से पहले फ़ोटो आपके डिवाइस पर छोटी की जाती है।",

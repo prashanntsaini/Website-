@@ -32,15 +32,15 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=15">
-<link rel="modulepreload" href="community.js?v=15">
-<link rel="modulepreload" href="media.js?v=15">
-<link rel="modulepreload" href="files.js?v=15">
-<link rel="modulepreload" href="player-utils.js?v=15">
+<link rel="modulepreload" href="auth.js?v=16">
+<link rel="modulepreload" href="community.js?v=16">
+<link rel="modulepreload" href="media.js?v=16">
+<link rel="modulepreload" href="files.js?v=16">
+<link rel="modulepreload" href="player-utils.js?v=16">
 <link rel="stylesheet" href="style.css?v=16">
-<script src="site-config.js?v=15"></script>
-<script src="theme.js?v=15"></script>
-<script src="icons.js?v=15"></script>
+<script src="site-config.js?v=16"></script>
+<script src="theme.js?v=16"></script>
+<script src="icons.js?v=16"></script>
 </head>
 <body class="msg-page">
 <header class="nav">
@@ -68,10 +68,10 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=15";
-  import * as C from "./community.js?v=15";
-  import { initLightbox } from "./media.js?v=15";
-  import * as CALL from "./calls.js?v=15";
+  import { protectPage } from "./auth.js?v=16";
+  import * as C from "./community.js?v=16";
+  import { initLightbox } from "./media.js?v=16";
+  import * as CALL from "./calls.js?v=16";
   const $ = id => document.getElementById(id);
   const { esc, F } = C;
   const ic = n => window.ic ? window.ic(n) : "";
@@ -576,6 +576,6 @@
     } catch (e) { $("list").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; }
   });
 </script>
-<script type="module" src="layout.js?v=15"></script>
+<script type="module" src="layout.js?v=16"></script>
 </body>
 </html>

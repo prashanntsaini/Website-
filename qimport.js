@@ -1,6 +1,6 @@
 /* Gyaan Hub - bulk question import (used by admin.html -> Tests -> Bulk import)
    parseQuestions(text, filename?) accepts JSON, CSV, HTML or plain text and returns
-   { questions: [{ q, opts:[4], ans:0-3, img?, optImgs? }], errors: [string], meta: {title?, subject?, minutes?, active?} } */
+   { questions: [{ q, opts:[4], ans:0-3, img?, optImgs? }], errors: [string], meta: {title?, subject?, chapter?, cls?, minutes?, active?} } */
 
 const L = "ABCD";
 const clean = s => String(s ?? "").replace(/\s+\n/g, "\n").trim();
@@ -50,7 +50,8 @@ function parseJson(text) {
   const meta = {};
   let arr = data;
   if (!Array.isArray(data)) {
-    for (const k of ["title", "subject"]) if (typeof data[k] === "string") meta[k] = data[k];
+    for (const k of ["title", "subject", "chapter"]) if (typeof data[k] === "string") meta[k] = data[k];
+    const cv = data.class ?? data.cls; if (cv !== undefined && cv !== null && String(cv).trim()) meta.cls = String(cv).trim();
     if (Number.isFinite(+data.minutes)) meta.minutes = +data.minutes;
     if (typeof data.active === "boolean") meta.active = data.active;
     arr = data.questions || data.items || data.data;

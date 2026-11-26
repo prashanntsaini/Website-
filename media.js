@@ -1,6 +1,6 @@
 // Gyaan Hub - images for tests / avatar: compress on device, resolve "fsimg:" references, click-to-zoom
-import { getImage, saveImage } from "./auth.js?v=15";
-import { esc, normalizeImgUrl } from "./player-utils.js?v=15";
+import { getImage, saveImage } from "./auth.js?v=16";
+import { esc, normalizeImgUrl } from "./player-utils.js?v=16";
 
 export const isRef = s => typeof s === "string" && s.startsWith("fsimg:");
 export { normalizeImgUrl };

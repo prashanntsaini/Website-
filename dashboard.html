@@ -27,11 +27,11 @@
 <meta name="twitter:title" content="Dashboard | Gyaan Hub">
 <meta name="twitter:description" content="Your study library: notes, previous year papers and video lectures, all in one place.">
 <meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
-<link rel="stylesheet" href="style.css?v=16">
-<script src="site-config.js?v=15"></script>
-<script src="theme.js?v=15"></script>
-<script src="ads.js?v=15"></script>
-<script src="icons.js?v=15"></script>
+<link rel="stylesheet" href="style.css?v=17">
+<script src="site-config.js?v=16"></script>
+<script src="theme.js?v=16"></script>
+<script src="ads.js?v=16"></script>
+<script src="icons.js?v=16"></script>
 </head>
 <body>
 <header class="nav">
@@ -67,81 +67,188 @@
     </div>
     <p class="count" id="count"></p>
 
-    <div id="tests-box" style="display:none">
-      <h2 style="font-size:1.4rem;margin:8px 0 14px">📝 <span data-i18n="dash.onlineTests">Online Tests</span></h2>
-      <div id="tests-list" class="grid g3" style="margin-bottom:34px"></div>
-      <h2 style="font-size:1.4rem;margin:8px 0 14px">📚 <span data-i18n="dash.material">Study Material</span></h2>
-    </div>
-    <div id="list" class="grid g3"></div>
+    <nav id="crumbs" class="crumbs" style="display:none" aria-label="Breadcrumb"></nav>
+    <div id="view"></div>
     <div id="ad-dash" class="ad-slot" style="display:none"></div>
-    <div id="list2" class="grid g3"></div>
     <div id="empty" class="empty" style="display:none" data-i18n="dash.empty">No results found. Try a different search term or filter.</div>
   </div>
 </main>
 
 <script type="module">
-  import { protectPage, logout, fsList, fsListFresh, cacheGet, listProgress, toMs } from "./auth.js?v=15";
-  import { materials as sample, iconFor } from "./materials.js?v=15";
-  import { getPrefs } from "./prefs.js?v=15";
-  import { t, applyI18n } from "./i18n.js?v=15";
-  import { isSafeUrl } from "./player-utils.js?v=15";
+  import { protectPage, logout, fsListFresh, cacheGet, listProgress, toMs } from "./auth.js?v=16";
+  import { materials as sample, iconFor } from "./materials.js?v=16";
+  import { getPrefs } from "./prefs.js?v=16";
+  import { t, applyI18n } from "./i18n.js?v=16";
+  import { isSafeUrl } from "./player-utils.js?v=16";
 
-  let materials = sample;
+  let materials = sample, tests = [];
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const safe = u => isSafeUrl(u) ? esc(u) : "#";
   const playerHref = (link, title, type) => "player.html?u=" + encodeURIComponent(link) + "&title=" + encodeURIComponent(title) + "&type=" + encodeURIComponent(type || "");
   const NEW_MS = 7 * 86400000;
-  function showTests(rows) {
-    const t = (rows || []).filter(x => x.active !== false && Array.isArray(x.questions) && x.questions.length);
-    document.getElementById("tests-box").style.display = t.length ? "block" : "none";
-    document.getElementById("tests-list").innerHTML = t.map(x => `
-      <a class="card" href="tests.html?start=${encodeURIComponent(x.id)}">
-        <div class="ico">🎯</div>
-        <h3>${esc(x.title)}</h3>
-        <div class="mat"><small>${esc(x.subject || "General")} · ${x.questions.length} questions${x.minutes ? " · " + x.minutes + " min" : ""}</small><span class="tag" style="margin:0">Start</span></div>
-      </a>`).join("");
+  const tr = (k, fb) => { const v = t(k); return v === k ? fb : v; };
+  const ico = n => (window.ic ? window.ic(n) : "");
+
+  /* ---------- names, classes, chapters ---------- */
+  const coll = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
+  const KEY = s => String(s ?? "").trim().toLowerCase().replace(/\s+/g, " ");
+  const ALIAS = { maths: "mathematics", math: "mathematics", bio: "biology", phy: "physics", chem: "chemistry", cs: "computer science" };
+  const subjKey = s => { const k = KEY(s) || "general"; return ALIAS[k] || k; };
+  const titleCase = s => s.replace(/\S+/g, w => w[0].toUpperCase() + w.slice(1).toLowerCase());
+  // "BIOLOGY" and "Biology" are one subject; show the nicest spelling that was used most
+  function niceName(list) {
+    const cnt = {}; list.forEach(x => { x = x.trim(); cnt[x] = (cnt[x] || 0) + 1; });
+    const uniq = Object.keys(cnt).sort((a, b) => cnt[b] - cnt[a]);
+    const mixed = uniq.find(x => /[a-z]/.test(x) && /[A-Z]/.test(x));
+    if (mixed) return mixed;
+    const raw = uniq[0] || "General";
+    return raw.length <= 4 ? raw.toUpperCase() : titleCase(raw);
   }
-  async function loadTests() {
-    try { showTests(await fsListFresh("tests")); } catch (e) { /* keep what is shown */ }
-  }
-  const applyMaterials = rows => {
-    const r = (rows || []).filter(x => x.active !== false);
-    if (r.length) materials = r.map(x => ({ t: x.t, s: x.s, type: x.type, icon: iconFor(x.type), link: x.link, external: x.external === true, created: toMs(x.createdAt) }));
-    return r.length > 0;
+  const SUBJ_ICON = { biology: "leaf", physics: "atom", chemistry: "flask", mathematics: "divide", "computer science": "laptop" };
+  const clsKey = c => {
+    const s = KEY(c).replace(/^class\s*/, "");
+    if (!s) return "general";
+    if (/^\d{1,2}(st|nd|rd|th)?$/.test(s)) return String(parseInt(s, 10));
+    return s === "other" ? "other" : s;
   };
-  async function loadMaterials() {
-    try { applyMaterials(await fsListFresh("materials")); } catch (e) { /* keep what is shown */ }
+  const clsLabel = k => k === "general" ? tr("dash.general", "General") : k === "other" ? tr("dash.other", "Other") : /^\d+$/.test(k) ? tr("dash.class", "Class") + " " + k : titleCase(k);
+  const clsOrder = k => /^\d+$/.test(k) ? +k : k === "other" ? 100 : k === "general" ? 200 : 150;
+
+  /* ---------- one flat list of everything (online tests + study material) ---------- */
+  function allItems() {
+    const out = [];
+    const alerts = getPrefs().newAlerts;
+    tests.forEach(x => out.push({
+      kind: "test", title: x.title || "Test", subj: x.subject, cls: x.cls ?? x.class, ch: x.chapter, type: "Test",
+      href: "tests.html?start=" + encodeURIComponent(x.id), direct: false, icon: iconFor("Test"),
+      extra: x.questions.length + " questions" + (x.minutes ? " · " + x.minutes + " min" : ""), tag: t("dash.start"),
+      created: toMs(x.createdAt), alerts
+    }));
+    materials.forEach(m => {
+      const direct = m.type === "Test" || m.external || !isSafeUrl(m.link);
+      out.push({
+        kind: "mat", title: m.t, subj: m.s, cls: m.cls, ch: m.ch, type: m.type,
+        href: direct ? safe(m.link) : playerHref(m.link, m.t, m.type), direct, icon: m.icon,
+        extra: "", tag: m.type, created: m.created, alerts
+      });
+    });
+    return out;
+  }
+  const card = (it, showSubj) => {
+    const isNew = it.alerts && it.created && Date.now() - it.created < NEW_MS;
+    const small = [it.sname, it.extra].filter(Boolean).join(" · ");
+    return `
+      <a class="card" href="${it.href}" ${it.direct ? 'target="_blank" rel="noopener"' : ""}>
+        <div class="ico">${it.icon}</div>
+        <h3>${esc(it.title)}${isNew ? `<span class="new-badge">${t("dash.new")}</span>` : ""}</h3>
+        <div class="mat"><small>${esc(small)}</small><span class="tag" style="margin:0">${esc(it.tag)}</span></div>
+      </a>`;
+  };
+  const counts = items => {
+    const nt = items.filter(i => i.kind === "test").length, nm = items.length - nt, p = [];
+    if (nt) p.push(nt + " " + (nt === 1 ? tr("dash.test1", "test") : tr("dash.tests", "tests")));
+    if (nm) p.push(nm + " " + (nm === 1 ? tr("dash.mat1", "material") : tr("dash.mats", "materials")));
+    return p.join(" · ");
+  };
+
+  /* ---------- group: subject > class > chapter ---------- */
+  function build(items) {
+    const subs = new Map();
+    items.forEach(it => {
+      const sk = subjKey(it.subj);
+      let S = subs.get(sk);
+      if (!S) subs.set(sk, S = { key: sk, names: [], items: [], classes: new Map() });
+      S.names.push(String(it.subj || "General")); S.items.push(it);
+      const ck = clsKey(it.cls);
+      let C = S.classes.get(ck);
+      if (!C) S.classes.set(ck, C = { key: ck, items: [] });
+      C.items.push(it);
+    });
+    subs.forEach(S => { S.name = niceName(S.names); S.items.forEach(it => { it.sname = S.name; }); });
+    return subs;
+  }
+  function chapters(items) {
+    const m = new Map();
+    items.forEach(it => {
+      const k = KEY(it.ch);
+      let c = m.get(k);
+      if (!c) m.set(k, c = { key: k, names: [], items: [] });
+      if (it.ch) c.names.push(String(it.ch));
+      c.items.push(it);
+    });
+    const list = [...m.values()].map(c => ({ ...c, name: c.key ? niceName(c.names) : tr("dash.noChapter", "General") }));
+    list.forEach(c => c.items.sort((a, b) => coll.compare(a.title, b.title)));
+    return list.sort((a, b) => (a.key ? 0 : 1) - (b.key ? 0 : 1) || coll.compare(a.name, b.name));   // chapters A-Z, unnamed last
   }
 
+  /* ---------- screen ---------- */
   let filter = "all", q = "";
-  const list = document.getElementById("list"), list2 = document.getElementById("list2"), adDash = document.getElementById("ad-dash"), empty = document.getElementById("empty"), count = document.getElementById("count");
+  const view = document.getElementById("view"), crumbs = document.getElementById("crumbs"), adDash = document.getElementById("ad-dash"), empty = document.getElementById("empty"), count = document.getElementById("count");
+  const hashState = () => { const h = new URLSearchParams(location.hash.replace(/^#/, "")); return { s: h.get("s") || "", c: h.get("c") || "" }; };
+  const hs = (s, c) => "#s=" + encodeURIComponent(s) + (c ? "&c=" + encodeURIComponent(c) : "");
+  const blockCard = (href, icon, name, items, hint) => `
+      <a class="card subj-card" href="${href}">
+        <div class="ico">${icon}</div>
+        <h3>${esc(name)}</h3>
+        <div class="mat"><small>${esc(counts(items) || hint || "")}</small><span class="tag" style="margin:0">${tr("dash.open", "Open")}</span></div>
+      </a>`;
 
   function render() {
-    const rows = materials.filter(m =>
-      (filter === "all" || m.type === filter) &&
-      (m.t + " " + m.s).toLowerCase().includes(q.trim().toLowerCase()));
-    const alerts = getPrefs().newAlerts;
-    const cards = rows.map(m => {
-      const direct = m.type === "Test" || m.external || !isSafeUrl(m.link);
-      const href = direct ? safe(m.link) : playerHref(m.link, m.t, m.type);
-      const isNew = alerts && m.created && Date.now() - m.created < NEW_MS;
-      return `
-      <a class="card" href="${href}" ${direct ? 'target="_blank" rel="noopener"' : ""}>
-        <div class="ico">${m.icon}</div>
-        <h3>${esc(m.t)}${isNew ? `<span class="new-badge">${t("dash.new")}</span>` : ""}</h3>
-        <div class="mat"><small>${esc(m.s)}</small><span class="tag" style="margin:0">${esc(m.type)}</span></div>
-      </a>`;
-    });
-    list.innerHTML = cards.slice(0, 6).join("");        // banner sits after the 6th card
-    list2.innerHTML = cards.slice(6).join("");
-    adDash.style.display = rows.length ? "flex" : "none";
-    if (rows.length && window.GyaanAds) GyaanAds.banner(adDash);   // built once, not on every search/filter
-    empty.style.display = rows.length ? "none" : "block";
-    count.textContent = rows.length + " " + (rows.length === 1 ? t("dash.one") : t("dash.many"));
-    const nn = getPrefs().newAlerts ? materials.filter(m => m.created && Date.now() - m.created < NEW_MS).length : 0;
+    const all = allItems().filter(it => filter === "all" || it.type === filter);
+    const subs = build(all);
+    const needle = q.trim().toLowerCase();
+    let shown = all, showAd = false, html = "", cr = "", total = all.length;
+
+    if (needle) {                                   // searching: one flat A-Z list across everything
+      shown = all.filter(it => (it.title + " " + it.sname + " " + (it.ch || "") + " " + clsLabel(clsKey(it.cls))).toLowerCase().includes(needle));
+      total = shown.length; showAd = shown.length > 0;
+      shown.sort((a, b) => coll.compare(a.title, b.title));
+      html = shown.length ? `<div class="grid g3">${shown.map(it => card(it, true)).join("")}</div>` : "";
+    } else {
+      const st = hashState();
+      const S = st.s ? subs.get(st.s) : null;
+      if (!S) {                                     // level 1: one block per subject
+        const list = [...subs.values()].sort((a, b) => (a.key === "general" ? 1 : 0) - (b.key === "general" ? 1 : 0) || coll.compare(a.name, b.name));
+        html = list.length ? `<h2 class="view-h">${tr("dash.pickSubject", "Choose a subject")}</h2><div class="grid g3">${list.map(x => blockCard(hs(x.key), ico(SUBJ_ICON[x.key] || "book"), x.name, x.items)).join("")}</div>` : "";
+      } else {
+        const home = `<a href="#">${tr("dash.allSubjects", "All subjects")}</a><span>›</span>`;
+        const cl = [...S.classes.values()].sort((a, b) => clsOrder(a.key) - clsOrder(b.key));
+        const only = cl.length === 1 && cl[0].key === "general" ? cl[0] : null;   // nothing classified yet: skip the class step
+        const C = only || (st.c ? S.classes.get(st.c) : null);
+        if (!C) {                                   // level 2: class-wise division
+          total = S.items.length;
+          cr = home + `<b>${esc(S.name)}</b>`;
+          html = `<h2 class="view-h">${esc(S.name)}</h2><p class="view-sub">${tr("dash.pickClass", "Choose your class")}</p><div class="grid g3">${cl.map(c => blockCard(hs(S.key, c.key), ico("cap"), clsLabel(c.key), c.items)).join("")}</div>`;
+        } else {                                    // level 3: chapters A-Z, content A-Z inside each chapter
+          total = C.items.length; showAd = true;
+          cr = home + (only ? "" : `<a href="${hs(S.key)}">${esc(S.name)}</a><span>›</span>`) + `<b>${only ? esc(S.name) : esc(clsLabel(C.key))}</b>`;
+          html = `<h2 class="view-h">${esc(S.name)}${only ? "" : " · " + esc(clsLabel(C.key))}</h2>` + chapters(C.items).map(ch => `
+            <section class="chap"><h3 class="chap-h"><span>${esc(ch.name)}</span><small>${ch.items.length}</small></h3>
+            <div class="grid g3">${ch.items.map(it => card(it, false)).join("")}</div></section>`).join("");
+        }
+      }
+    }
+
+    view.innerHTML = html;
+    crumbs.style.display = cr ? "flex" : "none"; crumbs.innerHTML = cr;
+    adDash.style.display = showAd ? "flex" : "none";
+    if (showAd && window.GyaanAds) GyaanAds.banner(adDash);   // built once, not on every search/filter
+    empty.style.display = total ? "none" : "block";
+    count.textContent = total + " " + (total === 1 ? t("dash.one") : t("dash.many"));
+    const nn = getPrefs().newAlerts ? all.filter(i => i.created && Date.now() - i.created < NEW_MS).length : 0;
     const nb = document.getElementById("new-banner");
     nb.style.display = nn ? "flex" : "none"; nb.innerHTML = nn ? "🆕 <span><b>" + nn + "</b> " + t("dash.newBanner") + "</span>" : "";
   }
+
+  /* ---------- data ---------- */
+  const setTests = rows => { tests = (rows || []).filter(x => x.active !== false && Array.isArray(x.questions) && x.questions.length); };
+  const applyMaterials = rows => {
+    const r = (rows || []).filter(x => x.active !== false);
+    if (r.length) materials = r.map(x => ({ t: x.t, s: x.s, cls: x.cls, ch: x.chapter, type: x.type, icon: iconFor(x.type), link: x.link, external: x.external === true, created: toMs(x.createdAt) }));
+    return r.length > 0;
+  };
+  async function loadTests() { try { setTests(await fsListFresh("tests")); render(); } catch (e) { /* keep what is shown */ } }
+  async function loadMaterials() { try { applyMaterials(await fsListFresh("materials")); } catch (e) { /* keep what is shown */ } }
 
   document.getElementById("search").addEventListener("input", e => { q = e.target.value; render(); });
   document.getElementById("chips").addEventListener("click", e => {
@@ -149,6 +256,7 @@
     document.querySelectorAll(".chip").forEach(c => c.classList.remove("on"));
     b.classList.add("on"); filter = b.dataset.f; render();
   });
+  window.addEventListener("hashchange", () => { render(); const top = document.getElementById("count"); if (top) top.scrollIntoView({ block: "start" }); });
   document.getElementById("logout").addEventListener("click", logout);
 
   // "Continue learning": what you opened last (this device at once, then your account)
@@ -185,16 +293,16 @@
       d.textContent = "Demo mode: real login will start working as soon as you add your Firebase config in auth.js.";
     }
     // show the last known lists instantly, then refresh them
-    const cm = cacheGet("materials");
-    if (cm && applyMaterials(cm)) render();
-    else list.innerHTML = '<div class="skel"></div><div class="skel"></div><div class="skel"></div>';
-    showTests(cacheGet("tests"));
+    const cm = cacheGet("materials"), ct = cacheGet("tests");
+    setTests(ct);
+    if ((cm && applyMaterials(cm)) || tests.length) render();
+    else view.innerHTML = '<div class="grid g3"><div class="skel"></div><div class="skel"></div><div class="skel"></div></div>';
     loadMaterials().then(render);
     loadTests();
     loadContinue(user.uid);
     applyI18n();
   });
 </script>
-<script type="module" src="layout.js?v=15"></script>
+<script type="module" src="layout.js?v=16"></script>
 </body>
 </html>
