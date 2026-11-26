@@ -18,6 +18,7 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 const items = [
   ["index.html", "home", "nav.home"],
   ["dashboard.html", "library", "nav.dashboard"],
+  ["explore.html", "search", "nav.free"],
   ["tests.html", "notes", "nav.tests"],
   ["reels.html", "film", "nav.reels"],
   ["community.html", "users", "nav.community"],
