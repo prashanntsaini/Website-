@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js"></script>
+  <script src="clean-url.js?v=18"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Community reports | Gyaan Hub</title>
@@ -18,7 +18,7 @@
 <meta property="og:title" content="Community reports | Gyaan Hub">
 <meta property="og:description" content="Notes, previous year papers, video lectures and mock tests, all in one place.">
 <meta property="og:url" content="https://prashantsaini.runs-on.dev/moderation">
-<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -26,11 +26,11 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Community reports | Gyaan Hub">
 <meta name="twitter:description" content="Notes, previous year papers, video lectures and mock tests, all in one place.">
-<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
-<link rel="stylesheet" href="style.css?v=16">
-<script src="site-config.js?v=16"></script>
-<script src="theme.js?v=16"></script>
-<script src="icons.js?v=16"></script>
+<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
+<link rel="stylesheet" href="style.css?v=18">
+<script src="site-config.js?v=18"></script>
+<script src="theme.js?v=18"></script>
+<script src="icons.js?v=18"></script>
 </head>
 <body>
 <header class="nav">
@@ -50,8 +50,8 @@
 </main>
 
 <script type="module">
-  import { protectPage, checkAdmin, fsRecent, fsSetPath, fsDelete, toMs } from "./auth.js?v=16";
-  import { esc, errText, toast } from "./community.js?v=16";
+  import { protectPage, checkAdmin, fsRecent, fsSetPath, fsDelete, toMs } from "./auth.js?v=18";
+  import { esc, errText, toast } from "./community.js?v=18";
   const $ = id => document.getElementById(id);
   let rows = [], filter = "open";
 
@@ -100,6 +100,6 @@
     catch (e) { $("out").innerHTML = `<div class="empty">${esc(errText(e))}</div>`; }
   });
 </script>
-<script type="module" src="layout.js?v=16"></script>
+<script type="module" src="layout.js?v=18"></script>
 </body>
 </html>

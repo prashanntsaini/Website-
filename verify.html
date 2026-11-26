@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js"></script>
+  <script src="clean-url.js?v=18"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Verify Email | Gyaan Hub</title>
@@ -18,7 +18,7 @@
 <meta property="og:title" content="Verify Email | Gyaan Hub">
 <meta property="og:description" content="Notes, previous year papers, video lectures and mock tests, all in one place.">
 <meta property="og:url" content="https://prashantsaini.runs-on.dev/verify">
-<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -26,16 +26,17 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Verify Email | Gyaan Hub">
 <meta name="twitter:description" content="Notes, previous year papers, video lectures and mock tests, all in one place.">
-<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
-<link rel="stylesheet" href="style.css?v=16">
-<script src="site-config.js?v=16"></script>
-<script src="theme.js?v=16"></script>
-<script src="icons.js?v=16"></script>
+<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
+<link rel="stylesheet" href="style.css?v=18">
+<script src="site-config.js?v=18"></script>
+<script src="theme.js?v=18"></script>
+<script src="icons.js?v=18"></script>
 </head>
 <body>
 <div class="auth-wrap">
   <div class="auth-card">
     <a href="index.html" class="logo"><i>G</i> Gyaan Hub</a>
+    <div id="otp-step">
     <h1>Verify your email</h1>
     <p class="sub" id="sub">Preparing your verification code...</p>
     <div id="msg" class="msg"></div>
@@ -51,11 +52,30 @@
     <p class="alt" style="margin-top:10px">Check your spam folder too. The code is valid for 10 minutes.</p>
     <p class="alt" style="font-size:.72rem;opacity:.6">build 8</p>
     <p class="alt"><a href="#" id="logout" style="color:var(--muted);font-weight:500">Use a different account</a></p>
+    </div>
+
+    <!-- Step 2: confirm Terms of Use + Privacy Policy (shown after the code, or after Google sign-in) -->
+    <div id="consent-step" hidden>
+      <div class="cs-icon" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 3v6c0 4.5-3.2 8-8 9-4.8-1-8-4.5-8-9V6l8-3z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></svg></div>
+      <h1>One last step</h1>
+      <p class="sub">Please confirm both to finish signing in<span id="c-who"></span>.</p>
+      <div id="cmsg" class="msg"></div>
+      <label class="cs-row">
+        <input type="checkbox" id="c-terms"><i class="cs-box"></i>
+        <span class="cs-txt"><b>Terms of Use</b><small>I have read and agree to the <a href="terms.html" target="_blank" rel="noopener">Terms of Use</a>.</small></span>
+      </label>
+      <label class="cs-row">
+        <input type="checkbox" id="c-privacy"><i class="cs-box"></i>
+        <span class="cs-txt"><b>Privacy Policy</b><small>I have read and agree to the <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</small></span>
+      </label>
+      <button class="btn btn-gold btn-block" type="button" id="c-go" disabled>Agree &amp; continue</button>
+      <p class="alt"><a href="#" id="c-out" style="color:var(--muted);font-weight:500">Cancel and sign out</a></p>
+    </div>
   </div>
 </div>
 
 <script type="module">
-  import { onUser, isVerified, markVerified, logout, takeNext } from "./auth.js?v=16";
+  import { onUser, isVerified, markVerified, logout, takeNext, consentOk, giveConsent } from "./auth.js?v=18";
 
   // ---- EmailJS settings ----
   const EMAILJS = {
@@ -133,8 +153,7 @@
     if (await sha(user.uid + ":" + entered) === rec.h) {
       markVerified(user);
       localStorage.removeItem(kOtp());
-      msg("Email verified! Redirecting...", "ok");
-      setTimeout(() => location.href = takeNext(), 700);
+      showConsent();                                   // step 2: confirm Terms + Privacy, then sign in
     } else {
       rec.tries++; write(kOtp(), rec);
       msg("Incorrect code. " + Math.max(MAX_ATTEMPTS - rec.tries, 0) + " attempt(s) left.");
@@ -155,9 +174,30 @@
   if (fromLink && /^\d{6}$/.test(fromLink)) { $("code").value = fromLink; history.replaceState(null, "", "verify.html"); }
 
   $("resend").addEventListener("click", () => sendCode(true));
+
+  // ---- step 2: consent (both boxes must be ticked) ----
+  const cmsg = t => { $("cmsg").className = "msg err"; $("cmsg").textContent = t; };
+  function showConsent() {
+    clearInterval(timer);
+    $("otp-step").hidden = true;
+    $("consent-step").hidden = false;
+    $("c-who").textContent = user && user.email ? " as " + user.email : "";
+    document.title = "Confirm to continue | Gyaan Hub";
+  }
+  const bothTicked = () => $("c-terms").checked && $("c-privacy").checked;
+  const syncGo = () => { $("c-go").disabled = !bothTicked(); if (bothTicked()) $("cmsg").className = "msg"; };
+  $("c-terms").addEventListener("change", syncGo);
+  $("c-privacy").addEventListener("change", syncGo);
+  $("c-go").addEventListener("click", async () => {
+    if (!bothTicked()) return cmsg("Please tick both boxes to continue.");
+    $("c-go").disabled = true; $("c-go").textContent = "Please wait...";
+    await giveConsent(user);
+    location.href = takeNext();
+  });
+  $("c-out").addEventListener("click", e => { e.preventDefault(); logout(); });
   $("logout").addEventListener("click", e => { e.preventDefault(); logout(); });
 
-  onUser(u => {
+  onUser(async u => {
     if (!u) {
       $("sub").textContent = "Please sign in first to verify your email.";
       msg("You are not signed in.");
@@ -165,8 +205,11 @@
       document.querySelector(".alt").innerHTML = '<a href="login.html" class="btn btn-gold btn-block">Go to Sign In</a>';
       return;
     }
-    if (isVerified(u)) { location.href = takeNext(); return; }
     user = u;
+    if (isVerified(u)) {                               // already verified (Google / earlier code): only consent can be left
+      if (await consentOk(u)) location.href = takeNext(); else showConsent();
+      return;
+    }
     $("sub").textContent = "Enter the code we emailed to " + u.email;
     const rec = read(kOtp());
     if (rec && Date.now() < rec.exp) {
@@ -177,6 +220,6 @@
     }
   });
 </script>
-<script type="module" src="layout.js?v=16"></script>
+<script type="module" src="layout.js?v=18"></script>
 </body>
 </html>

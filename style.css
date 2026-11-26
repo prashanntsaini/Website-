@@ -1408,3 +1408,152 @@ html footer .ft-links a.ft-free,html.light footer .ft-links a.ft-free{color:#1b1
 .chap-h small{font-size:.78rem;color:var(--muted);background:var(--card);border:1px solid var(--border);padding:2px 10px;border-radius:99px;font-weight:600}
 .subj-card{display:block;text-decoration:none;color:inherit}
 .subj-card h3{margin-bottom:6px}
+
+
+/* ============ v17: one tidy people row, name + blue tick on ONE line, same font everywhere ============ */
+.cm-person{cursor:pointer;flex-wrap:nowrap}
+.cm-person .grow{display:flex;flex-direction:column;gap:2px}
+.cm-nm{display:flex;align-items:center;gap:0;min-width:0;max-width:100%}
+.cm-nm b{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cm-person .grow small{display:block;font-size:.85rem;line-height:1.35;color:var(--muted)}
+.cm-person .grow small:empty{display:none}
+.cm-go{flex:none;display:grid;place-items:center;color:var(--muted)}
+.cm-go{font-size:1.7rem;line-height:1;padding-bottom:3px}
+/* a blue tick next to a name never drops to the next line, whatever the page */
+a:has(> .vtk),h1:has(> .vtk),h2:has(> .vtk),h3:has(> .vtk){display:inline-flex;align-items:center;max-width:100%;vertical-align:bottom}
+a:has(> .vtk) > b,a:has(> .vtk) > span:not(.vtk),h1:has(> .vtk) > span:not(.vtk){display:inline;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.vtk{flex:none;margin-left:5px;font-size:1em;font-weight:400;font-style:normal;letter-spacing:0;line-height:1;vertical-align:middle}
+.cm-row .grow b,.cm-row .grow small,.cm-side .grow b,.cm-side .grow small{font-family:inherit;letter-spacing:0}
+
+/* v17b: "Followed by ..." line on a profile, like Instagram */
+.cm-about .cm-mf{font-size:.88rem;color:var(--muted);margin:2px 0 6px;line-height:1.4}
+.cm-about .cm-mf:empty{display:none}
+.cm-person .btn{flex:none}
+/* ====================================================================
+   v17: rounded chat (header, call cards, message box, bubbles) + shared chat background
+   ==================================================================== */
+.cm-chat{border-radius:22px}
+@media(max-width:860px){.cm-chat{border-radius:0}}
+
+/* header: a rounded bar that floats above the chat */
+.cm-conv-head.ig-head .ig-hb{width:38px;height:38px}
+.cm-conv-head.ig-head{margin:8px 8px 0;padding:6px 8px 6px 6px;min-height:60px;border:1px solid var(--border);border-radius:30px;background:var(--card);position:relative;z-index:6}
+@media(max-width:860px) and (display-mode:standalone){.cm-conv-head.ig-head{margin-top:calc(8px + env(safe-area-inset-top));padding-top:6px}}
+.cm-menu-pop{border-radius:20px;padding:8px}
+.cm-menu-pop button{border-radius:14px}
+.cm-bpop{border-radius:18px}
+.cm-bpop button{border-radius:12px}
+
+/* messages */
+.cm-msgs{padding:12px 12px 8px}
+.cm-r .cm-bubble,.cm-r .cm-bubble.mine{border-radius:20px;padding:10px 16px}
+.cm-bubble.unsent{border:1px solid var(--border)}
+.cm-bubble.media .cm-img,.cm-bubble.media .cm-vid,.cm-img,.cm-vid{border-radius:20px}
+.cm-file{border-radius:16px}
+.cm-r .cm-bubble.media{padding:0}
+
+/* voice / video call cards */
+.cm-call{border-radius:26px;padding:12px 14px;gap:12px}
+.cm-call-back{border-radius:999px;padding:9px 18px}
+
+/* message box */
+.cm-compose.ig{border-radius:32px;padding:5px 6px 5px 5px}
+.cm-compose.ig .ig-gif{border-radius:999px}
+.cm-compose{border-radius:26px}
+.cm-pchip{border-radius:20px}
+.cm-pend{padding:8px 14px 0}
+
+/* chats list */
+.cm-side .cm-row{border-radius:20px}
+.cm-side .cm-search,.ig-lsearch .cm-search{border-radius:999px}
+.cm-toast{border-radius:999px}
+
+/* sheets and dialogs */
+.cm-card{border-radius:26px}
+.cm-modal.sheet .cm-card{border-radius:28px 28px 0 0}
+@media(min-width:861px){.cm-modal.sheet .cm-card{border-radius:26px}}
+.cm-field input,.cm-field select,.cm-field textarea{border-radius:14px}
+.bg-sw{border-radius:18px}
+.sm-list button{border-radius:16px}
+
+/* the chat background covers the whole conversation (behind the header, messages and message box) */
+.cm-conv.has-bg .cm-msgs{background:transparent}
+.cm-conv.has-bg .cm-conv-head.ig-head,.cm-conv.has-bg .cm-compose.ig,.cm-conv.has-bg .cm-call,.cm-conv.has-bg .cm-pchip{background:rgba(27,30,35,.72);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3);border-color:rgba(255,255,255,.14)}
+html.light .cm-conv.has-bg .cm-conv-head.ig-head,html.light .cm-conv.has-bg .cm-compose.ig,html.light .cm-conv.has-bg .cm-call,html.light .cm-conv.has-bg .cm-pchip{background:rgba(255,255,255,.8);border-color:rgba(0,0,0,.08)}
+.cm-conv.has-bg .cm-sep{background:rgba(0,0,0,.42);color:#fff;padding:3px 12px;border-radius:999px}
+.cm-conv.has-bg .cm-empty{color:#fff;text-shadow:0 1px 4px rgba(0,0,0,.6)}
+.cm-conv.has-bg .cm-bubble:not(.mine):not(.media){background:rgba(27,30,35,.82)}
+html.light .cm-conv.has-bg .cm-bubble:not(.mine):not(.media){background:rgba(255,255,255,.9);color:#111}
+
+/* ====================================================================
+   v17: Instagram-style settings - a list, and every setting opens as its own page
+   ==================================================================== */
+body.st-page .tabbar{display:none!important}
+body.st-page.has-tabbar{padding-bottom:0}
+@media(max-width:860px){body.st-page .nav{display:none}}
+.st-app{max-width:680px;margin:0 auto;min-height:100dvh;padding-bottom:40px}
+.st-head{position:sticky;top:0;z-index:30;display:flex;align-items:center;gap:6px;padding:10px 10px 8px;background:var(--bg)}
+@media(min-width:861px){.st-head{position:static;padding-top:22px}}
+.st-title{flex:1;margin:0;font-size:1.25rem;font-weight:800;line-height:1.2}
+.st-view{animation:stIn .22s ease-out}
+.st-view[hidden],.st-item[hidden],.st-sec[hidden]{display:none}
+@keyframes stIn{from{opacity:0;transform:translateX(26px)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){.st-view{animation:none}}
+
+/* list (home) */
+.st-search{position:relative;margin:4px 14px 6px}
+.st-search input{width:100%;padding:13px 18px 13px 46px;border-radius:999px;border:0;background:var(--card);color:var(--text);font:inherit;font-size:1rem;outline:none}
+.st-sic{position:absolute;left:17px;top:50%;transform:translateY(-50%);color:var(--muted);display:flex}
+.st-sic .vi{width:20px;height:20px}
+.st-sec h3{font-size:.86rem;font-weight:600;color:var(--muted);margin:0;padding:16px 22px 8px}
+.st-list{margin:0 12px;background:var(--card);border:1px solid var(--border);border-radius:22px;overflow:hidden}
+.st-item{display:flex;align-items:center;gap:14px;width:100%;padding:15px 16px;background:none;border:0;border-bottom:1px solid var(--border);color:var(--text);font:inherit;font-size:1rem;text-align:left;cursor:pointer;text-decoration:none;-webkit-tap-highlight-color:transparent;transition:background .15s}
+.st-item:last-child{border-bottom:0}
+.st-item:hover,.st-item:active{background:rgba(127,127,127,.12)}
+.st-ic{display:flex;flex:none}
+.st-ic .vi{width:25px;height:25px}
+.st-item .t{flex:1;min-width:0}
+.st-item .t b{display:block;font-weight:600}
+.st-item .t small{display:block;color:var(--muted);font-size:.8rem;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.st-item .t small:empty{display:none}
+.st-item .chev{display:flex;color:var(--muted);flex:none}
+.st-item .chev .vi{width:18px;height:18px}
+.st-item.danger,.st-item.danger .st-ic{color:#ff3b4e}
+.st-ava{display:flex;flex:none}
+.st-ava .avatar{width:48px;height:48px;font-size:1.2rem}
+.st-me{padding:14px 16px}
+.st-none{text-align:center;color:var(--muted);padding:30px 16px}
+#demo:empty{display:none}
+.st-wrap > #demo{margin:6px 14px}
+
+/* one setting = one page: the old panels become rounded cards */
+.st-view[data-view]:not([data-view=home]){padding:4px 12px 30px}
+.st-view .panel{background:var(--card);border:1px solid var(--border);border-radius:22px;box-shadow:none;padding:6px 18px;margin:0 0 14px}
+.st-view .panel>h2{display:none}
+.st-view .panel.danger{border-color:rgba(255,59,78,.45)}
+.st-view .panel .note{margin:10px 0}
+.st-view .set-row select,.st-view .set-input,.st-view .stack input{border-radius:14px}
+.st-view .btn,.st-view .seg,.st-view .seg button{border-radius:999px}
+.st-view .plan{border-radius:20px}
+.st-view .sub-now{border-radius:16px}
+.st-view .dev{border-radius:16px}
+section.st-sec{padding:0;margin:0}
+/* ---- consent step (verify.html): Terms of Use + Privacy Policy ---- */
+.cs-icon{width:52px;height:52px;border-radius:14px;display:grid;place-items:center;margin:0 0 16px;color:var(--accent);background:rgba(90,75,218,.12);border:1px solid rgba(90,75,218,.25)}
+.cs-row{display:flex;align-items:flex-start;gap:14px;padding:14px 16px;margin-bottom:12px;border:1.5px solid var(--border);border-radius:12px;background:var(--bg);cursor:pointer;transition:border-color .18s,background .18s}
+.cs-row:hover{border-color:var(--accent)}
+.cs-row input{position:absolute;opacity:0;pointer-events:none}
+.cs-box{flex:none;width:22px;height:22px;margin-top:1px;border-radius:7px;border:2px solid var(--muted);display:grid;place-items:center;transition:.18s}
+.cs-box::after{content:"";width:6px;height:11px;border:solid #fff;border-width:0 2.5px 2.5px 0;transform:rotate(45deg) scale(0);margin-top:-2px;transition:transform .15s}
+.cs-row input:checked+.cs-box{background:var(--accent);border-color:var(--accent)}
+.cs-row input:checked+.cs-box::after{transform:rotate(45deg) scale(1)}
+.cs-row:has(input:checked){border-color:var(--accent);background:rgba(90,75,218,.08)}
+.cs-row input:focus-visible+.cs-box{box-shadow:0 0 0 3px rgba(90,75,218,.3)}
+.cs-txt b{display:block;font-size:.98rem;margin-bottom:2px}
+.cs-txt small{display:block;color:var(--muted);font-size:.86rem;line-height:1.45}
+.cs-txt a,.cs-hint a{color:var(--accent);font-weight:600;text-decoration:underline}
+html:not(.light) .cs-txt a,html:not(.light) .cs-hint a{color:var(--gold2)}
+#c-go{margin-top:6px}
+#c-go:disabled{opacity:.45;cursor:not-allowed;transform:none;box-shadow:none}
+.cs-hint{margin:14px 0 0;font-size:.8rem;color:var(--muted);text-align:center;line-height:1.5}
+#consent-step[hidden],#otp-step[hidden]{display:none}

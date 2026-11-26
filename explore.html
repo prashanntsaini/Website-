@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js"></script>
+  <script src="clean-url.js?v=18"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Free Online Tests & Study Material | Gyaan Hub</title>
@@ -18,7 +18,7 @@
 <meta property="og:title" content="Free Online Tests & Study Material | Gyaan Hub">
 <meta property="og:description" content="See the free online mock tests and study material (notes, previous year papers, video lectures) on Gyaan Hub. Sign in to start.">
 <meta property="og:url" content="https://prashantsaini.runs-on.dev/explore">
-<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -26,11 +26,11 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Free Online Tests & Study Material | Gyaan Hub">
 <meta name="twitter:description" content="See the free online mock tests and study material (notes, previous year papers, video lectures) on Gyaan Hub. Sign in to start.">
-<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
-<link rel="stylesheet" href="style.css?v=16">
-<script src="site-config.js?v=16"></script>
-<script src="theme.js?v=16"></script>
-<script src="icons.js?v=16"></script>
+<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
+<link rel="stylesheet" href="style.css?v=18">
+<script src="site-config.js?v=18"></script>
+<script src="theme.js?v=18"></script>
+<script src="icons.js?v=18"></script>
 </head>
 <body>
 <header class="nav">
@@ -93,7 +93,7 @@
 </footer>
 
 <script type="module">
-  import { fsGet, onUser } from "./auth.js?v=16";
+  import { fsGet, onUser } from "./auth.js?v=18";
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   let signedIn = false, tests = [], mats = [];
@@ -141,6 +141,6 @@
     renderTests(); renderMats();
   })();
 </script>
-<script type="module" src="layout.js?v=16"></script>
+<script type="module" src="layout.js?v=18"></script>
 </body>
 </html>

@@ -109,9 +109,8 @@ service cloud.firestore {
       allow read: if signedIn() && (resource == null
           || request.auth.uid == resource.data.follower || request.auth.uid == resource.data.target
           || (resource.data.status == "accepted" && (
-                (resource.data.targetPrivate == false && resource.data.followerPrivate == false)
-                || isAccFollower(resource.data.target)
-                || (resource.data.targetPrivate == false && isAccFollower(resource.data.follower)))));
+                resource.data.targetPrivate == false
+                || isAccFollower(resource.data.target))));
       allow create: if signedIn()
           && request.resource.data.follower == request.auth.uid
           && request.resource.data.target is string && request.resource.data.target != request.auth.uid
@@ -167,6 +166,15 @@ service cloud.firestore {
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["text", "edited", "editedAt", "deleted", "att", "updatedAt"])
             && request.resource.data.text is string && request.resource.data.text.size() <= 1000;
         allow delete: if signedIn() && resource.data.from == request.auth.uid;
+      }
+      match /bg/{bid} {                    // shared chat background (bg/current): both people see the same wallpaper
+        function bgPeople() { return get(/databases/$(database)/documents/chats/$(cid)).data.participants; }
+        allow read: if signedIn() && request.auth.uid in bgPeople();
+        allow create, update: if signedIn() && request.auth.uid in bgPeople()
+            && request.resource.data.by == request.auth.uid
+            && (!("v" in request.resource.data) || (request.resource.data.v is string && request.resource.data.v.size() <= 900000))
+            && !blockedEither(bgPeople());
+        allow delete: if false;
       }
       match /files/{fid} {                 // attachment pieces (used when Firebase Storage is not enabled)
         function chatPeople() { return get(/databases/$(database)/documents/chats/$(cid)).data.participants; }

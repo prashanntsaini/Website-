@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js"></script>
+  <script src="clean-url.js?v=18"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Reels | Gyaan Hub</title>
@@ -18,7 +18,7 @@
 <meta property="og:title" content="Reels | Gyaan Hub">
 <meta property="og:description" content="Watch short study reels shared by students on Gyaan Hub.">
 <meta property="og:url" content="https://prashantsaini.runs-on.dev/reels">
-<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -26,19 +26,19 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Reels | Gyaan Hub">
 <meta name="twitter:description" content="Watch short study reels shared by students on Gyaan Hub.">
-<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=16">
-<link rel="modulepreload" href="community.js?v=16">
-<link rel="modulepreload" href="files.js?v=16">
-<link rel="stylesheet" href="style.css?v=16">
-<script src="site-config.js?v=16"></script>
-<script src="theme.js?v=16"></script>
-<script src="icons.js?v=16"></script>
+<link rel="modulepreload" href="auth.js?v=18">
+<link rel="modulepreload" href="community.js?v=18">
+<link rel="modulepreload" href="files.js?v=18">
+<link rel="stylesheet" href="style.css?v=18">
+<script src="site-config.js?v=18"></script>
+<script src="theme.js?v=18"></script>
+<script src="icons.js?v=18"></script>
 <style>
   html,body{height:100%;overflow:hidden;background:#000}
   body{background-image:none}
@@ -128,8 +128,8 @@
 </div>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=16";
-  import * as C from "./community.js?v=16";
+  import { protectPage } from "./auth.js?v=18";
+  import * as C from "./community.js?v=18";
   const $ = id => document.getElementById(id);
   const { esc } = C;
   const ic = (n, c) => window.ic ? window.ic(n, c) : "";
@@ -403,7 +403,7 @@
 
   protectPage(async u => {
     me = u;
-    import("./calls.js?v=16").then(m => m.initCalls(u)).catch(() => {});
+    import("./calls.js?v=18").then(m => m.initCalls(u)).catch(() => {});
     await loadFollowing();
     build("explore");
   });

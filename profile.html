@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js"></script>
+  <script src="clean-url.js?v=18"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile | Gyaan Hub</title>
@@ -18,7 +18,7 @@
 <meta property="og:title" content="Profile | Gyaan Hub">
 <meta property="og:description" content="A student profile on Gyaan Hub: posts, reels and followers.">
 <meta property="og:url" content="https://prashantsaini.runs-on.dev/profile">
-<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -26,21 +26,21 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Profile | Gyaan Hub">
 <meta name="twitter:description" content="A student profile on Gyaan Hub: posts, reels and followers.">
-<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=16">
-<link rel="modulepreload" href="community.js?v=16">
-<link rel="modulepreload" href="media.js?v=16">
-<link rel="modulepreload" href="files.js?v=16">
-<link rel="modulepreload" href="player-utils.js?v=16">
-<link rel="stylesheet" href="style.css?v=16">
-<script src="site-config.js?v=16"></script>
-<script src="theme.js?v=16"></script>
-<script src="icons.js?v=16"></script>
+<link rel="modulepreload" href="auth.js?v=18">
+<link rel="modulepreload" href="community.js?v=18">
+<link rel="modulepreload" href="media.js?v=18">
+<link rel="modulepreload" href="files.js?v=18">
+<link rel="modulepreload" href="player-utils.js?v=18">
+<link rel="stylesheet" href="style.css?v=18">
+<script src="site-config.js?v=18"></script>
+<script src="theme.js?v=18"></script>
+<script src="icons.js?v=18"></script>
 </head>
 <body>
 <header class="nav">
@@ -58,9 +58,9 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=16";
-  import * as C from "./community.js?v=16";
-  import { initLightbox } from "./media.js?v=16";
+  import { protectPage } from "./auth.js?v=18";
+  import * as C from "./community.js?v=18";
+  import { initLightbox } from "./media.js?v=18";
   initLightbox();
   const $ = id => document.getElementById(id);
   const { esc } = C;
@@ -97,14 +97,11 @@
     people[p.id] = p;
     const enc = encodeURIComponent(p.id), you = p.id === me.uid;
     const st = (myFollowing.get(p.id) || {}).status, followsMe = (myFollowers.get(p.id) || {}).status === "accepted";
-    let btns = "";
-    if (!you) {
-      btns = !st ? `<button class="btn btn-gold" data-act="pfollow" data-id="${esc(p.id)}">${p.isPrivate ? "Request" : (followsMe ? "Follow back" : "Follow")}</button>`
-        : `<button class="btn btn-ghost" data-act="punfollow" data-id="${esc(p.id)}">${st === "pending" ? "Requested" : "Following"}</button>`;
-      if (quickMsg(p)) btns += `<a class="btn btn-ghost" href="messages.html?to=${enc}">${ic("chat")} Message</a>`;
-    }
-    return `<div class="cm-row"><a class="lp" data-lp="${esc(p.id)}" href="profile.html?u=${enc}">${C.avatarHtml(p, "sm")}</a>
-      <div class="grow"><a href="profile.html?u=${enc}"><b>${esc(p.name)}</b>${C.tk(p.id)}</a><small>${[C.handleOf(p), p.isPrivate ? ic("lock") + " Private" : "", followsMe && !you ? "Follows you" : "", note].filter(Boolean).join(" · ")}</small><small class="cm-mf" data-mf="${esc(p.id)}"></small></div>${btns}</div>`;
+    let btn = "";   // only the follow button here. "Follows you", mutual friends and Message are on the profile itself.
+    if (!you) btn = !st ? `<button class="btn btn-gold" data-act="pfollow" data-id="${esc(p.id)}">${p.isPrivate ? "Request" : (followsMe ? "Follow back" : "Follow")}</button>`
+      : `<button class="btn btn-ghost" data-act="punfollow" data-id="${esc(p.id)}">${st === "pending" ? "Requested" : "Following"}</button>`;
+    return `<div class="cm-row cm-person" data-go="profile.html?u=${enc}" role="link" tabindex="0"><a class="lp" data-lp="${esc(p.id)}" href="profile.html?u=${enc}">${C.avatarHtml(p, "sm")}</a>
+      <div class="grow"><span class="cm-nm"><b>${esc(p.name)}</b>${C.tk(p.id)}</span><small>${[C.handleOf(p), p.isPrivate ? ic("lock") + " Private" : "", note].filter(Boolean).join(" · ")}</small></div>${btn}</div>`;
   }
   // "Mutual friends": students I follow who also follow this person (shown by name)
   async function fillMutuals(box, ps) {
@@ -117,7 +114,7 @@
         const ids = [...new Set((rows || []).map(r => r.follower).filter(u => mine.has(u) && u !== x.id))];
         const el = box.querySelector(`[data-mf="${CSS.escape(x.id)}"]`); if (!el || !ids.length) return;
         const names = (await C.profilesOf(ids, 3)).map(q => q.name);
-        el.textContent = "Mutual friends: " + names.join(", ") + (ids.length > 3 ? " +" + (ids.length - 3) + " more" : "");
+        el.textContent = "Followed by " + names.join(", ") + (ids.length > 3 ? " +" + (ids.length - 3) + " more" : "");
       } catch (e) {}
     }));
   }
@@ -127,7 +124,6 @@
     el.innerHTML = `<div class="skel"></div>`;
     const ps = await C.profilesOf(rows.map(r => r[key]));
     el.innerHTML = ps.map(p => personRow(p)).join("");
-    fillMutuals(el, ps);
   }
 
   /* ---------- load ---------- */
@@ -218,6 +214,7 @@
       </div>
       <div class="cm-about">
         <div class="cm-handle">${C.handleOf(prof)}</div>
+        ${isMe ? "" : `<div class="cm-mf" data-mf="${esc(uid)}"></div>`}
         ${canSee && stats && stats.bio ? `<p class="cm-bio">${esc(stats.bio)}</p>` : ""}
         <div class="cm-chips">
           <span id="rk" style="display:contents">${rank ? `<span class="cm-chip gold">${ic("trophy")} Rank #${rank}</span>` : ""}</span>
@@ -236,6 +233,7 @@
     $("app").innerHTML = head + `<div class="cm-tabs" id="tabs">${tabs.map(([k, l, i]) => `<button class="chip ${k === tab ? "on" : ""}" data-tab="${k}">${ic(i)} ${l}</button>`).join("")}</div><div id="panel"></div>`;
     $("panel").dataset.canSee = canSee ? "1" : "";
     renderTab(canSee);
+    if (!isMe) fillMutuals($("app"), [{ ...prof, id: uid }]);
   }
   function renderTab(canSee = $("panel").dataset.canSee === "1") {
     document.querySelectorAll("#tabs [data-tab]").forEach(b => b.classList.toggle("on", b.dataset.tab === tab));
@@ -482,7 +480,6 @@
         try {
           const res = (await C.searchStudents(q)).slice(0, 30);
           $("found").innerHTML = res.length ? res.map(p => personRow(p, p.byId ? "Found by username" : "")).join("") : `<div class="empty">No student found. Check the spelling or the username.</div>`;
-          fillMutuals($("found"), res);
         } catch (e) { $("found").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; }
       }, 350);
     });
@@ -496,7 +493,6 @@
       const same = myCourse ? pool.filter(r => C.sameCourse(r.course, myCourse)) : [];
       const ids = [...same, ...pool.filter(r => !same.includes(r))].slice(0, 6).map(r => r.uid);
       const ps = await C.profilesOf(ids);
-      if ($("sugg")) setTimeout(() => fillMutuals($("sugg"), ps), 0);
       if ($("sugg")) $("sugg").innerHTML = ps.length ? ps.map(p => personRow(p, myCourse && same.some(r => r.uid === p.id) ? "Same course as you" : "Top student")).join("") : `<div class="empty">No suggestions yet. Search by name or username above.</div>`;
     } catch (e) { if ($("sugg")) $("sugg").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; }
   }
@@ -594,11 +590,14 @@
   }
 
   /* ---------- clicks ---------- */
+  document.addEventListener("keydown", e => { const r = e.target.closest && e.target.closest(".cm-person[data-go]"); if (r && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); location.href = r.dataset.go; } });
   document.addEventListener("click", async e => {
     const pop = $("pop"); if (pop && !e.target.closest(".cm-menu")) pop.classList.remove("open");
     if (!e.target.closest(".cm-menu")) document.querySelectorAll(".pp-pop.open").forEach(x => x.classList.remove("open"));
     const tb = e.target.closest("[data-tab]");
     if (tb && !tb.dataset.act) { tab = tb.dataset.tab; renderTab(); window.scrollTo({ top: 0, behavior: "smooth" }); return; }
+    const row = e.target.closest(".cm-person[data-go]");
+    if (row && !e.target.closest("a,button")) { location.href = row.dataset.go; return; }
     const b = e.target.closest("[data-act]"); if (!b) return;
     const act = b.dataset.act, id = b.dataset.id;
     try {
@@ -675,6 +674,6 @@
     }
   });
 </script>
-<script type="module" src="layout.js?v=16"></script>
+<script type="module" src="layout.js?v=18"></script>
 </body>
 </html>

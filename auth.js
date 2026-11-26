@@ -159,6 +159,48 @@ export function markVerified(user) {
   try { localStorage.setItem("gyaan_verified_" + user.uid, "1"); } catch (e) {}
 }
 
+// ---- consent: Terms of Use + Privacy Policy ----
+// Asked once per account, right after the email code (Google sign-ins: right after sign-in).
+// Nothing is saved until BOTH are confirmed. Pages open only after that (protectPage / layout.js).
+const CONSENT_V = 1;
+const cKey = u => "gyaan_consent_" + ((u && (u.uid || u.email)) || "demo");
+const consentValid = c => !!(c && c.terms && c.privacy && c.v >= CONSENT_V);
+export function hasConsent(user) {
+  try { return consentValid(JSON.parse(localStorage.getItem(cKey(user)) || "null")); } catch (e) { return false; }
+}
+function applyConsent(user, c) {
+  try {
+    localStorage.setItem(cKey(user), JSON.stringify(c));
+    // site-wide flag that ads.js and analytics read
+    localStorage.setItem("gyaan_consent", JSON.stringify({ v: 2, policies: true, analytics: true, ts: c.ts }));
+  } catch (e) {}
+  window.dispatchEvent(new Event("consent-changed"));
+}
+export async function giveConsent(user) {
+  const c = { v: CONSENT_V, terms: true, privacy: true, ts: new Date().toISOString() };
+  applyConsent(user, c);                                   // works at once on this device
+  if (!DEMO && user && user.uid) { try { await withTimeout(fsSetPath(["users", user.uid], { consent: c }), 4000); } catch (e) {} }
+}
+// This device first; on a new device the account document is asked once.
+export async function consentOk(user) {
+  if (!user) return false;
+  if (hasConsent(user)) return true;
+  if (DEMO) return false;
+  try {
+    const d = await withTimeout(fsGetPath(["users", user.uid]), 4000);
+    if (d && consentValid(d.consent)) { applyConsent(user, d.consent); return true; }
+  } catch (e) {}
+  return false;
+}
+// Settings > Withdraw consent: forget it here and on the account, then sign out.
+export async function withdrawConsent() {
+  const u = currentUser();
+  try { if (u) localStorage.removeItem(cKey(u)); localStorage.removeItem("gyaan_consent"); } catch (e) {}
+  if (!DEMO && u) { try { await withTimeout(fsSetPath(["users", u.uid], { consent: null }), 4000); } catch (e) {} }
+  window.dispatchEvent(new Event("consent-changed"));
+  await logout();
+}
+
 export function protectPage(cb, opts = {}) {
   const requireVerified = opts.requireVerified !== false;
   if (DEMO) {
@@ -167,9 +209,14 @@ export function protectPage(cb, opts = {}) {
     cb(u, true);
     return;
   }
-  onAuthStateChanged(auth, user => {
+  onAuthStateChanged(auth, async user => {
     if (!user) { location.href = "login.html" + (signOutReason ? "?reason=" + signOutReason : ""); return; }
     if (requireVerified && !isVerified(user)) { location.href = "verify.html"; return; }
+    if (requireVerified && !(await consentOk(user))) {
+      // keep the page they wanted, so they land on it after confirming
+      try { const p = location.pathname.split("/").pop(); if (p) sessionStorage.setItem("gyaan_next", (/\.html?$/i.test(p) ? p : p + ".html") + location.search); } catch (e) {}
+      location.href = "verify.html"; return;
+    }
     bootPromise = bootSession(user);
     cb(user, false);
   });

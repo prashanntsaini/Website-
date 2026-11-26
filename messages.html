@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js"></script>
+  <script src="clean-url.js?v=18"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Messages | Gyaan Hub</title>
@@ -18,7 +18,7 @@
 <meta property="og:title" content="Messages | Gyaan Hub">
 <meta property="og:description" content="Chat with other students on Gyaan Hub.">
 <meta property="og:url" content="https://prashantsaini.runs-on.dev/messages">
-<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -26,21 +26,21 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Messages | Gyaan Hub">
 <meta name="twitter:description" content="Chat with other students on Gyaan Hub.">
-<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=16">
-<link rel="modulepreload" href="community.js?v=16">
-<link rel="modulepreload" href="media.js?v=16">
-<link rel="modulepreload" href="files.js?v=16">
-<link rel="modulepreload" href="player-utils.js?v=16">
-<link rel="stylesheet" href="style.css?v=16">
-<script src="site-config.js?v=16"></script>
-<script src="theme.js?v=16"></script>
-<script src="icons.js?v=16"></script>
+<link rel="modulepreload" href="auth.js?v=18">
+<link rel="modulepreload" href="community.js?v=18">
+<link rel="modulepreload" href="media.js?v=18">
+<link rel="modulepreload" href="files.js?v=18">
+<link rel="modulepreload" href="player-utils.js?v=18">
+<link rel="stylesheet" href="style.css?v=18">
+<script src="site-config.js?v=18"></script>
+<script src="theme.js?v=18"></script>
+<script src="icons.js?v=18"></script>
 </head>
 <body class="msg-page">
 <header class="nav">
@@ -68,10 +68,10 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=16";
-  import * as C from "./community.js?v=16";
-  import { initLightbox } from "./media.js?v=16";
-  import * as CALL from "./calls.js?v=16";
+  import { protectPage } from "./auth.js?v=18";
+  import * as C from "./community.js?v=18";
+  import { initLightbox } from "./media.js?v=18";
+  import * as CALL from "./calls.js?v=18";
   const $ = id => document.getElementById(id);
   const { esc, F } = C;
   const ic = n => window.ic ? window.ic(n) : "";
@@ -112,13 +112,14 @@
     if (unsub) { unsub(); unsub = null; }
     // the chat covers the whole screen straight away; the details are filled in as they arrive
     $("chat").classList.add("in-conv"); document.body.classList.add("msg-in-conv");
+    stopBg(); $("conv").classList.remove("has-bg"); $("conv").style.background = "";
     $("conv").innerHTML = `<div class="cm-conv-head ig-head"><button class="ig-hb cm-back" id="back0" type="button" aria-label="Back">${backIc}</button></div><div class="cm-msgs"><div class="cm-empty">Opening chat...</div></div>`;
-    $("back0").addEventListener("click", () => { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); cur = null; loadList(); });
+    $("back0").addEventListener("click", () => { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); stopBg(); cur = null; loadList(); });
     const prof = await C.getProfile(otherUid, true).catch(() => profCache[otherUid] || null);
     if (!prof) { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); C.toast("This student has no community profile."); return; }
     profCache[otherUid] = prof;
     cur = { uid: otherUid, prof, cid: C.chatId(me.uid, otherUid) };
-    msgs = [];
+    msgs = []; watchBg();
     const [blocked, exists] = await Promise.all([C.isBlocked(me.uid, otherUid), C.chatExists(cur.cid)]);
     const can = blocked ? { ok: false, why: "You blocked this student." } : await C.canMessage(me.uid, otherUid, prof).catch(() => ({ ok: true }));
     fitChat();
@@ -141,7 +142,7 @@
           <input type="file" id="file" hidden><input type="file" id="file-gal" accept="image/*,video/*" hidden><input type="file" id="file-cam" accept="image/*" capture="environment" hidden>
         </div>`
                : `<div class="cm-compose"><div class="cm-msg" style="margin:0;flex:1;text-align:center">${esc(can.why || "You cannot message this student.")}</div></div>`}`;
-    $("back").addEventListener("click", () => { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); fitChat(); if (unsub) { unsub(); unsub = null; } cur = null; loadList(); });
+    $("back").addEventListener("click", () => { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); fitChat(); if (unsub) { unsub(); unsub = null; } stopBg(); $("conv").classList.remove("has-bg"); $("conv").style.background = ""; cur = null; loadList(); });
     if (can.ok) {
       $("call-a").addEventListener("click", () => CALL.startCall(otherUid, "audio", prof));
       $("call-v").addEventListener("click", () => CALL.startCall(otherUid, "video", prof));
@@ -298,7 +299,7 @@
       }
       await C.sendMessage(me.uid, cur.uid, text, att);
       ta.value = ""; pendFile = null; renderPend(); syncCompose();
-      if (!existed) watch();
+      if (!existed) { watch(); watchBg(); }
       loadList();
     } catch (e) {
       if (att) F.deleteFile(att, { type: "chat", cid: cur.cid });      // do not leave a stored file behind if the message failed
@@ -468,83 +469,136 @@
     }, 350);
   });
 
-  /* ---------- chat background (kept on this phone, only you see it) ---------- */
+  /* ---------- chat background: shared, so BOTH students see the same wallpaper ----------
+     Stored in Firestore at chats/{cid}/bg/current and watched live. "Only for me" keeps a private copy on this phone instead. */
   const BG_PRESETS = [
     ["Midnight", "#0b1020"], ["Graphite", "#1c1d22"], ["Forest", "linear-gradient(160deg,#0f2d24,#1d5b45)"], ["Ocean", "linear-gradient(160deg,#08203e,#1b6ca8)"],
     ["Sunset", "linear-gradient(160deg,#42275a,#e0636b)"], ["Violet", "linear-gradient(160deg,#1e1450,#6a4bd8)"], ["Rose", "linear-gradient(160deg,#4a1330,#c9486f)"], ["Sand", "#efe6d6"], ["Sky", "linear-gradient(160deg,#cfe8ff,#ffffff)"]
   ];
-  const BG_ONE = () => "gyaan_chatbg_" + me.uid + "_" + cur.cid, BG_ALL = () => "gyaan_chatbg_all_" + me.uid;
+  const BG_ONE = () => "gyaan_chatbg_" + me.uid + "_" + cur.cid, BG_ALL = () => "gyaan_chatbg_all_" + me.uid;   // BG_ALL: old "all my chats" setting, still honoured
   const IMG_OK = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/;
   const bgRead = k => { try { return JSON.parse(localStorage.getItem(k) || "null"); } catch (e) { return null; } };
-  function bgGet() {
-    const b = bgRead(BG_ONE()) || bgRead(BG_ALL());
-    if (!b || b.k === "none") return null;
-    if (b.k === "img" && IMG_OK.test(b.v || "")) return b;
+  const bgValid = b => {
+    if (!b) return null;
+    if (b.k === "img" && typeof b.v === "string" && IMG_OK.test(b.v)) return b;
     if (b.k === "css" && BG_PRESETS.some(p => p[1] === b.v)) return b;
     return null;
+  };
+  const bgPath = cid => ["chats", cid, "bg", "current"];
+  let bgUnsub = null, sharedBg = null;
+  function stopBg() { if (bgUnsub) { bgUnsub(); bgUnsub = null; } sharedBg = null; }
+  function watchBg() {
+    if (!cur) return;
+    if (bgUnsub) { bgUnsub(); bgUnsub = null; }
+    const cid = cur.cid; let first = true;
+    try {
+      bgUnsub = C.A.fsWatchDoc(bgPath(cid), d => {
+        if (!cur || cur.cid !== cid) return;
+        const prev = sharedBg; sharedBg = d;
+        if (!first && d && d.by && d.by !== me.uid && (!prev || prev.k !== d.k || prev.v !== d.v)) C.toast(cur.prof.name + " changed the chat background", 3000);
+        first = false;
+        applyBg();
+      }, () => {});
+    } catch (e) {}
   }
-  function applyBg() {
-    const box = $("msgs"); if (!box) return;
+  // priority: my private background for this chat > the shared one > my old "all chats" background
+  function bgGet() {
+    const mine = bgRead(BG_ONE());
+    if (mine) return mine.k === "none" ? null : bgValid(mine);
+    if (sharedBg && sharedBg.k !== "none") return bgValid(sharedBg);
+    if (sharedBg && sharedBg.k === "none") return null;
+    const all = bgRead(BG_ALL());
+    return all && all.k !== "none" ? bgValid(all) : null;
+  }
+  // the picture covers the WHOLE chat screen (behind the rounded header, messages and message box)
+  function applyBg(previewDim) {
+    const box = $("conv"); if (!box) return;
     const b = bgGet();
     box.classList.toggle("has-bg", !!b);
     if (!b) { box.style.background = ""; return; }
-    if (b.k === "img") { const d = Math.max(0, Math.min(70, +b.dim || 0)) / 100; box.style.background = `linear-gradient(rgba(0,0,0,${d}),rgba(0,0,0,${d})) center/cover no-repeat, url("${b.v}") center/cover no-repeat`; }
+    if (b.k === "img") { const d = Math.max(0, Math.min(70, +(previewDim != null ? previewDim : b.dim) || 0)) / 100; box.style.background = `linear-gradient(rgba(0,0,0,${d}),rgba(0,0,0,${d})) center/cover no-repeat, url("${b.v}") center/cover no-repeat`; }
     else box.style.background = b.v;
   }
+  // the photo is shrunk so it fits in one Firestore document (under 900 KB)
   function bgFromFile(f) {
     return new Promise((res, rej) => {
       if (!/^image\//.test(f.type)) return rej(new Error("Please choose a photo."));
       const url = URL.createObjectURL(f), im = new Image();
       im.onload = () => {
         URL.revokeObjectURL(url);
-        const sc = Math.min(1, 1280 / Math.max(im.width, im.height)), c = document.createElement("canvas");
-        c.width = Math.max(1, Math.round(im.width * sc)); c.height = Math.max(1, Math.round(im.height * sc));
-        c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
-        let q = .78, out = c.toDataURL("image/jpeg", q);
-        while (out.length > 1400000 && q > .35) { q -= .1; out = c.toDataURL("image/jpeg", q); }
-        res(out);
+        let side = 1080, out = "";
+        for (let tries = 0; tries < 5; tries++) {
+          const sc = Math.min(1, side / Math.max(im.width, im.height)), c = document.createElement("canvas");
+          c.width = Math.max(1, Math.round(im.width * sc)); c.height = Math.max(1, Math.round(im.height * sc));
+          c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
+          let q = .78; out = c.toDataURL("image/jpeg", q);
+          while (out.length > 700000 && q > .4) { q -= .1; out = c.toDataURL("image/jpeg", q); }
+          if (out.length <= 700000) return res(out);
+          side = Math.round(side * .75);
+        }
+        rej(new Error("This photo is too large. Try a smaller one."));
       };
       im.onerror = () => { URL.revokeObjectURL(url); rej(new Error("Could not read that photo.")); };
       im.src = url;
     });
+  }
+  const bgLocalSave = obj => { try { localStorage.setItem(BG_ONE(), JSON.stringify(obj)); return true; } catch (e) { return false; } };
+  // obj = { k: "none" } | { k: "css", v } | { k: "img", v, dim }
+  async function bgSave(obj, onlyMe) {
+    if (onlyMe) {
+      if (!bgLocalSave(obj)) throw new Error("Could not save. The phone storage is full, try a smaller photo.");
+      applyBg(); return;
+    }
+    try { localStorage.removeItem(BG_ONE()); } catch (e) {}      // a shared choice replaces my private one for this chat
+    try {
+      await C.ensureChat(me.uid, cur.uid);
+      if (!bgUnsub) watchBg();
+      await C.A.fsSetPath(bgPath(cur.cid), { ...obj, by: me.uid, ts: Date.now() }, false);
+      sharedBg = { ...obj, by: me.uid, ts: Date.now() }; applyBg();
+    } catch (e) {
+      bgLocalSave(obj); applyBg();
+      C.toast("Could not share the background, so it is saved only for you. (Publish the updated firestore.rules.)", 7000);
+    }
   }
   function openBg() {
     const md = document.createElement("div");
     md.className = "cm-modal sheet";
     const b0 = bgGet();
     md.innerHTML = `<div class="cm-card"><h2>Chat background<button class="cm-x" aria-label="Close">✕</button></h2>
+      <p class="cm-sub" style="font-size:.88rem;margin:-6px 0 10px">Visible to both of you in this chat.</p>
       <div class="bg-grid" id="bg-g"><button type="button" class="bg-sw bg-def" data-i="-1" aria-label="Default"><span>Default</span></button>${BG_PRESETS.map((p, i) => `<button type="button" class="bg-sw" data-i="${i}" style="background:${p[1]}" aria-label="${p[0]}"><span>${p[0]}</span></button>`).join("")}</div>
       <div class="cm-actions" style="margin:14px 0 6px"><button class="btn btn-ghost" id="bg-up" type="button">${ic("image")} Choose your own photo</button><input type="file" id="bg-file" accept="image/*" hidden></div>
       <div class="cm-field" id="bg-dw" ${b0 && b0.k === "img" ? "" : "hidden"}><label for="bg-dim">Darken photo</label><input id="bg-dim" type="range" min="0" max="70" step="5" value="${b0 && b0.k === "img" ? (+b0.dim || 0) : 20}"></div>
-      <label class="check"><input type="checkbox" id="bg-all"><span>Use this for all my chats</span></label>
+      <label class="check"><input type="checkbox" id="bg-me" ${bgRead(BG_ONE()) ? "checked" : ""}><span>Only for me (${esc(cur.prof.name)} will not see it)</span></label>
       <div class="cm-msg" id="bg-m"></div>
-      <p class="gif-by" style="text-align:left">The background is saved on this phone only. The other student does not see it.</p></div>`;
+      <p class="gif-by" style="text-align:left">Without “Only for me”, the background is saved to this chat, so you and ${esc(cur.prof.name)} both see it, on every device.</p></div>`;
     document.body.appendChild(md);
-    const q = id => md.querySelector("#" + id), close = () => md.remove();
+    const q = id => md.querySelector("#" + id), close = () => md.remove(), onlyMe = () => q("bg-me").checked;
+    const fail = err => { q("bg-m").className = "cm-msg err"; q("bg-m").textContent = err.message || "Could not use that."; };
+    const clear = () => { q("bg-m").className = "cm-msg"; q("bg-m").textContent = ""; };
     md.addEventListener("click", e => { if (e.target === md || e.target.closest(".cm-x")) close(); });
-    const save = obj => {
-      const all = q("bg-all").checked;
-      try {
-        if (obj.k === "none" && all) { localStorage.removeItem(BG_ONE()); localStorage.removeItem(BG_ALL()); }
-        else if (all) { localStorage.setItem(BG_ALL(), JSON.stringify(obj)); localStorage.removeItem(BG_ONE()); }
-        else localStorage.setItem(BG_ONE(), JSON.stringify(obj));
-        q("bg-m").className = "cm-msg"; q("bg-m").textContent = "";
-      } catch (e) { q("bg-m").className = "cm-msg err"; q("bg-m").textContent = "Could not save. The phone storage is full, try a smaller photo."; return; }
-      applyBg();
-    };
-    q("bg-g").addEventListener("click", e => {
+    q("bg-g").addEventListener("click", async e => {
       const b = e.target.closest("[data-i]"); if (!b) return;
-      const i = +b.dataset.i; q("bg-dw").hidden = true;
-      save(i < 0 ? { k: "none" } : { k: "css", v: BG_PRESETS[i][1] });
+      const i = +b.dataset.i; q("bg-dw").hidden = true; clear();
+      try { await bgSave(i < 0 ? { k: "none" } : { k: "css", v: BG_PRESETS[i][1] }, onlyMe()); } catch (err) { fail(err); }
     });
     q("bg-up").addEventListener("click", () => q("bg-file").click());
     q("bg-file").addEventListener("change", async e => {
       const f = e.target.files[0]; e.target.value = ""; if (!f) return;
       q("bg-m").className = "cm-msg"; q("bg-m").textContent = "Preparing photo...";
-      try { const v = await bgFromFile(f); q("bg-dw").hidden = false; save({ k: "img", v, dim: +q("bg-dim").value }); }
-      catch (err) { q("bg-m").className = "cm-msg err"; q("bg-m").textContent = err.message || "Could not use that photo."; }
+      try { const v = await bgFromFile(f); q("bg-dw").hidden = false; await bgSave({ k: "img", v, dim: +q("bg-dim").value }, onlyMe()); clear(); }
+      catch (err) { fail(err); }
     });
-    q("bg-dim").addEventListener("input", () => { const b = bgGet(); if (b && b.k === "img") save({ k: "img", v: b.v, dim: +q("bg-dim").value }); });
+    q("bg-dim").addEventListener("input", () => applyBg(+q("bg-dim").value));          // live preview only
+    q("bg-dim").addEventListener("change", async () => {                                // saved when the finger is lifted
+      const b = bgGet(); if (!b || b.k !== "img") return;
+      const dim = +q("bg-dim").value;
+      try {
+        if (onlyMe()) await bgSave({ k: "img", v: b.v, dim }, true);
+        else if (sharedBg && sharedBg.k === "img" && sharedBg.v === b.v) { await C.A.fsSetPath(bgPath(cur.cid), { dim, by: me.uid, ts: Date.now() }); sharedBg = { ...sharedBg, dim }; applyBg(); }
+        else await bgSave({ k: "img", v: b.v, dim }, false);
+      } catch (err) { fail(err); }
+    });
   }
 
   C.onLongPress(document, "[data-lp]", el => { const id = el.dataset.lp; C.viewPhoto(id === "__cur" ? (cur && cur.prof) : profCache[id]); });
@@ -576,6 +630,6 @@
     } catch (e) { $("list").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; }
   });
 </script>
-<script type="module" src="layout.js?v=16"></script>
+<script type="module" src="layout.js?v=18"></script>
 </body>
 </html>

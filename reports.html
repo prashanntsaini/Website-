@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js"></script>
+  <script src="clean-url.js?v=18"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Reports | Gyaan Hub</title>
@@ -18,7 +18,7 @@
 <meta property="og:title" content="Reports | Gyaan Hub">
 <meta property="og:description" content="Notes, previous year papers, video lectures and mock tests, all in one place.">
 <meta property="og:url" content="https://prashantsaini.runs-on.dev/reports">
-<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -26,11 +26,11 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Reports | Gyaan Hub">
 <meta name="twitter:description" content="Notes, previous year papers, video lectures and mock tests, all in one place.">
-<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
-<link rel="stylesheet" href="style.css?v=16">
-<script src="site-config.js?v=16"></script>
-<script src="theme.js?v=16"></script>
-<script src="icons.js?v=16"></script>
+<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
+<link rel="stylesheet" href="style.css?v=18">
+<script src="site-config.js?v=18"></script>
+<script src="theme.js?v=18"></script>
+<script src="icons.js?v=18"></script>
 </head>
 <body>
 <header class="nav">
@@ -64,8 +64,8 @@
   </div>
 </main>
 <script type="module">
-  import { protectPage, fsList } from "./auth.js?v=16";
-  import { materials as sample } from "./materials.js?v=16";
+  import { protectPage, fsList } from "./auth.js?v=18";
+  import { materials as sample } from "./materials.js?v=18";
   let materials = sample;
 
   const labels = { Notes: "Notes", Papers: "Papers", Video: "Videos", Test: "Mock Tests" };
@@ -99,6 +99,6 @@
     a.click(); URL.revokeObjectURL(a.href);
   });
 </script>
-<script type="module" src="layout.js?v=16"></script>
+<script type="module" src="layout.js?v=18"></script>
 </body>
 </html>

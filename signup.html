@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js"></script>
+  <script src="clean-url.js?v=18"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sign Up | Gyaan Hub</title>
@@ -18,7 +18,7 @@
 <meta property="og:title" content="Sign Up | Gyaan Hub">
 <meta property="og:description" content="Create your free Gyaan Hub account for notes, papers and mock tests.">
 <meta property="og:url" content="https://prashantsaini.runs-on.dev/signup">
-<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -26,11 +26,11 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Sign Up | Gyaan Hub">
 <meta name="twitter:description" content="Create your free Gyaan Hub account for notes, papers and mock tests.">
-<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
-<link rel="stylesheet" href="style.css?v=16">
-<script src="site-config.js?v=16"></script>
-<script src="theme.js?v=16"></script>
-<script src="icons.js?v=16"></script>
+<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
+<link rel="stylesheet" href="style.css?v=18">
+<script src="site-config.js?v=18"></script>
+<script src="theme.js?v=18"></script>
+<script src="icons.js?v=18"></script>
 </head>
 <body>
 <div class="auth-wrap">
@@ -43,11 +43,11 @@
       <div class="field"><label for="name">Full name</label><input id="name" name="fullname" type="text" placeholder="Your full name" required minlength="2" autocomplete="name"></div>
       <div class="field"><label for="email">Email address</label><input id="email" name="email" type="email" placeholder="you@example.com" required autocomplete="email"></div>
       <div class="field"><label for="password">Password (min 6 characters)</label><input id="password" name="password" type="password" placeholder="••••••••" required minlength="6" autocomplete="new-password"></div>
-      <label class="check"><input type="checkbox" id="agree" required><span>I agree to the <a href="terms.html" target="_blank" rel="noopener">Terms of Use</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</span></label>
       <button class="btn btn-gold btn-block" type="submit">Create Account</button>
+      <p class="cs-hint">Next we verify your email. Then you confirm the <a href="terms.html" target="_blank" rel="noopener">Terms of Use</a> and <a href="privacy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
     </form>
     <div class="divider">OR</div>
-    <button id="google" class="btn btn-ghost btn-block" type="button" onclick="if(!document.getElementById('agree').checked){event.stopImmediatePropagation();var m=document.getElementById('msg');m.className='msg err';m.textContent='Please accept the Terms of Use and Privacy Policy first.';}">
+    <button id="google" class="btn btn-ghost btn-block" type="button">
       <img class="gicon" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt=""> Continue with Google
     </button>
     <p class="alt">Already have an account? <a href="login.html">Sign In</a></p>
@@ -67,9 +67,9 @@
   });
 </script>
 <script type="module">
-  import { setupSignup } from "./auth.js?v=16";
+  import { setupSignup } from "./auth.js?v=18";
   setupSignup();
 </script>
-<script type="module" src="layout.js?v=16"></script>
+<script type="module" src="layout.js?v=18"></script>
 </body>
 </html>

@@ -1,9 +1,9 @@
 // Gyaan Hub - Student Community (profiles, follow, rank, messages, block / report)
 // Uses the SAME Firebase project and helpers as the rest of the site (auth.js). No new keys, no new services.
-import * as A from "./auth.js?v=16";
-import { squareAvatar } from "./media.js?v=16";
-import * as F from "./files.js?v=16";
-import * as S from "./sub.js?v=16";
+import * as A from "./auth.js?v=18";
+import { squareAvatar } from "./media.js?v=18";
+import * as F from "./files.js?v=18";
+import * as S from "./sub.js?v=18";
 
 export { A, squareAvatar, F, S };
 export const tk = S.tk;                 // blue tick placeholder: ${C.tk(uid)} next to a name
@@ -231,8 +231,8 @@ export async function searchStudents(q) {
   if (looksLikeCode(q) || UNAME_RE.test(q.replace(/^@/, "").toLowerCase())) tasks.push(findByCode(q).then(r => r.forEach(p => out.set(p.id, { ...p, byId: true }))).catch(() => {}));
   const lc = q.toLowerCase();
   const ulc = lc.replace(/^@/, "");
-  if (UNAME_RE.test(ulc)) tasks.push(A.fsWhere("profiles", [["username", ">=", ulc], ["username", "<=", ulc + "\uf8ff"]]).then(r => r.filter(p => !p.isPrivate).forEach(p => { out.set(p.id, { ...p, byId: true }); })).catch(() => {}));
-  tasks.push(A.fsWhere("profiles", [["nameLc", ">=", lc], ["nameLc", "<=", lc + "\uf8ff"]]).then(r => r.filter(p => !p.isPrivate).forEach(p => { if (!out.has(p.id)) out.set(p.id, p); })));
+  if (UNAME_RE.test(ulc)) tasks.push(A.fsWhere("profiles", [["username", ">=", ulc], ["username", "<=", ulc + "\uf8ff"]]).then(r => r.forEach(p => { out.set(p.id, { ...p, byId: true }); })).catch(() => {}));
+  tasks.push(A.fsWhere("profiles", [["nameLc", ">=", lc], ["nameLc", "<=", lc + "\uf8ff"]]).then(r => r.forEach(p => { if (!out.has(p.id)) out.set(p.id, p); })));
   await Promise.all(tasks);
   return [...out.values()];
 }
@@ -282,11 +282,11 @@ export const unfollow = (me, other) => A.fsDeletePath(["follows", followId(me, o
 export const acceptRequest = (me, follower) => A.fsSetPath(["follows", followId(follower, me)], { status: "accepted" });
 export const declineRequest = (me, follower) => A.fsDeletePath(["follows", followId(follower, me)]);
 
-// Lists. Public lists show only people whose profiles are public; private profiles are visible to the owner and accepted followers.
+// Lists. Private students are listed too (name, photo, lock) so people can find them; their posts and details stay hidden until the follow is accepted.
 export async function listFollowers(uid, isMe, prof, viewerAccepted) {
   if (isMe) return A.fsWhere("follows", [["target", "==", uid]]);
   if (prof.isPrivate) return viewerAccepted ? A.fsWhere("follows", [["target", "==", uid], ["status", "==", "accepted"]]) : null;
-  return A.fsWhere("follows", [["target", "==", uid], ["status", "==", "accepted"], ["targetPrivate", "==", false], ["followerPrivate", "==", false]]);
+  return A.fsWhere("follows", [["target", "==", uid], ["status", "==", "accepted"], ["targetPrivate", "==", false]]);
 }
 export async function listFollowing(uid, isMe, prof, viewerAccepted) {
   if (isMe) return A.fsWhere("follows", [["follower", "==", uid]]);

@@ -29,6 +29,7 @@ A static study-materials portal with Firebase Authentication. (The site name can
 - **Chat extras:** unsend and edit your own messages, and send photos, videos, audio, PDFs, APK files, ZIPs and any other document (paperclip button; you can also paste an image)
 - **Posts & reels:** upload a post (photo / video / text) or a reel (video up to 90 seconds) from Profile, edit the caption, delete, like, and see a Feed of the students you follow
 - **Voice & video calls** (v14): call buttons in every chat (WebRTC, media is peer-to-peer). Incoming calls ring on every page while the website is open, with accept / decline, mute, camera on/off and flip camera. A call log ("Voice call · 2:13", "Missed video call", "Call back") is saved in the chat
+- **v17 chat & settings:** the chat header, call cards and message box are rounded. **Chat background is now shared**: when one student sets a wallpaper (Chat menu → Chat background) both students see it live; "Only for me" keeps a private one on that phone. It is saved at `chats/{cid}/bg/current`, so **publish the updated `firestore.rules`** (new `bg` rule). **Settings** is an Instagram-style list; every item (Profile, Password & email, Active devices, Appearance, Notifications, Player, Data, Privacy, Subscription, Your data, Delete) opens as its own page (`settings#privacy`) with a back arrow
 - **Messages** is full screen on phones with an Instagram-style header, bubbles and message box
 - **Reels:** live like / comment / repost counters, Instagram-style heart, next 3 reels are preloaded
 - Responsive dark design with no build step
@@ -320,3 +321,11 @@ Create the document `admins/<your UID>` (field `role` = `admin`) in the Firebase
 3. Both students must have the website open. A static site cannot send push notifications to a closed browser.
 4. Calls use free Google STUN servers (`iceServers` in `site-config.js`). On some mobile networks with strict NAT a **TURN** server is also needed. Add your TURN details to `iceServers` in `site-config.js` (instructions are in that file).
 5. Messages: a call can only be placed to students who may message you (same privacy / block rules as chat).
+- **v18 (everything merged):**
+  - **Consent:** the cookie pop-up is gone. After the email code (or Google sign-in) a student confirms the Terms of Use and the Privacy Policy on `verify.html`. It is saved per account (this phone and `users/{uid}.consent`). Settings > Privacy > "Withdraw & sign out" removes it.
+  - **Settings:** Instagram-style list, every item opens its own page.
+  - **Chat:** shared chat background (needs the new `bg` rule in `firestore.rules`).
+  - **People lists:** one clean row with only the Follow / Follow back button. "Followed by ..." and "Follows you" are on the profile. Private students appear in followers lists and in search (their posts stay hidden). This needs the updated `follows` rule in `firestore.rules`.
+  - **Look:** system font everywhere, free-tests bar on the home page, rounder Follow / Message buttons, blue tick always on the same line as the name.
+  - **Publish `firestore.rules` again** after uploading this version.
+

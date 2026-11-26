@@ -1,5 +1,5 @@
 // Gyaan Hub - English / Hindi UI text. Add more keys here; use data-i18n="key" in HTML or t("key") in JS.
-import { getPrefs } from "./prefs.js?v=16";
+import { getPrefs } from "./prefs.js?v=18";
 
 const D = {
   en: {
@@ -37,12 +37,14 @@ const D = {
     "set.data": "Download & data usage", "set.saver": "Data saver mode", "set.saverHint": "Lower video quality (360p), PDFs render at normal resolution, no autoplay.",
     "set.clearCache": "Clear saved data on this device", "set.clearCacheHint": "Removes cached lists and resume positions stored in this browser.", "set.clear": "Clear",
     "set.privacy": "Privacy & cookies", "set.cookies": "Cookie preferences", "set.cookiesHint": "Review or change which optional cookies we may use.", "set.manage": "Manage",
-    "set.withdraw": "Withdraw consent", "set.withdrawHint": "Clears your saved choice. You will be asked again.", "set.reset": "Reset consent", "set.policies": "Policies",
+    "set.withdraw": "Withdraw consent", "set.withdrawHint": "Removes your consent and signs you out. You confirm the Terms and Privacy Policy again when you sign in.", "set.reset": "Withdraw & sign out", "set.withdrawAsk": "Withdraw consent and sign out?", "set.policies": "Policies",
     "set.yourData": "Your data", "set.export": "Export my data", "set.exportHint": "Download your profile, settings, devices, learning progress and test results as a JSON file.",
     "set.exportBtn": "Download JSON", "set.danger": "Danger zone", "set.delete": "Delete my account",
     "set.deleteHint": "Permanently deletes your account, test results and saved data. This cannot be undone.",
     "set.deleteBtn": "Delete account", "set.deleteConfirm": "Type DELETE to confirm", "set.confirmPw": "Your password",
     "set.session": "Session", "set.sessionHint": "Sign out of this device", "set.saved": "Saved.",
+    "set.search": "Search", "set.grpAccount": "Your account", "set.grpUse": "How you use Gyaan Hub", "set.grpPrivacy": "Privacy", "set.grpSubs": "Subscriptions", "set.grpData": "Your data and login",
+    "set.community": "Community and messages", "set.subTitle": "Subscription", "set.free": "Free plan", "set.noMatch": "No settings found.", "set.logoutRow": "Log out",
 
     "pl.back": "Back", "pl.speed": "Speed", "pl.quality": "Quality", "pl.auto": "Auto", "pl.download": "Download", "pl.open": "Open original",
     "pl.fullscreen": "Fullscreen", "pl.page": "Page", "pl.fit": "Fit", "pl.night": "Night mode", "pl.loading": "Loading...",
@@ -86,12 +88,14 @@ const D = {
     "set.data": "डाउनलोड और डेटा उपयोग", "set.saver": "डेटा सेवर मोड", "set.saverHint": "वीडियो क्वालिटी कम (360p), PDF सामान्य रेज़ोल्यूशन पर, ऑटोप्ले बंद।",
     "set.clearCache": "इस डिवाइस का सेव डेटा साफ़ करें", "set.clearCacheHint": "इस ब्राउज़र में रखी लिस्ट और रेज़्यूम पोज़िशन हटाता है।", "set.clear": "साफ़ करें",
     "set.privacy": "प्राइवेसी और कुकी", "set.cookies": "कुकी प्राथमिकताएँ", "set.cookiesHint": "देखें या बदलें कि कौन-सी वैकल्पिक कुकी चलें।", "set.manage": "बदलें",
-    "set.withdraw": "सहमति वापस लें", "set.withdrawHint": "आपकी सेव की गई पसंद हट जाएगी। दोबारा पूछा जाएगा।", "set.reset": "सहमति रीसेट", "set.policies": "पॉलिसी",
+    "set.withdraw": "सहमति वापस लें", "set.withdrawHint": "आपकी सहमति हट जाएगी और आप साइन आउट हो जाएँगे। दोबारा साइन इन पर नियम और प्राइवेसी पॉलिसी फिर से कन्फ़र्म करनी होगी।", "set.reset": "वापस लें और साइन आउट", "set.withdrawAsk": "सहमति वापस लेकर साइन आउट करें?", "set.policies": "पॉलिसी",
     "set.yourData": "आपका डेटा", "set.export": "मेरा डेटा एक्सपोर्ट करें", "set.exportHint": "प्रोफ़ाइल, सेटिंग्स, डिवाइस, पढ़ाई की प्रगति और टेस्ट रिज़ल्ट JSON फ़ाइल में डाउनलोड करें।",
     "set.exportBtn": "JSON डाउनलोड", "set.danger": "खतरे का क्षेत्र", "set.delete": "मेरा अकाउंट डिलीट करें",
     "set.deleteHint": "आपका अकाउंट, टेस्ट रिज़ल्ट और सेव किया डेटा हमेशा के लिए हट जाएगा। इसे वापस नहीं किया जा सकता।",
     "set.deleteBtn": "अकाउंट डिलीट करें", "set.deleteConfirm": "पक्का करने के लिए DELETE लिखें", "set.confirmPw": "आपका पासवर्ड",
     "set.session": "सेशन", "set.sessionHint": "इस डिवाइस से साइन आउट करें", "set.saved": "सेव हो गया।",
+    "set.search": "खोजें", "set.grpAccount": "आपका खाता", "set.grpUse": "आप Gyaan Hub कैसे इस्तेमाल करते हैं", "set.grpPrivacy": "प्राइवेसी", "set.grpSubs": "सब्सक्रिप्शन", "set.grpData": "आपका डेटा और लॉगिन",
+    "set.community": "कम्युनिटी और मैसेज", "set.subTitle": "सब्सक्रिप्शन", "set.free": "फ्री प्लान", "set.noMatch": "कोई सेटिंग नहीं मिली।", "set.logoutRow": "लॉग आउट",
 
     "pl.back": "वापस", "pl.speed": "स्पीड", "pl.quality": "क्वालिटी", "pl.auto": "ऑटो", "pl.download": "डाउनलोड", "pl.open": "ओरिजिनल खोलें",
     "pl.fullscreen": "फ़ुलस्क्रीन", "pl.page": "पेज", "pl.fit": "फ़िट", "pl.night": "नाइट मोड", "pl.loading": "लोड हो रहा है...",

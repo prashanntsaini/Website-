@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js"></script>
+  <script src="clean-url.js?v=18"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Community | Gyaan Hub</title>
@@ -18,7 +18,7 @@
 <meta property="og:title" content="Community | Gyaan Hub">
 <meta property="og:description" content="Find students, follow them and climb the Gyaan Hub leaderboard.">
 <meta property="og:url" content="https://prashantsaini.runs-on.dev/community">
-<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta property="og:image" content="https://prashantsaini.runs-on.dev/og-image.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -26,21 +26,21 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Community | Gyaan Hub">
 <meta name="twitter:description" content="Find students, follow them and climb the Gyaan Hub leaderboard.">
-<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png?v=1">
+<meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
 <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=16">
-<link rel="modulepreload" href="community.js?v=16">
-<link rel="modulepreload" href="media.js?v=16">
-<link rel="modulepreload" href="files.js?v=16">
-<link rel="modulepreload" href="player-utils.js?v=16">
-<link rel="stylesheet" href="style.css?v=16">
-<script src="site-config.js?v=16"></script>
-<script src="theme.js?v=16"></script>
-<script src="icons.js?v=16"></script>
+<link rel="modulepreload" href="auth.js?v=18">
+<link rel="modulepreload" href="community.js?v=18">
+<link rel="modulepreload" href="media.js?v=18">
+<link rel="modulepreload" href="files.js?v=18">
+<link rel="modulepreload" href="player-utils.js?v=18">
+<link rel="stylesheet" href="style.css?v=18">
+<script src="site-config.js?v=18"></script>
+<script src="theme.js?v=18"></script>
+<script src="icons.js?v=18"></script>
 </head>
 <body>
 <header class="nav">
@@ -79,9 +79,9 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=16";
-  import * as C from "./community.js?v=16";
-  import { applyI18n } from "./i18n.js?v=16";
+  import { protectPage } from "./auth.js?v=18";
+  import * as C from "./community.js?v=18";
+  import { applyI18n } from "./i18n.js?v=18";
   const $ = id => document.getElementById(id);
   const { esc } = C;
   let me, myProf, myStats, rows = [], course = "";   // course: "" = everyone
@@ -164,6 +164,6 @@
     applyI18n();
   });
 </script>
-<script type="module" src="layout.js?v=16"></script>
+<script type="module" src="layout.js?v=18"></script>
 </body>
 </html>
