@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=19"></script>
+  <script src="clean-url.js?v=20"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Messages | Gyaan Hub</title>
@@ -32,15 +32,15 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=19">
-<link rel="modulepreload" href="community.js?v=19">
-<link rel="modulepreload" href="media.js?v=19">
-<link rel="modulepreload" href="files.js?v=19">
-<link rel="modulepreload" href="player-utils.js?v=19">
-<link rel="stylesheet" href="style.css?v=19">
-<script src="site-config.js?v=19"></script>
-<script src="theme.js?v=19"></script>
-<script src="icons.js?v=19"></script>
+<link rel="modulepreload" href="auth.js?v=20">
+<link rel="modulepreload" href="community.js?v=20">
+<link rel="modulepreload" href="media.js?v=20">
+<link rel="modulepreload" href="files.js?v=20">
+<link rel="modulepreload" href="player-utils.js?v=20">
+<link rel="stylesheet" href="style.css?v=20">
+<script src="site-config.js?v=20"></script>
+<script src="theme.js?v=20"></script>
+<script src="icons.js?v=20"></script>
 </head>
 <body class="msg-page">
 <header class="nav">
@@ -68,10 +68,10 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=19";
-  import * as C from "./community.js?v=19";
-  import { initLightbox } from "./media.js?v=19";
-  import * as CALL from "./calls.js?v=19";
+  import { protectPage } from "./auth.js?v=20";
+  import * as C from "./community.js?v=20";
+  import { initLightbox } from "./media.js?v=20";
+  import * as CALL from "./calls.js?v=20";
   const $ = id => document.getElementById(id);
   const { esc, F } = C;
   const ic = n => window.ic ? window.ic(n) : "";
@@ -624,7 +624,7 @@
 
   protectPage(async (user, demo) => {
     me = user; setTimeout(runSched, 1500);
-    import("./accounts-ui.js?v=19").then(m => {
+    import("./accounts-ui.js?v=20").then(m => {
       const nm = m.currentAccountName(); if (nm) $("accname").textContent = nm;
       $("accbtn").addEventListener("click", m.openAccountSheet);
     });
@@ -638,6 +638,6 @@
     } catch (e) { $("list").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; }
   });
 </script>
-<script type="module" src="layout.js?v=19"></script>
+<script type="module" src="layout.js?v=20"></script>
 </body>
 </html>

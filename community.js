@@ -1,9 +1,9 @@
 // Gyaan Hub - Student Community (profiles, follow, rank, messages, block / report)
 // Uses the SAME Firebase project and helpers as the rest of the site (auth.js). No new keys, no new services.
-import * as A from "./auth.js?v=19";
-import { squareAvatar } from "./media.js?v=19";
-import * as F from "./files.js?v=19";
-import * as S from "./sub.js?v=19";
+import * as A from "./auth.js?v=20";
+import { squareAvatar } from "./media.js?v=20";
+import * as F from "./files.js?v=20";
+import * as S from "./sub.js?v=20";
 
 export { A, squareAvatar, F, S };
 export const tk = S.tk;                 // blue tick placeholder: ${C.tk(uid)} next to a name
@@ -450,11 +450,42 @@ export function viewPhoto(p) {
   document.addEventListener("keydown", key);
   document.body.appendChild(o);
 }
-// Share the profile link with the phone's share sheet (falls back to copying the link)
+// Share the profile link: our own sheet with Copy link, WhatsApp, Facebook and more
 export async function shareProfile(p, uid) {
   const link = profileLink(p.username || p.code || studentCode(uid));
-  const data = { title: (p.name || "Student") + " on Gyaan Hub", text: "Follow " + (p.name || "this student") + " on Gyaan Hub", url: link };
-  if (navigator.share) { try { await navigator.share(data); return; } catch (e) { if (e && e.name === "AbortError") return; } }
-  try { await navigator.clipboard.writeText(link); toast("Profile link copied", 2200); }
-  catch (e) { window.prompt("Copy this link:", link); }
+  const title = (p.name || "Student") + " on Gyaan Hub", text = "Follow " + (p.name || "this student") + " on Gyaan Hub";
+  const u = encodeURIComponent(link), t = encodeURIComponent(text), both = encodeURIComponent(text + " " + link);
+  const apps = [
+    ["WhatsApp", "#25d366", "WA", "https://wa.me/?text=" + both],
+    ["Facebook", "#1877f2", "f", "https://www.facebook.com/sharer/sharer.php?u=" + u],
+    ["Instagram", "#d62976", "IG", "https://www.instagram.com/direct/inbox/"],
+    ["Telegram", "#229ed9", "TG", "https://t.me/share/url?url=" + u + "&text=" + t],
+    ["X", "#000", "X", "https://twitter.com/intent/tweet?url=" + u + "&text=" + t],
+    ["LinkedIn", "#0a66c2", "in", "https://www.linkedin.com/sharing/share-offsite/?url=" + u],
+    ["Snapchat", "#f7c600", "SC", "https://www.snapchat.com/scan?attachmentUrl=" + u],
+    ["Email", "#6b7280", "@", "mailto:?subject=" + encodeURIComponent(title) + "&body=" + both],
+    ["SMS", "#16a34a", "SMS", "sms:?body=" + both]
+  ];
+  document.querySelectorAll(".sh-ov").forEach(x => x.remove());
+  const md = document.createElement("div");
+  md.className = "cm-modal sheet sh-ov";
+  md.innerHTML = `<div class="cm-card"><h2>Share profile<button class="cm-x" type="button" aria-label="Close">✕</button></h2><div class="sh-grid">
+    <button type="button" data-copy><i style="background:#4f6bff">🔗</i><span>Copy link</span></button>
+    ${apps.map(([n, c, l, href]) => `<a href="${esc(href)}" target="_blank" rel="noopener" data-app="${n}"><i style="background:${c}">${l}</i><span>${n}</span></a>`).join("")}
+    ${navigator.share ? `<button type="button" data-more><i style="background:#374151">•••</i><span>More</span></button>` : ""}
+  </div></div>`;
+  const close = () => md.remove();
+  const copy = async msg => {
+    try { await navigator.clipboard.writeText(link); toast(msg, 3500); }
+    catch (e) { window.prompt("Copy this link:", link); }
+  };
+  md.addEventListener("click", async e => {
+    if (e.target === md || e.target.closest(".cm-x")) return close();
+    const b = e.target.closest("[data-copy],[data-more],[data-app]"); if (!b) return;
+    if (b.hasAttribute("data-copy")) await copy("Profile link copied");
+    else if (b.hasAttribute("data-more")) { try { await navigator.share({ title, text, url: link }); } catch (x) {} }
+    else if (b.dataset.app === "Instagram") await copy("Link copied. Paste it in your Instagram chat.");   // Instagram has no link-share URL
+    setTimeout(close, 50);
+  });
+  document.body.appendChild(md);
 }

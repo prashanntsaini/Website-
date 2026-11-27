@@ -1,6 +1,6 @@
 // Gyaan Hub - account switcher sheet (several accounts on one device, like Instagram)
-import { getAccounts, accountSlot, switchAccount, startAddAccount, logout, maxAccounts, currentUser } from "./auth.js?v=19";
-import { t } from "./i18n.js?v=19";
+import { getAccounts, accountSlot, switchAccount, startAddAccount, logout, maxAccounts, currentUser } from "./auth.js?v=20";
+import { t } from "./i18n.js?v=20";
 
 const esc = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const label = a => a.name || (a.email ? a.email.split("@")[0] : "Account");
