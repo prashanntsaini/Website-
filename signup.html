@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=24"></script>
+  <script src="clean-url.js?v=25"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sign Up | Gyaan Hub</title>
@@ -27,10 +27,10 @@
 <meta name="twitter:title" content="Sign Up | Gyaan Hub">
 <meta name="twitter:description" content="Create your free Gyaan Hub account for notes, papers and mock tests.">
 <meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
-<link rel="stylesheet" href="style.css?v=24">
-<script src="site-config.js?v=24"></script>
-<script src="theme.js?v=24"></script>
-<script src="icons.js?v=24"></script>
+<link rel="stylesheet" href="style.css?v=25">
+<script src="site-config.js?v=25"></script>
+<script src="theme.js?v=25"></script>
+<script src="icons.js?v=25"></script>
 </head>
 <body>
 <div class="auth-wrap">
@@ -68,13 +68,13 @@
   });
 </script>
 <script type="module">
-  import { setupSignup, isAddingAccount, cancelAddAccount } from "./auth.js?v=24";
+  import { setupSignup, isAddingAccount, cancelAddAccount } from "./auth.js?v=25";
   setupSignup();
   if (isAddingAccount()) {
     document.getElementById("add-banner").hidden = false;
     document.getElementById("add-cancel").addEventListener("click", e => { e.preventDefault(); cancelAddAccount(); });
   }
 </script>
-<script type="module" src="layout.js?v=24"></script>
+<script type="module" src="layout.js?v=25"></script>
 </body>
 </html>

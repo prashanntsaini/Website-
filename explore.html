@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=24"></script>
+  <script src="clean-url.js?v=25"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Free Online Tests & Study Material | Gyaan Hub</title>
@@ -27,10 +27,10 @@
 <meta name="twitter:title" content="Free Online Tests & Study Material | Gyaan Hub">
 <meta name="twitter:description" content="See the free online mock tests and study material (notes, previous year papers, video lectures) on Gyaan Hub. Sign in to start.">
 <meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
-<link rel="stylesheet" href="style.css?v=24">
-<script src="site-config.js?v=24"></script>
-<script src="theme.js?v=24"></script>
-<script src="icons.js?v=24"></script>
+<link rel="stylesheet" href="style.css?v=25">
+<script src="site-config.js?v=25"></script>
+<script src="theme.js?v=25"></script>
+<script src="icons.js?v=25"></script>
 </head>
 <body>
 <header class="nav">
@@ -93,7 +93,7 @@
 </footer>
 
 <script type="module">
-  import { fsGet, onUser } from "./auth.js?v=24";
+  import { fsGet, onUser } from "./auth.js?v=25";
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   let signedIn = false, tests = [], mats = [];
@@ -141,6 +141,6 @@
     renderTests(); renderMats();
   })();
 </script>
-<script type="module" src="layout.js?v=24"></script>
+<script type="module" src="layout.js?v=25"></script>
 </body>
 </html>

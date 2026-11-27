@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=24"></script>
+  <script src="clean-url.js?v=25"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Community reports | Gyaan Hub</title>
@@ -27,10 +27,10 @@
 <meta name="twitter:title" content="Community reports | Gyaan Hub">
 <meta name="twitter:description" content="Notes, previous year papers, video lectures and mock tests, all in one place.">
 <meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
-<link rel="stylesheet" href="style.css?v=24">
-<script src="site-config.js?v=24"></script>
-<script src="theme.js?v=24"></script>
-<script src="icons.js?v=24"></script>
+<link rel="stylesheet" href="style.css?v=25">
+<script src="site-config.js?v=25"></script>
+<script src="theme.js?v=25"></script>
+<script src="icons.js?v=25"></script>
 </head>
 <body>
 <header class="nav">
@@ -50,8 +50,8 @@
 </main>
 
 <script type="module">
-  import { protectPage, checkAdmin, fsRecent, fsSetPath, fsDelete, toMs } from "./auth.js?v=24";
-  import { esc, errText, toast } from "./community.js?v=24";
+  import { protectPage, checkAdmin, fsRecent, fsSetPath, fsDelete, toMs } from "./auth.js?v=25";
+  import { esc, errText, toast } from "./community.js?v=25";
   const $ = id => document.getElementById(id);
   let rows = [], filter = "open";
 
@@ -69,7 +69,7 @@
             <button class="btn btn-ghost" data-a="del" data-id="${esc(r.id)}">Delete</button>
           </div></div>
         ${r.details ? `<p style="margin:10px 0 0" data-keep>${esc(r.details)}</p>` : ""}
-        ${(r.evidence || []).length ? `<div style="margin-top:10px;font-size:15px;color:var(--muted)"><b>Chat evidence</b>${r.evidence.map(e => `<div>${e.from === "reported" ? "⚠️ Reported" : "Reporter"}: <span data-keep>${esc(e.text)}</span></div>`).join("")}</div>` : ""}
+        ${(r.evidence || []).length ? `<div style="margin-top:10px;font-size:17px;color:var(--muted)"><b>Chat evidence</b>${r.evidence.map(e => `<div>${e.from === "reported" ? "⚠️ Reported" : "Reporter"}: <span data-keep>${esc(e.text)}</span></div>`).join("")}</div>` : ""}
       </div>`).join("") : `<div class="empty">No ${filter} reports.</div>`;
   }
 
@@ -100,6 +100,6 @@
     catch (e) { $("out").innerHTML = `<div class="empty">${esc(errText(e))}</div>`; }
   });
 </script>
-<script type="module" src="layout.js?v=24"></script>
+<script type="module" src="layout.js?v=25"></script>
 </body>
 </html>

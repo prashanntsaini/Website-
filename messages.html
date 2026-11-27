@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=24"></script>
+  <script src="clean-url.js?v=25"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Messages | Gyaan Hub</title>
@@ -32,15 +32,15 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=24">
-<link rel="modulepreload" href="community.js?v=24">
-<link rel="modulepreload" href="media.js?v=24">
-<link rel="modulepreload" href="files.js?v=24">
-<link rel="modulepreload" href="player-utils.js?v=24">
-<link rel="stylesheet" href="style.css?v=24">
-<script src="site-config.js?v=24"></script>
-<script src="theme.js?v=24"></script>
-<script src="icons.js?v=24"></script>
+<link rel="modulepreload" href="auth.js?v=25">
+<link rel="modulepreload" href="community.js?v=25">
+<link rel="modulepreload" href="media.js?v=25">
+<link rel="modulepreload" href="files.js?v=25">
+<link rel="modulepreload" href="player-utils.js?v=25">
+<link rel="stylesheet" href="style.css?v=25">
+<script src="site-config.js?v=25"></script>
+<script src="theme.js?v=25"></script>
+<script src="icons.js?v=25"></script>
 </head>
 <body class="msg-page">
 <header class="nav">
@@ -68,10 +68,10 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=24";
-  import * as C from "./community.js?v=24";
-  import { initLightbox } from "./media.js?v=24";
-  import * as CALL from "./calls.js?v=24";
+  import { protectPage } from "./auth.js?v=25";
+  import * as C from "./community.js?v=25";
+  import { initLightbox } from "./media.js?v=25";
+  import * as CALL from "./calls.js?v=25";
   const $ = id => document.getElementById(id);
   const { esc, F } = C;
   const ic = n => window.ic ? window.ic(n) : "";
@@ -389,7 +389,7 @@
     const t8 = new Date(); t8.setDate(t8.getDate() + 1); t8.setHours(8, 0, 0, 0);
     md.innerHTML = `<div class="cm-card"><h2>Send options<button class="cm-x" aria-label="Close">✕</button></h2>
       <div class="sm-list"><button type="button" data-a="now">${ic("send")} Send now</button>
-      ${pendFile ? `<p class="cm-sub" style="font-size:15px;margin:8px 4px 0">Photos and files cannot be scheduled. Remove the file to schedule a text message.</p>` : `<button type="button" data-a="h1">${ic("hourglass")} Send in 1 hour</button><button type="button" data-a="t8">${ic("moon")} Send tomorrow at 8:00 AM</button><button type="button" data-a="pick">${ic("pencil")} Pick date and time...</button>`}</div></div>`;
+      ${pendFile ? `<p class="cm-sub" style="font-size:17px;margin:8px 4px 0">Photos and files cannot be scheduled. Remove the file to schedule a text message.</p>` : `<button type="button" data-a="h1">${ic("hourglass")} Send in 1 hour</button><button type="button" data-a="t8">${ic("moon")} Send tomorrow at 8:00 AM</button><button type="button" data-a="pick">${ic("pencil")} Pick date and time...</button>`}</div></div>`;
     document.body.appendChild(md);
     const close = () => md.remove();
     md.addEventListener("click", e => {
@@ -409,7 +409,7 @@
     const min = new Date(Date.now() + 60000);
     const def = new Date(Date.now() + 3600000);
     md.innerHTML = `<div class="cm-card"><h2>Schedule a message<button class="cm-x" aria-label="Close">✕</button></h2>
-      <p class="cm-sub" style="font-size:15px">To: <b>${esc(cur.prof.name)}</b></p>
+      <p class="cm-sub" style="font-size:17px">To: <b>${esc(cur.prof.name)}</b></p>
       <div class="cm-field"><label>Message</label><textarea id="sc-t" maxlength="1000" rows="3" placeholder="Type your message"></textarea></div>
       <div class="cm-field"><label>Send at</label><input id="sc-d" type="datetime-local"></div>
       <div class="cm-msg" id="sc-m"></div>
@@ -424,7 +424,7 @@
     t.value = ta.value; d.min = localInput(min); d.value = localInput(def);
     const list = () => {
       const mine = sLoad().filter(x => x.to === cur.uid).sort((a, b) => a.at - b.at);
-      md.querySelector("#sc-list").innerHTML = mine.length ? `<h3 style="font-size:1rem;margin:16px 0 6px">Waiting to be sent</h3>` + mine.map(x => `<div class="sc-row"><div class="grow"><b data-keep>${esc(x.text)}</b><small>${new Date(x.at).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small></div><button class="btn btn-ghost btn-sm" data-cancel="${esc(x.id)}" type="button">Cancel</button></div>`).join("") : "";
+      md.querySelector("#sc-list").innerHTML = mine.length ? `<h3 style="font-size:18px;margin:16px 0 6px">Waiting to be sent</h3>` + mine.map(x => `<div class="sc-row"><div class="grow"><b data-keep>${esc(x.text)}</b><small>${new Date(x.at).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })}</small></div><button class="btn btn-ghost btn-sm" data-cancel="${esc(x.id)}" type="button">Cancel</button></div>`).join("") : "";
     };
     list();
     md.querySelector("#sc-list").addEventListener("click", e => { const b = e.target.closest("[data-cancel]"); if (!b) return; sSave(sLoad().filter(x => x.id !== b.dataset.cancel)); list(); });
@@ -442,7 +442,7 @@
     const m = document.createElement("div");
     m.className = "cm-modal";
     m.innerHTML = `<div class="cm-card"><h2>Report ${esc(cur.prof.name)}<button class="cm-x" aria-label="Close">✕</button></h2>
-      <p class="cm-sub" style="font-size:15px">The last few messages of this chat are sent with your report so our team can review it.</p>
+      <p class="cm-sub" style="font-size:17px">The last few messages of this chat are sent with your report so our team can review it.</p>
       <div class="cm-field"><label>What is the problem?</label><select id="r-why"><option>Abusive or rude behaviour</option><option>Inappropriate content</option><option>Spam</option><option>Asking for personal information</option><option>Other</option></select></div>
       <div class="cm-field"><label>Details (optional)</label><textarea id="r-txt" maxlength="500" rows="3"></textarea></div>
       <div class="cm-msg" id="r-msg"></div>
@@ -571,7 +571,7 @@
     md.className = "cm-modal sheet";
     const b0 = bgGet();
     md.innerHTML = `<div class="cm-card"><h2>Chat background<button class="cm-x" aria-label="Close">✕</button></h2>
-      <p class="cm-sub" style="font-size:15px;margin:-6px 0 10px">Visible to both of you in this chat.</p>
+      <p class="cm-sub" style="font-size:17px;margin:-6px 0 10px">Visible to both of you in this chat.</p>
       <div class="bg-grid" id="bg-g"><button type="button" class="bg-sw bg-def" data-i="-1" aria-label="Default"><span>Default</span></button>${BG_PRESETS.map((p, i) => `<button type="button" class="bg-sw" data-i="${i}" style="background:${p[1]}" aria-label="${p[0]}"><span>${p[0]}</span></button>`).join("")}</div>
       <div class="cm-actions" style="margin:14px 0 6px"><button class="btn btn-ghost" id="bg-up" type="button">${ic("image")} Choose your own photo</button><input type="file" id="bg-file" accept="image/*" hidden></div>
       <div class="cm-field" id="bg-dw" ${b0 && b0.k === "img" ? "" : "hidden"}><label for="bg-dim">Darken photo</label><input id="bg-dim" type="range" min="0" max="70" step="5" value="${b0 && b0.k === "img" ? (+b0.dim || 0) : 20}"></div>
@@ -626,7 +626,7 @@
 
   protectPage(async (user, demo) => {
     me = user; setTimeout(runSched, 1500);
-    import("./accounts-ui.js?v=24").then(m => {
+    import("./accounts-ui.js?v=25").then(m => {
       const nm = m.currentAccountName(); if (nm) $("accname").textContent = nm;
       $("accbtn").addEventListener("click", m.openAccountSheet);
     });
@@ -640,6 +640,6 @@
     } catch (e) { $("list").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; }
   });
 </script>
-<script type="module" src="layout.js?v=24"></script>
+<script type="module" src="layout.js?v=25"></script>
 </body>
 </html>

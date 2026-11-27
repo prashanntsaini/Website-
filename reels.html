@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=24"></script>
+  <script src="clean-url.js?v=25"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Reels | Gyaan Hub</title>
@@ -32,13 +32,13 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=24">
-<link rel="modulepreload" href="community.js?v=24">
-<link rel="modulepreload" href="files.js?v=24">
-<link rel="stylesheet" href="style.css?v=24">
-<script src="site-config.js?v=24"></script>
-<script src="theme.js?v=24"></script>
-<script src="icons.js?v=24"></script>
+<link rel="modulepreload" href="auth.js?v=25">
+<link rel="modulepreload" href="community.js?v=25">
+<link rel="modulepreload" href="files.js?v=25">
+<link rel="stylesheet" href="style.css?v=25">
+<script src="site-config.js?v=25"></script>
+<script src="theme.js?v=25"></script>
+<script src="icons.js?v=25"></script>
 <style>
   html,body{height:100%;overflow:hidden;background:#000}
   body{background-image:none}
@@ -65,11 +65,11 @@
   .rv-ib{width:40px;height:40px;border-radius:50%;border:0;background:rgba(0,0,0,.4);color:#fff;display:grid;place-items:center;cursor:pointer;backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent}
   .rv-ib .vi svg{width:22px;height:22px}
   .rv-seg{display:flex;gap:4px;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);border-radius:999px;padding:4px}
-  .rv-seg button{border:0;background:none;color:rgba(255,255,255,.75);font:inherit;font-weight:600;font-size:15px;padding:6px 16px;border-radius:999px;cursor:pointer}
+  .rv-seg button{border:0;background:none;color:rgba(255,255,255,.75);font:inherit;font-weight:600;font-size:17px;padding:6px 16px;border-radius:999px;cursor:pointer}
   .rv-seg button.on{background:#fff;color:#111}
   /* right action rail */
   .rv-rail{position:absolute;right:8px;bottom:calc(86px + env(safe-area-inset-bottom));z-index:5;display:flex;flex-direction:column;align-items:center;gap:18px}
-  .rv-btn{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:48px;padding:2px 0;background:none;border:0;color:#fff;font:inherit;font-size:14px;font-weight:700;cursor:pointer;text-shadow:0 1px 4px rgba(0,0,0,.75);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+  .rv-btn{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:48px;padding:2px 0;background:none;border:0;color:#fff;font:inherit;font-size:16px;font-weight:700;cursor:pointer;text-shadow:0 1px 4px rgba(0,0,0,.75);-webkit-tap-highlight-color:transparent;touch-action:manipulation}
   .rv-btn .vi{width:34px;height:34px}
   .rv-btn .vi svg{width:34px;height:34px;stroke-width:1.9;filter:drop-shadow(0 1px 4px rgba(0,0,0,.65));transition:transform .15s}
   .rv-btn:active .vi svg{transform:scale(.8)}
@@ -84,14 +84,14 @@
   .rv-info{position:absolute;left:0;right:76px;bottom:calc(18px + env(safe-area-inset-bottom));z-index:5;padding:0 14px;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.7)}
   .rv-by{display:flex;align-items:center;gap:10px;margin-bottom:10px}
   .rv-by .rv-ava{position:relative;display:block;flex:none;width:44px;height:44px;border-radius:50%;padding:2px;background:linear-gradient(45deg,#feda75,#fa7e1e,#d62976,#962fbf,#4f5bd5)}
-  .rv-by .rv-ava .avatar{width:100%;height:100%;border:2px solid #000;box-sizing:border-box;font-size:1rem}
+  .rv-by .rv-ava .avatar{width:100%;height:100%;border:2px solid #000;box-sizing:border-box;font-size:18px}
   .rv-by .rv-who{display:flex;flex-direction:column;min-width:0;line-height:1.2}
-  .rv-by .rv-who b{font-weight:700;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46vw}
-  .rv-by .rv-who small{font-size:13px;opacity:.8;font-weight:500}
+  .rv-by .rv-who b{font-weight:700;font-size:18px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:46vw}
+  .rv-by .rv-who small{font-size:15px;opacity:.8;font-weight:500}
   .rv-by .rv-name{color:#fff}
-  .rv-fol{border:1px solid #2f6fe0;background:#2f6fe0;color:#fff;border-radius:8px;font:inherit;font-weight:700;font-size:14px;padding:5px 14px;cursor:pointer;margin-left:2px}
+  .rv-fol{border:1px solid #2f6fe0;background:#2f6fe0;color:#fff;border-radius:8px;font:inherit;font-weight:700;font-size:16px;padding:5px 14px;cursor:pointer;margin-left:2px}
   .rv-fol[disabled]{opacity:.6}
-  .rv-cap{font-size:15px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;cursor:pointer}
+  .rv-cap{font-size:17px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-wrap;word-break:break-word;cursor:pointer}
   .rv-cap.open{-webkit-line-clamp:unset;max-height:30vh;overflow:auto;display:block}
   /* empty / loading */
   .rv-msg{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:#cfd3e8;padding:30px;gap:12px;align-content:center;z-index:2}
@@ -128,8 +128,8 @@
 </div>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=24";
-  import * as C from "./community.js?v=24";
+  import { protectPage } from "./auth.js?v=25";
+  import * as C from "./community.js?v=25";
   const $ = id => document.getElementById(id);
   const { esc } = C;
   const ic = (n, c) => window.ic ? window.ic(n, c) : "";
@@ -402,7 +402,7 @@
 
   protectPage(async u => {
     me = u;
-    import("./calls.js?v=24").then(m => m.initCalls(u)).catch(() => {});
+    import("./calls.js?v=25").then(m => m.initCalls(u)).catch(() => {});
     await loadFollowing();
     build("explore");
   });
