@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=23"></script>
+  <script src="clean-url.js?v=24"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel | Gyaan Hub</title>
@@ -27,16 +27,16 @@
 <meta name="twitter:title" content="Admin Panel | Gyaan Hub">
 <meta name="twitter:description" content="Notes, previous year papers, video lectures and mock tests, all in one place.">
 <meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
-<link rel="stylesheet" href="style.css?v=23">
-<script src="site-config.js?v=23"></script>
-<script src="theme.js?v=23"></script>
-<script src="icons.js?v=23"></script>
+<link rel="stylesheet" href="style.css?v=24">
+<script src="site-config.js?v=24"></script>
+<script src="theme.js?v=24"></script>
+<script src="icons.js?v=24"></script>
 </head>
 <body>
 <header class="nav">
   <div class="container">
     <a href="index.html" class="logo"><i>G</i> Gyaan Hub</a>
-    <div class="nav-cta"><span id="who" style="color:var(--muted);font-size:.9rem"></span></div>
+    <div class="nav-cta"><span id="who" style="color:var(--muted);font-size:15px"></span></div>
   </div>
 </header>
 
@@ -86,7 +86,7 @@
           <h2>⚡ Bulk import questions</h2>
           <p class="sub" style="margin-bottom:14px">Paste all your questions (or choose a file). They are filled into the form below. Check them, then press <b>Save test</b>. Works with <b>text, JSON, CSV and HTML</b>.</p>
           <details style="margin-bottom:14px"><summary style="cursor:pointer;color:var(--gold)">Show formats</summary>
-<pre style="white-space:pre-wrap;font-size:.8rem;color:var(--muted);margin:10px 0 0">TEXT / HTML (4 options A-D, then the answer):
+<pre style="white-space:pre-wrap;font-size:14px;color:var(--muted);margin:10px 0 0">TEXT / HTML (4 options A-D, then the answer):
 1. What is the capital of France?
 A) Berlin
 B) Paris
@@ -197,14 +197,14 @@ question,A,B,C,D,answer
 </main>
 
 <script type="module">
-  import { protectPage, adminDiag, fsList, fsRecent, fsSave, fsDelete, fsGroup, toMs, loadSite, saveSite } from "./auth.js?v=23";
-  import { isSafeUrl, normalizeImgUrl } from "./player-utils.js?v=23";
-  import { parseQuestions } from "./qimport.js?v=23";
-  import { uploadQuestionImage, hydrate, initLightbox } from "./media.js?v=23";
+  import { protectPage, adminDiag, fsList, fsRecent, fsSave, fsDelete, fsGroup, toMs, loadSite, saveSite } from "./auth.js?v=24";
+  import { isSafeUrl, normalizeImgUrl } from "./player-utils.js?v=24";
+  import { parseQuestions } from "./qimport.js?v=24";
+  import { uploadQuestionImage, hydrate, initLightbox } from "./media.js?v=24";
   initLightbox();
-  import { materials as sample } from "./materials.js?v=23";
-  import * as SUB from "./sub.js?v=23";
-  import * as C from "./community.js?v=23";
+  import { materials as sample } from "./materials.js?v=24";
+  import * as SUB from "./sub.js?v=24";
+  import * as C from "./community.js?v=24";
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -559,6 +559,6 @@ question,A,B,C,D,answer
     catch (e) { note("Could not load data: " + (e.code || e.message) + ". Check that the Firestore rules are published.", "err"); }
   });
 </script>
-<script type="module" src="layout.js?v=23"></script>
+<script type="module" src="layout.js?v=24"></script>
 </body>
 </html>

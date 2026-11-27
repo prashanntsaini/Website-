@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=23"></script>
+  <script src="clean-url.js?v=24"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile | Gyaan Hub</title>
@@ -32,15 +32,15 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=23">
-<link rel="modulepreload" href="community.js?v=23">
-<link rel="modulepreload" href="media.js?v=23">
-<link rel="modulepreload" href="files.js?v=23">
-<link rel="modulepreload" href="player-utils.js?v=23">
-<link rel="stylesheet" href="style.css?v=23">
-<script src="site-config.js?v=23"></script>
-<script src="theme.js?v=23"></script>
-<script src="icons.js?v=23"></script>
+<link rel="modulepreload" href="auth.js?v=24">
+<link rel="modulepreload" href="community.js?v=24">
+<link rel="modulepreload" href="media.js?v=24">
+<link rel="modulepreload" href="files.js?v=24">
+<link rel="modulepreload" href="player-utils.js?v=24">
+<link rel="stylesheet" href="style.css?v=24">
+<script src="site-config.js?v=24"></script>
+<script src="theme.js?v=24"></script>
+<script src="icons.js?v=24"></script>
 </head>
 <body class="pf-page">
 <header class="nav">
@@ -58,9 +58,9 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=23";
-  import * as C from "./community.js?v=23";
-  import { initLightbox } from "./media.js?v=23";
+  import { protectPage } from "./auth.js?v=24";
+  import * as C from "./community.js?v=24";
+  import { initLightbox } from "./media.js?v=24";
   initLightbox();
   const $ = id => document.getElementById(id);
   const { esc } = C;
@@ -446,7 +446,7 @@
   /* ---------- find people (name or username) ---------- */
   function findTab() {
     $("panel").lastElementChild.innerHTML = `<input class="cm-search" id="q" type="search" placeholder="Search by name or username (e.g. ${C.handleOf(myProf || prof)})" maxlength="40" autocomplete="off">
-      <p class="cm-sub" style="font-size:.82rem;margin:8px 0 12px">Name search shows public profiles. Private profiles can only be found with their exact username.</p>
+      <p class="cm-sub" style="font-size:14px;margin:8px 0 12px">Name search shows public profiles. Private profiles can only be found with their exact username.</p>
       <div id="found" class="cm-list"></div>
       <h3 style="margin:24px 0 10px">Suggested for you</h3><div id="sugg" class="cm-list"><div class="skel"></div></div>`;
     let timer;
@@ -490,7 +490,7 @@
     let av = prof.avatar || "";
     const s = stats || {};
     const m = modal(`<h2>${welcome ? "Set up your profile" : "Edit profile"}<button class="cm-x" aria-label="Close">✕</button></h2>
-      ${welcome ? '<p class="cm-sub" style="font-size:.9rem">Choose how you appear to other students. You can change all of this later.</p>' : ""}
+      ${welcome ? '<p class="cm-sub" style="font-size:15px">Choose how you appear to other students. You can change all of this later.</p>' : ""}
       <div class="cm-field" style="display:flex;gap:14px;align-items:center"><div id="e-av"></div>
         <div><button class="btn btn-ghost" id="e-up" type="button">${ic("camera")} Upload photo</button> <button class="btn btn-ghost" id="e-rm" type="button">Remove</button><input type="file" id="e-file" accept="image/*" hidden></div></div>
       <div class="cm-field"><label>Or pick an avatar</label><div class="cm-presets" id="e-pre"></div></div>
@@ -649,6 +649,6 @@
     }
   });
 </script>
-<script type="module" src="layout.js?v=23"></script>
+<script type="module" src="layout.js?v=24"></script>
 </body>
 </html>
