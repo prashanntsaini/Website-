@@ -1,6 +1,6 @@
 // Gyaan Hub - shared layout: left slide-out menu + consent guard + site name + preference sync
-import { getPrefs, savePrefs, mergeRemote } from "./prefs.js?v=21";
-import { t, applyI18n } from "./i18n.js?v=21";
+import { getPrefs, savePrefs, mergeRemote } from "./prefs.js?v=23";
+import { t, applyI18n } from "./i18n.js?v=23";
 let page = location.pathname.split("/").pop() || "index.html";
 if (!/\.html?$/i.test(page)) page += ".html";          // clean URLs: /messages -> messages.html
 const linkSel = h => `a[href="${h}"], a[href="${h.replace(/\.html$/, "")}"]`;
@@ -12,12 +12,8 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;",
 const items = [
   ["index.html", "home", "nav.home"],
   ["dashboard.html", "library", "nav.dashboard"],
-  ["explore.html", "search", "nav.free"],
-  ["tests.html", "notes", "nav.tests"],
   ["reels.html", "film", "nav.reels"],
-  ["community.html", "users", "nav.community"],
   ["messages.html", "chat", "nav.messages"],
-  ["reports.html", "chart", "nav.reports"],
   ["settings.html", "gear", "nav.settings"],
   ["profile.html", "user", "nav.profile"]      // Profile is the last item of the menu
 ];
@@ -27,6 +23,19 @@ const initials = u => ((u.displayName || u.email || "?").trim()[0] || "?").toUpp
 function avatarHtml(u, cls = "") {
   let a = ""; try { a = localStorage.getItem(avatarKey(u.uid)) || ""; } catch (e) {}
   return a ? `<img class="avatar ${cls}" src="${a}" alt="">` : `<span class="avatar ${cls}">${esc(initials(u))}</span>`;
+}
+
+// Premium "Switch account" button: stacked avatars of the accounts on this device + chevron (Instagram / Facebook style)
+function switchBtn(a) {
+  const list = a.getAccounts(), cur = a.accountSlot();
+  const ord = [...list.filter(x => x.slot === cur), ...list.filter(x => x.slot !== cur)].slice(0, 3);
+  const av = x => {
+    let img = ""; try { img = localStorage.getItem(avatarKey(x.uid)) || ""; } catch (e) {}
+    const nm = x.name || (x.email ? x.email.split("@")[0] : "?");
+    return img ? `<img class="avatar" src="${img}" alt="">` : `<span class="avatar">${esc((nm[0] || "?").toUpperCase())}</span>`;
+  };
+  const sub = list.length > 1 ? list.length + " accounts on this device" : "Add or switch accounts";
+  return `<button class="drawer-switch" id="drawer-switch" type="button"><span class="acc-stack" aria-hidden="true">${ord.map(av).join("")}</span><span class="ds-t"><b>${t("acc.switch")}</b><small>${sub}</small></span><span class="ds-ch" aria-hidden="true">${window.ic ? window.ic("chevron") : "›"}</span></button>`;
 }
 
 function buildMenu() {
@@ -75,12 +84,12 @@ function buildMenu() {
   const box = drawer.querySelector("#drawer-auth");
   const signedOut = () => { box.innerHTML = `<a href="login.html" class="btn btn-ghost btn-block">${t("nav.signin")}</a><a href="signup.html" class="btn btn-gold btn-block">${t("nav.signup")}</a>`; };
   const paintUser = (u, a) => {
-    box.innerHTML = `<div class="who-row">${avatarHtml(u)}<div class="who">${t("nav.signedAs")}<br><b>${esc(u.displayName || u.email || "")}</b><small>${esc(u.displayName ? (u.email || "") : "")}</small></div></div>${a.isDemo() ? "" : `<button class="btn btn-ghost btn-block" id="drawer-switch">⇄ ${t("acc.switch")}${a.getAccounts().length > 1 ? " (" + a.getAccounts().length + ")" : ""}</button>`}<button class="btn btn-ghost btn-block" id="drawer-logout">${t("nav.logout")}</button>`;
+    box.innerHTML = `<div class="who-row">${avatarHtml(u)}<div class="who">${t("nav.signedAs")}<br><b>${esc(u.displayName || u.email || "")}</b><small>${esc(u.displayName ? (u.email || "") : "")}</small></div></div>${a.isDemo() ? "" : switchBtn(a)}<button class="btn btn-ghost btn-block" id="drawer-logout">${t("nav.logout")}</button>`;
     box.querySelector("#drawer-logout").addEventListener("click", a.logout);
     const sw = box.querySelector("#drawer-switch");
-    if (sw) sw.addEventListener("click", () => import("./accounts-ui.js?v=21").then(m => m.openAccountSheet()));
+    if (sw) sw.addEventListener("click", () => import("./accounts-ui.js?v=23").then(m => m.openAccountSheet()));
   };
-  import("./auth.js?v=21").then(a => a.onUser(u => {
+  import("./auth.js?v=23").then(a => a.onUser(u => {
     if (!u) return signedOut();
     paintUser(u, a);
     window.addEventListener("avatar-changed", () => paintUser(u, a));
@@ -94,7 +103,7 @@ function buildMenu() {
       });
       let tm; window.addEventListener("prefs-saved", e => { clearTimeout(tm); tm = setTimeout(() => a.savePrefsUp(e.detail).catch(() => {}), 800); });
     }
-    if (!a.isDemo()) import("./community.js?v=21").then(async c => {
+    if (!a.isDemo()) import("./community.js?v=23").then(async c => {
       const [unread, reqs] = await Promise.all([c.unreadCount(u.uid), a.fsWhere("follows", [["target", "==", u.uid], ["status", "==", "pending"]]).then(r => r.length).catch(() => 0)]);
       const badge = (href, n) => { const el = n && drawer.querySelector(".drawer-nav " + linkSel(href).replace(", a[", ", .drawer-nav a[")); if (el && !el.querySelector(".nav-badge")) el.insertAdjacentHTML("beforeend", `<i class="nav-badge">${n > 9 ? "9+" : n}</i>`); };
       badge("messages.html", unread); badge("profile.html", reqs);
@@ -102,7 +111,7 @@ function buildMenu() {
       tb("messages.html", unread);
     }).catch(() => {});
     // incoming voice / video calls ring on every page
-    if (!a.isDemo()) import("./calls.js?v=21").then(m => m.initCalls(u)).catch(() => {});
+    if (!a.isDemo()) import("./calls.js?v=23").then(m => m.initCalls(u)).catch(() => {});
     a.checkAdmin(u).then(ok => {
       const s = drawer.querySelector(linkSel("settings.html"));
       if (ok && s && !drawer.querySelector(linkSel("admin.html"))) s.insertAdjacentHTML("afterend", `<a href="admin.html" class="${page === "admin.html" ? "active" : ""}"><span>${window.ic("tools")}</span><em data-i18n="nav.admin">${t("nav.admin")}</em></a><a href="moderation.html" class="${page === "moderation.html" ? "active" : ""}"><span>${window.ic("flag")}</span><em>Community reports</em></a>`);
@@ -174,7 +183,7 @@ window.addEventListener("prefs-changed", () => {
   if (d) d.querySelectorAll("[data-i18n]").forEach(el => { el.textContent = t(el.dataset.i18n); });
 });
 // site name / logo / contact: cached copy is applied by theme.js at once, the fresh copy is fetched here
-import("./auth.js?v=21").then(async a => {
+import("./auth.js?v=23").then(async a => {
   const site = await a.loadSite();
   if (!site) return;
   const fresh = { name: site.name || "", logo: site.logo || "", contact: site.contact || "" };
@@ -192,7 +201,7 @@ if (toc) document.querySelectorAll(".doc-body h2").forEach((h, i) => {
 // Signed in but the Terms of Use / Privacy Policy are not confirmed yet: finish that step first.
 // (Public visitors see no popup; the Terms and Privacy pages stay readable.)
 if (!onLegalPage && !onAuthPage) {
-  import("./auth.js?v=21").then(a => a.onUser(async u => {
+  import("./auth.js?v=23").then(a => a.onUser(async u => {
     if (u && a.isVerified(u) && !(await a.consentOk(u))) location.href = "verify.html";
   })).catch(() => {});
 }

@@ -1,9 +1,9 @@
 // Gyaan Hub - Student Community (profiles, follow, rank, messages, block / report)
 // Uses the SAME Firebase project and helpers as the rest of the site (auth.js). No new keys, no new services.
-import * as A from "./auth.js?v=21";
-import { squareAvatar } from "./media.js?v=21";
-import * as F from "./files.js?v=21";
-import * as S from "./sub.js?v=21";
+import * as A from "./auth.js?v=23";
+import { squareAvatar } from "./media.js?v=23";
+import * as F from "./files.js?v=23";
+import * as S from "./sub.js?v=23";
 
 export { A, squareAvatar, F, S };
 export const tk = S.tk;                 // blue tick placeholder: ${C.tk(uid)} next to a name
@@ -458,6 +458,7 @@ const LOGO = {
   link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
   wa: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12.04 2a9.9 9.9 0 0 0-8.5 14.9L2 22l5.25-1.38A9.9 9.9 0 1 0 12.04 2zm0 1.8a8.1 8.1 0 1 1-4.3 15l-.3-.2-3.1.8.83-3-.2-.32A8.1 8.1 0 0 1 12.04 3.8zm-3.2 3.9c-.2 0-.5.07-.75.35-.25.28-.97.95-.97 2.3s1 2.7 1.1 2.88c.14.18 1.93 3.07 4.77 4.18 2.36.93 2.84.75 3.35.7.5-.05 1.65-.67 1.88-1.33.23-.65.23-1.2.16-1.33-.07-.12-.25-.2-.53-.34-.28-.14-1.65-.82-1.9-.9-.26-.1-.45-.14-.63.14-.19.28-.72.9-.88 1.1-.16.18-.32.2-.6.07-.28-.14-1.18-.43-2.25-1.38-.83-.74-1.4-1.66-1.56-1.94-.16-.28-.02-.43.12-.57.13-.12.28-.32.42-.48.14-.17.19-.28.28-.47.1-.19.05-.35-.02-.49-.07-.14-.62-1.5-.86-2.05-.22-.54-.45-.46-.63-.47h-.54z"/></svg>',
   fb: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.2 2 11.4c0 2.95 1.45 5.57 3.72 7.3V22l3.4-1.87c.9.25 1.86.39 2.88.39 5.52 0 10-4.2 10-9.4S17.52 2 12 2zm1.03 12.6-2.55-2.72-4.98 2.72 5.48-5.82 2.61 2.72 4.92-2.72-5.48 5.82z"/></svg>',
+  facebook: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M13.5 22v-8.3h2.8l.5-3.4h-3.3V8.1c0-1 .4-1.7 1.8-1.7H17V3.4C16.7 3.3 15.7 3.2 14.6 3.2c-2.5 0-4.2 1.5-4.2 4.3v2.8H7.5v3.4h2.9V22z"/></svg>',
   ig: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="5.2"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none"/></svg>',
   tg: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M21.6 3.4 2.9 10.6c-.9.35-.88 1.6.03 1.9l4.7 1.5 1.8 5.6c.2.7 1.1.9 1.6.35l2.6-2.6 4.8 3.5c.6.45 1.5.1 1.7-.65L23 4.7c.2-.9-.65-1.6-1.4-1.3zM9.2 13.4l8.6-5.4c.3-.2.5.15.3.35l-7 6.5-.3 3-1.6-4.45z"/></svg>',
   x: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.78zm-1.08 16.16h1.7L7.4 4.75H5.58z"/></svg>',
@@ -487,6 +488,7 @@ export async function shareSheet(o) {
   const apps = [
     { n: "Copy link", c: "#4f6bff", l: LOGO.link, run: () => copy("Link copied") },
     { n: "WhatsApp", c: "#25d366", l: LOGO.wa, run: () => window.open("https://wa.me/?text=" + both, "_blank", "noopener") },
+    { n: "Facebook", c: "#1877f2", l: LOGO.facebook, run: () => openApp("fb://facewebmodal/f?href=" + encodeURIComponent("https://www.facebook.com/sharer/sharer.php?u=" + u), "https://www.facebook.com/sharer/sharer.php?u=" + u) },
     { n: "Messenger", c: "linear-gradient(135deg,#00b2ff,#006aff 55%,#a334fa)", l: LOGO.fb, run: () => { copy("Link copied - paste it in Messenger if it does not appear"); openApp("fb-messenger://share/?link=" + u, "https://www.messenger.com/"); } },
     { n: "Instagram", c: "linear-gradient(45deg,#f9a03f,#e1306c 50%,#833ab4)", l: LOGO.ig, run: () => { copy("Link copied - paste it in your Instagram message"); openApp("instagram://direct-inbox", "https://www.instagram.com/direct/inbox/"); } },
     { n: "Telegram", c: "#229ed9", l: LOGO.tg, run: () => openApp("tg://msg_url?url=" + u + "&text=" + t, "https://t.me/share/url?url=" + u + "&text=" + t) },
@@ -507,6 +509,7 @@ export async function shareSheet(o) {
     ${meUser ? `<div class="sh-search">${window.ic ? window.ic("search") : ""}<input type="text" placeholder="Search" autocomplete="off" aria-label="Search people"></div>
     <div class="sh-people" id="sh-people"><div class="sh-note">Loading...</div></div>
     <div class="sh-sendbar" hidden><input type="text" maxlength="200" placeholder="Write a message..." aria-label="Message"><button type="button" class="sh-go">${LOGO.send}<span>Send</span></button></div>` : ""}
+    ${o.preview ? `<div class="sh-prev">${o.preview.avatar || ""}<span class="sh-pt"><b>${esc(o.preview.name || "")}</b><small>${esc(link.replace(/^https?:\/\//, ""))}</small></span></div>` : ""}
     <div class="sh-apps">${apps.map((a, i) => `<button type="button" data-app="${i}"><i style="background:${a.c};${a.dark ? "color:#000" : ""}">${a.l}</i><span>${a.n}</span></button>`).join("")}</div>
   </div>`;
   const close = () => { md.remove(); document.removeEventListener("keydown", key); };
@@ -566,5 +569,5 @@ export async function shareSheet(o) {
 // Share the profile link
 export async function shareProfile(p, uid) {
   const link = profileLink(p.username || p.code || studentCode(uid));
-  return shareSheet({ heading: "Share profile", people: false, link, title: (p.name || "Student") + " on Gyaan Hub", text: "Follow " + (p.name || "this student") + " on Gyaan Hub" });
+  return shareSheet({ heading: "Share profile", people: false, preview: { name: p.name || "Student", avatar: avatarHtml(p, "") }, link, title: (p.name || "Student") + " on Gyaan Hub", text: "Follow " + (p.name || "this student") + " on Gyaan Hub" });
 }

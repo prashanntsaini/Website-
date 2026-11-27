@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=21"></script>
+  <script src="clean-url.js?v=23"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Panel | Gyaan Hub</title>
@@ -27,10 +27,10 @@
 <meta name="twitter:title" content="Admin Panel | Gyaan Hub">
 <meta name="twitter:description" content="Notes, previous year papers, video lectures and mock tests, all in one place.">
 <meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
-<link rel="stylesheet" href="style.css?v=21">
-<script src="site-config.js?v=21"></script>
-<script src="theme.js?v=21"></script>
-<script src="icons.js?v=21"></script>
+<link rel="stylesheet" href="style.css?v=23">
+<script src="site-config.js?v=23"></script>
+<script src="theme.js?v=23"></script>
+<script src="icons.js?v=23"></script>
 </head>
 <body>
 <header class="nav">
@@ -197,14 +197,14 @@ question,A,B,C,D,answer
 </main>
 
 <script type="module">
-  import { protectPage, adminDiag, fsList, fsRecent, fsSave, fsDelete, fsGroup, toMs, loadSite, saveSite } from "./auth.js?v=21";
-  import { isSafeUrl, normalizeImgUrl } from "./player-utils.js?v=21";
-  import { parseQuestions } from "./qimport.js?v=21";
-  import { uploadQuestionImage, hydrate, initLightbox } from "./media.js?v=21";
+  import { protectPage, adminDiag, fsList, fsRecent, fsSave, fsDelete, fsGroup, toMs, loadSite, saveSite } from "./auth.js?v=23";
+  import { isSafeUrl, normalizeImgUrl } from "./player-utils.js?v=23";
+  import { parseQuestions } from "./qimport.js?v=23";
+  import { uploadQuestionImage, hydrate, initLightbox } from "./media.js?v=23";
   initLightbox();
-  import { materials as sample } from "./materials.js?v=21";
-  import * as SUB from "./sub.js?v=21";
-  import * as C from "./community.js?v=21";
+  import { materials as sample } from "./materials.js?v=23";
+  import * as SUB from "./sub.js?v=23";
+  import * as C from "./community.js?v=23";
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -559,6 +559,6 @@ question,A,B,C,D,answer
     catch (e) { note("Could not load data: " + (e.code || e.message) + ". Check that the Firestore rules are published.", "err"); }
   });
 </script>
-<script type="module" src="layout.js?v=21"></script>
+<script type="module" src="layout.js?v=23"></script>
 </body>
 </html>

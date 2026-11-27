@@ -9,11 +9,10 @@ A static study-materials portal with Firebase Authentication. (The site name can
 - Password reset by email
 - Email OTP verification after sign up (EmailJS). Google sign-ins skip it
 - Protected dashboard with search and category filters
-- Left slide-out menu (three-line button) with Home, Dashboard, Reports, Settings, Privacy Policy, Terms of Use and Cookie preferences
+- Left slide-out menu (three-line button) with Home, Dashboard, Reels, Messages, Settings, Privacy Policy, Terms of Use and Cookie preferences
 - Privacy and cookie consent popup shown on a first visit (policy acceptance required, analytics optional)
 - Admin panel (`admin.html`): manage materials, create online MCQ tests, view student results
 - Online tests (`tests.html`) with timer, instant score and answer review
-- Reports page with summary cards, charts and CSV export
 - Built-in viewer (`player.html`): YouTube, Vimeo, Google Drive, MP4/HLS/audio and PDFs play inside the website. PDFs use PDF.js (sharp canvas rendering, zoom, night mode, page jump). Speed, quality, autoplay and resume-from-last-position follow your Settings
 - Settings page: profile photo, dark/light/system theme, English/Hindi, password and email change, active devices with remote logout (this device / others / all), notifications, player settings, data saver, clear local data, export my data (JSON) and delete account
 - **Design (v15)**: clean ed-tech look (white cards, indigo + yellow, Inter font). Colours are CSS variables at the top of the "v15 design" block at the end of `style.css`; light is the default, dark is in Settings
@@ -49,7 +48,7 @@ A static study-materials portal with Firebase Authentication. (The site name can
 | `qimport.js` | Parser for bulk question import (text / JSON / CSV / HTML) |
 | `layout.js` | Shared left menu and consent popup |
 | `materials.js` | List of study materials (edit this) |
-| `reports.html` / `settings.html` | Reports and account settings |
+| `settings.html` | Account settings |
 | `player.html` / `player-utils.js` | Built-in viewer for videos, notes and PDFs |
 | `site-config.js` | Defaults: site name/logo, optional Drive API key, location lookup on/off |
 | `theme.js` / `prefs.js` / `i18n.js` / `media.js` | Theme + site name, user preferences, English/Hindi texts, image upload/zoom helpers |
