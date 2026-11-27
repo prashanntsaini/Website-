@@ -1,9 +1,9 @@
 // Gyaan Hub - Student Community (profiles, follow, rank, messages, block / report)
 // Uses the SAME Firebase project and helpers as the rest of the site (auth.js). No new keys, no new services.
-import * as A from "./auth.js?v=20";
-import { squareAvatar } from "./media.js?v=20";
-import * as F from "./files.js?v=20";
-import * as S from "./sub.js?v=20";
+import * as A from "./auth.js?v=21";
+import { squareAvatar } from "./media.js?v=21";
+import * as F from "./files.js?v=21";
+import * as S from "./sub.js?v=21";
 
 export { A, squareAvatar, F, S };
 export const tk = S.tk;                 // blue tick placeholder: ${C.tk(uid)} next to a name
@@ -450,42 +450,121 @@ export function viewPhoto(p) {
   document.addEventListener("keydown", key);
   document.body.appendChild(o);
 }
-// Share the profile link: our own sheet with Copy link, WhatsApp, Facebook and more
-export async function shareProfile(p, uid) {
-  const link = profileLink(p.username || p.code || studentCode(uid));
-  const title = (p.name || "Student") + " on Gyaan Hub", text = "Follow " + (p.name || "this student") + " on Gyaan Hub";
-  const u = encodeURIComponent(link), t = encodeURIComponent(text), both = encodeURIComponent(text + " " + link);
+/* ---------- Share sheet (Instagram style): people to send to + apps ----------
+   shareSheet({ heading, link, text, title }) opens a bottom sheet with
+   - search + your chats / people you follow (tap one or more, then Send: the link goes into their chat)
+   - an app row: Copy link, WhatsApp, Facebook Messenger, Instagram message, Telegram message, X, LinkedIn, Snapchat, Email, SMS, More */
+const LOGO = {
+  link: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
+  wa: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12.04 2a9.9 9.9 0 0 0-8.5 14.9L2 22l5.25-1.38A9.9 9.9 0 1 0 12.04 2zm0 1.8a8.1 8.1 0 1 1-4.3 15l-.3-.2-3.1.8.83-3-.2-.32A8.1 8.1 0 0 1 12.04 3.8zm-3.2 3.9c-.2 0-.5.07-.75.35-.25.28-.97.95-.97 2.3s1 2.7 1.1 2.88c.14.18 1.93 3.07 4.77 4.18 2.36.93 2.84.75 3.35.7.5-.05 1.65-.67 1.88-1.33.23-.65.23-1.2.16-1.33-.07-.12-.25-.2-.53-.34-.28-.14-1.65-.82-1.9-.9-.26-.1-.45-.14-.63.14-.19.28-.72.9-.88 1.1-.16.18-.32.2-.6.07-.28-.14-1.18-.43-2.25-1.38-.83-.74-1.4-1.66-1.56-1.94-.16-.28-.02-.43.12-.57.13-.12.28-.32.42-.48.14-.17.19-.28.28-.47.1-.19.05-.35-.02-.49-.07-.14-.62-1.5-.86-2.05-.22-.54-.45-.46-.63-.47h-.54z"/></svg>',
+  fb: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2C6.48 2 2 6.2 2 11.4c0 2.95 1.45 5.57 3.72 7.3V22l3.4-1.87c.9.25 1.86.39 2.88.39 5.52 0 10-4.2 10-9.4S17.52 2 12 2zm1.03 12.6-2.55-2.72-4.98 2.72 5.48-5.82 2.61 2.72 4.92-2.72-5.48 5.82z"/></svg>',
+  ig: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="5.2"/><circle cx="12" cy="12" r="4.1"/><circle cx="17.4" cy="6.6" r="1" fill="currentColor" stroke="none"/></svg>',
+  tg: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M21.6 3.4 2.9 10.6c-.9.35-.88 1.6.03 1.9l4.7 1.5 1.8 5.6c.2.7 1.1.9 1.6.35l2.6-2.6 4.8 3.5c.6.45 1.5.1 1.7-.65L23 4.7c.2-.9-.65-1.6-1.4-1.3zM9.2 13.4l8.6-5.4c.3-.2.5.15.3.35l-7 6.5-.3 3-1.6-4.45z"/></svg>',
+  x: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M17.75 3h3.07l-6.7 7.66L22 21h-6.17l-4.83-6.32L5.47 21H2.4l7.17-8.2L2 3h6.33l4.37 5.78zm-1.08 16.16h1.7L7.4 4.75H5.58z"/></svg>',
+  in: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M5.4 8.6a2.1 2.1 0 1 0 0-4.2 2.1 2.1 0 0 0 0 4.2zM3.6 10.2h3.6V21H3.6zM9.4 10.2h3.45v1.5h.05c.5-.9 1.65-1.85 3.4-1.85 3.6 0 4.3 2.37 4.3 5.45V21h-3.6v-5c0-1.2 0-2.7-1.65-2.7s-1.9 1.3-1.9 2.62V21H9.4z"/></svg>',
+  sc: '<svg viewBox="0 0 24 24"><path fill="currentColor" d="M12.02 2.5c2.7 0 4.72 1.9 4.72 4.65 0 .75-.07 1.5-.12 2.2.33.17.7.28 1.1.18.5-.12.95.38.72.84-.3.6-1 .95-1.7 1.1.1.5.9 2.3 2.75 3.05.45.2.45.7.1.95-.55.4-1.3.55-1.85.7-.15.3-.1.75-.5.85-.5.1-1.1-.2-1.85-.1-.85.12-1.55 1.35-3.38 1.35s-2.53-1.23-3.38-1.35c-.75-.1-1.35.2-1.85.1-.4-.1-.35-.55-.5-.85-.55-.15-1.3-.3-1.85-.7-.35-.25-.35-.75.1-.95 1.85-.75 2.65-2.55 2.75-3.05-.7-.15-1.4-.5-1.7-1.1-.23-.46.22-.96.72-.84.4.1.77-.01 1.1-.18-.05-.7-.12-1.45-.12-2.2 0-2.75 2.02-4.65 4.72-4.65z"/></svg>',
+  mail: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3.5 7l8.5 6 8.5-6"/></svg>',
+  sms: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-5 4v-4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><path d="M8 10h8M8 13h5"/></svg>',
+  more: '<svg viewBox="0 0 24 24"><circle cx="5.5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="18.5" cy="12" r="1.8" fill="currentColor"/></svg>',
+  send: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 3 10.5 13.5"/><path d="M21 3l-6.5 18-4-7.5L3 9.5z"/></svg>',
+  check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>'
+};
+const isMobile = () => /android|iphone|ipad|ipod/i.test(navigator.userAgent || "");
+// open an app link; on phones try the app's own address first and fall back to the web page
+function openApp(appUrl, webUrl) {
+  if (isMobile() && appUrl) {
+    const t = Date.now();
+    location.href = appUrl;
+    setTimeout(() => { if (!document.hidden && Date.now() - t < 2500) window.open(webUrl, "_blank", "noopener"); }, 1200);
+  } else window.open(webUrl, "_blank", "noopener");
+}
+export async function shareSheet(o) {
+  const link = o.link, heading = o.heading || "Share";
+  const title = o.title || "Gyaan Hub", text = o.text || "";
+  const u = encodeURIComponent(link), t = encodeURIComponent(text), both = encodeURIComponent((text ? text + " " : "") + link);
+  const meUser = o.people && A.currentUser && A.currentUser();
+  const copy = async msg => { try { await navigator.clipboard.writeText(link); toast(msg, 3500); } catch (e) { window.prompt("Copy this link:", link); } };
   const apps = [
-    ["WhatsApp", "#25d366", "WA", "https://wa.me/?text=" + both],
-    ["Facebook", "#1877f2", "f", "https://www.facebook.com/sharer/sharer.php?u=" + u],
-    ["Instagram", "#d62976", "IG", "https://www.instagram.com/direct/inbox/"],
-    ["Telegram", "#229ed9", "TG", "https://t.me/share/url?url=" + u + "&text=" + t],
-    ["X", "#000", "X", "https://twitter.com/intent/tweet?url=" + u + "&text=" + t],
-    ["LinkedIn", "#0a66c2", "in", "https://www.linkedin.com/sharing/share-offsite/?url=" + u],
-    ["Snapchat", "#f7c600", "SC", "https://www.snapchat.com/scan?attachmentUrl=" + u],
-    ["Email", "#6b7280", "@", "mailto:?subject=" + encodeURIComponent(title) + "&body=" + both],
-    ["SMS", "#16a34a", "SMS", "sms:?body=" + both]
+    { n: "Copy link", c: "#4f6bff", l: LOGO.link, run: () => copy("Link copied") },
+    { n: "WhatsApp", c: "#25d366", l: LOGO.wa, run: () => window.open("https://wa.me/?text=" + both, "_blank", "noopener") },
+    { n: "Messenger", c: "linear-gradient(135deg,#00b2ff,#006aff 55%,#a334fa)", l: LOGO.fb, run: () => { copy("Link copied - paste it in Messenger if it does not appear"); openApp("fb-messenger://share/?link=" + u, "https://www.messenger.com/"); } },
+    { n: "Instagram", c: "linear-gradient(45deg,#f9a03f,#e1306c 50%,#833ab4)", l: LOGO.ig, run: () => { copy("Link copied - paste it in your Instagram message"); openApp("instagram://direct-inbox", "https://www.instagram.com/direct/inbox/"); } },
+    { n: "Telegram", c: "#229ed9", l: LOGO.tg, run: () => openApp("tg://msg_url?url=" + u + "&text=" + t, "https://t.me/share/url?url=" + u + "&text=" + t) },
+    { n: "X", c: "#000", l: LOGO.x, run: () => window.open("https://twitter.com/intent/tweet?url=" + u + "&text=" + t, "_blank", "noopener") },
+    { n: "LinkedIn", c: "#0a66c2", l: LOGO.in, run: () => window.open("https://www.linkedin.com/sharing/share-offsite/?url=" + u, "_blank", "noopener") },
+    { n: "Snapchat", c: "#f7c600", l: LOGO.sc, dark: true, run: () => { copy("Link copied - paste it in Snapchat"); openApp("snapchat://", "https://www.snapchat.com/"); } },
+    { n: "Email", c: "#6b7280", l: LOGO.mail, run: () => { location.href = "mailto:?subject=" + encodeURIComponent(title) + "&body=" + both; } },
+    { n: "SMS", c: "#16a34a", l: LOGO.sms, run: () => { location.href = "sms:?&body=" + both; } }
   ];
+  if (navigator.share) apps.push({ n: "More", c: "#374151", l: LOGO.more, run: async () => { try { await navigator.share({ title, text, url: link }); } catch (x) {} } });
+
   document.querySelectorAll(".sh-ov").forEach(x => x.remove());
   const md = document.createElement("div");
   md.className = "cm-modal sheet sh-ov";
-  md.innerHTML = `<div class="cm-card"><h2>Share profile<button class="cm-x" type="button" aria-label="Close">✕</button></h2><div class="sh-grid">
-    <button type="button" data-copy><i style="background:#4f6bff">🔗</i><span>Copy link</span></button>
-    ${apps.map(([n, c, l, href]) => `<a href="${esc(href)}" target="_blank" rel="noopener" data-app="${n}"><i style="background:${c}">${l}</i><span>${n}</span></a>`).join("")}
-    ${navigator.share ? `<button type="button" data-more><i style="background:#374151">•••</i><span>More</span></button>` : ""}
-  </div></div>`;
-  const close = () => md.remove();
-  const copy = async msg => {
-    try { await navigator.clipboard.writeText(link); toast(msg, 3500); }
-    catch (e) { window.prompt("Copy this link:", link); }
+  md.innerHTML = `<div class="cm-card sh-card ${o.people ? "with-people" : ""}">
+    <span class="sh-grab"></span>
+    <h2 class="sh-h">${esc(heading)}<button class="cm-x" type="button" aria-label="Close">✕</button></h2>
+    ${meUser ? `<div class="sh-search">${window.ic ? window.ic("search") : ""}<input type="text" placeholder="Search" autocomplete="off" aria-label="Search people"></div>
+    <div class="sh-people" id="sh-people"><div class="sh-note">Loading...</div></div>
+    <div class="sh-sendbar" hidden><input type="text" maxlength="200" placeholder="Write a message..." aria-label="Message"><button type="button" class="sh-go">${LOGO.send}<span>Send</span></button></div>` : ""}
+    <div class="sh-apps">${apps.map((a, i) => `<button type="button" data-app="${i}"><i style="background:${a.c};${a.dark ? "color:#000" : ""}">${a.l}</i><span>${a.n}</span></button>`).join("")}</div>
+  </div>`;
+  const close = () => { md.remove(); document.removeEventListener("keydown", key); };
+  const key = e => { if (e.key === "Escape") close(); };
+  document.addEventListener("keydown", key);
+  const picked = new Map();   // uid -> profile
+  let people = [];
+  const bar = () => md.querySelector(".sh-sendbar");
+  const draw = q => {
+    const box = md.querySelector("#sh-people"); if (!box) return;
+    q = (q || "").trim().toLowerCase();
+    const rows = people.filter(p => !q || String(p.name || "").toLowerCase().includes(q));
+    box.innerHTML = rows.length ? rows.map(p => `<button type="button" class="sh-p ${picked.has(p.uid) ? "on" : ""}" data-u="${esc(p.uid)}"><span class="sh-av">${avatarHtml(p, "")}<em>${LOGO.check}</em></span><span class="sh-nm">${esc(p.name || "Student")}</span></button>`).join("")
+      : `<div class="sh-note">${people.length ? "No one found" : "Follow students or start a chat to send them this directly."}</div>`;
+    const b = bar(); if (b) { b.hidden = !picked.size; b.querySelector(".sh-go span").textContent = picked.size > 1 ? "Send (" + picked.size + ")" : "Send"; }
   };
   md.addEventListener("click", async e => {
     if (e.target === md || e.target.closest(".cm-x")) return close();
-    const b = e.target.closest("[data-copy],[data-more],[data-app]"); if (!b) return;
-    if (b.hasAttribute("data-copy")) await copy("Profile link copied");
-    else if (b.hasAttribute("data-more")) { try { await navigator.share({ title, text, url: link }); } catch (x) {} }
-    else if (b.dataset.app === "Instagram") await copy("Link copied. Paste it in your Instagram chat.");   // Instagram has no link-share URL
-    setTimeout(close, 50);
+    const pp = e.target.closest(".sh-p");
+    if (pp) { const uid = pp.dataset.u; if (picked.has(uid)) picked.delete(uid); else picked.set(uid, people.find(x => x.uid === uid)); draw(md.querySelector(".sh-search input").value); return; }
+    const go = e.target.closest(".sh-go");
+    if (go) {
+      go.disabled = true;
+      const note = md.querySelector(".sh-sendbar input").value.trim(), msg = (note ? note + "\n" : "") + (text ? text + " " : "") + link;
+      let ok = 0, fail = "";
+      for (const [uid, p] of picked) {
+        try {
+          const c = await canMessage(meUser.uid, uid, p);
+          if (!c.ok) { fail = c.why; continue; }
+          await sendMessage(meUser.uid, uid, msg.slice(0, 1000), null); ok++;
+        } catch (x) { fail = errText(x); }
+      }
+      if (ok) toast("Sent to " + ok + (ok > 1 ? " people" : " person"), 3000);
+      if (fail) toast(fail, 5000);
+      if (ok) close(); else go.disabled = false;
+      return;
+    }
+    const b = e.target.closest("[data-app]"); if (!b) return;
+    const a = apps[+b.dataset.app]; await a.run();
+    if (a.n !== "Copy link") setTimeout(close, 50); else setTimeout(close, 400);
   });
+  md.addEventListener("input", e => { if (e.target.closest(".sh-search")) draw(e.target.value); });
   document.body.appendChild(md);
+
+  if (meUser) {
+    try {
+      const [chats, fol] = await Promise.all([listChats(meUser.uid).catch(() => []), A.fsWhere("follows", [["follower", "==", meUser.uid]]).catch(() => [])]);
+      const ids = [];
+      chats.forEach(c => { const o = otherOf(c, meUser.uid); if (o && !ids.includes(o)) ids.push(o); });
+      fol.filter(f => f.status === "accepted").forEach(f => { if (f.target && !ids.includes(f.target)) ids.push(f.target); });
+      const profs = await profilesOf(ids, 30);
+      people = profs.map((p, i) => ({ ...p, uid: ids[i] }));
+    } catch (e) { people = []; }
+    if (md.isConnected) draw("");
+  }
+}
+// Share the profile link
+export async function shareProfile(p, uid) {
+  const link = profileLink(p.username || p.code || studentCode(uid));
+  return shareSheet({ heading: "Share profile", people: false, link, title: (p.name || "Student") + " on Gyaan Hub", text: "Follow " + (p.name || "this student") + " on Gyaan Hub" });
 }

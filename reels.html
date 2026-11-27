@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=20"></script>
+  <script src="clean-url.js?v=21"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Reels | Gyaan Hub</title>
@@ -32,13 +32,13 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=20">
-<link rel="modulepreload" href="community.js?v=20">
-<link rel="modulepreload" href="files.js?v=20">
-<link rel="stylesheet" href="style.css?v=20">
-<script src="site-config.js?v=20"></script>
-<script src="theme.js?v=20"></script>
-<script src="icons.js?v=20"></script>
+<link rel="modulepreload" href="auth.js?v=21">
+<link rel="modulepreload" href="community.js?v=21">
+<link rel="modulepreload" href="files.js?v=21">
+<link rel="stylesheet" href="style.css?v=21">
+<script src="site-config.js?v=21"></script>
+<script src="theme.js?v=21"></script>
+<script src="icons.js?v=21"></script>
 <style>
   html,body{height:100%;overflow:hidden;background:#000}
   body{background-image:none}
@@ -128,8 +128,8 @@
 </div>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=20";
-  import * as C from "./community.js?v=20";
+  import { protectPage } from "./auth.js?v=21";
+  import * as C from "./community.js?v=21";
   const $ = id => document.getElementById(id);
   const { esc } = C;
   const ic = (n, c) => window.ic ? window.ic(n, c) : "";
@@ -336,8 +336,7 @@
   }
   async function share(id) {
     const p = items.find(x => x.id === id), link = new URL("reels?reel=" + encodeURIComponent(id), location.href).href;
-    if (navigator.share) { try { await navigator.share({ title: "Reel on Gyaan Hub", text: (p.caption || "").slice(0, 80), url: link }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
-    try { await navigator.clipboard.writeText(link); C.toast("Link copied", 2000); } catch (e) { C.toast(link, 6000); }
+    return C.shareSheet({ heading: "Share", people: true, link, title: "Reel on Gyaan Hub", text: (p && p.caption || "").slice(0, 80) });
   }
   function burst(el, x, y) {
     const h = document.createElement("div"); h.className = "rv-heart"; h.innerHTML = ic("heart");
@@ -403,7 +402,7 @@
 
   protectPage(async u => {
     me = u;
-    import("./calls.js?v=20").then(m => m.initCalls(u)).catch(() => {});
+    import("./calls.js?v=21").then(m => m.initCalls(u)).catch(() => {});
     await loadFollowing();
     build("explore");
   });

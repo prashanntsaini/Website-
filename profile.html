@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=20"></script>
+  <script src="clean-url.js?v=21"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile | Gyaan Hub</title>
@@ -32,15 +32,15 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=20">
-<link rel="modulepreload" href="community.js?v=20">
-<link rel="modulepreload" href="media.js?v=20">
-<link rel="modulepreload" href="files.js?v=20">
-<link rel="modulepreload" href="player-utils.js?v=20">
-<link rel="stylesheet" href="style.css?v=20">
-<script src="site-config.js?v=20"></script>
-<script src="theme.js?v=20"></script>
-<script src="icons.js?v=20"></script>
+<link rel="modulepreload" href="auth.js?v=21">
+<link rel="modulepreload" href="community.js?v=21">
+<link rel="modulepreload" href="media.js?v=21">
+<link rel="modulepreload" href="files.js?v=21">
+<link rel="modulepreload" href="player-utils.js?v=21">
+<link rel="stylesheet" href="style.css?v=21">
+<script src="site-config.js?v=21"></script>
+<script src="theme.js?v=21"></script>
+<script src="icons.js?v=21"></script>
 </head>
 <body>
 <header class="nav">
@@ -58,9 +58,9 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=20";
-  import * as C from "./community.js?v=20";
-  import { initLightbox } from "./media.js?v=20";
+  import { protectPage } from "./auth.js?v=21";
+  import * as C from "./community.js?v=21";
+  import { initLightbox } from "./media.js?v=21";
   initLightbox();
   const $ = id => document.getElementById(id);
   const { esc } = C;
@@ -378,9 +378,8 @@
     drawBar();
   }
   async function shareReel() {
-    const q = cur.p, link = new URL("profile?u=" + encodeURIComponent(q.repostOf ? q.uid : q.uid) + "&reel=" + encodeURIComponent(q.id), location.href).href;
-    if (navigator.share) { try { await navigator.share({ title: "Reel on Gyaan Hub", text: (q.caption || "").slice(0, 80), url: link }); return; } catch (e) { if (e && e.name === "AbortError") return; } }
-    copy(link, "Link copied");
+    const q = cur.p, link = new URL("profile?u=" + encodeURIComponent(q.uid) + "&reel=" + encodeURIComponent(q.id), location.href).href;
+    return C.shareSheet({ heading: "Share", people: true, link, title: "Reel on Gyaan Hub", text: (q.caption || "").slice(0, 80) });
   }
   async function savedTab() {
     $("panel").innerHTML = `<div id="plist" class="pp-list"><div class="skel"></div></div>`;
@@ -674,6 +673,6 @@
     }
   });
 </script>
-<script type="module" src="layout.js?v=20"></script>
+<script type="module" src="layout.js?v=21"></script>
 </body>
 </html>

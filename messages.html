@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=20"></script>
+  <script src="clean-url.js?v=21"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Messages | Gyaan Hub</title>
@@ -32,15 +32,15 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=20">
-<link rel="modulepreload" href="community.js?v=20">
-<link rel="modulepreload" href="media.js?v=20">
-<link rel="modulepreload" href="files.js?v=20">
-<link rel="modulepreload" href="player-utils.js?v=20">
-<link rel="stylesheet" href="style.css?v=20">
-<script src="site-config.js?v=20"></script>
-<script src="theme.js?v=20"></script>
-<script src="icons.js?v=20"></script>
+<link rel="modulepreload" href="auth.js?v=21">
+<link rel="modulepreload" href="community.js?v=21">
+<link rel="modulepreload" href="media.js?v=21">
+<link rel="modulepreload" href="files.js?v=21">
+<link rel="modulepreload" href="player-utils.js?v=21">
+<link rel="stylesheet" href="style.css?v=21">
+<script src="site-config.js?v=21"></script>
+<script src="theme.js?v=21"></script>
+<script src="icons.js?v=21"></script>
 </head>
 <body class="msg-page">
 <header class="nav">
@@ -68,10 +68,10 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=20";
-  import * as C from "./community.js?v=20";
-  import { initLightbox } from "./media.js?v=20";
-  import * as CALL from "./calls.js?v=20";
+  import { protectPage } from "./auth.js?v=21";
+  import * as C from "./community.js?v=21";
+  import { initLightbox } from "./media.js?v=21";
+  import * as CALL from "./calls.js?v=21";
   const $ = id => document.getElementById(id);
   const { esc, F } = C;
   const ic = n => window.ic ? window.ic(n) : "";
@@ -134,7 +134,7 @@
         <a class="grow ig-who lp" data-lp="__cur" href="profile.html?u=${pl}"><b>${esc(prof.name)}${C.tk(cur.uid)}</b><small>View profile</small></a>
         ${can.ok ? `<button class="ig-hb" id="call-a" type="button" aria-label="Voice call" title="Voice call">${ic("call")}</button><button class="ig-hb" id="call-v" type="button" aria-label="Video call" title="Video call">${ic("video")}</button>` : ""}
         <div class="cm-menu"><button class="ig-hb" id="menu" type="button" aria-label="More options">${ic("more")}</button>
-          <div class="cm-menu-pop" id="pop"><button id="m-profile" type="button">${ic("user")} View profile</button><button id="m-pic" type="button">${ic("image")} View profile picture</button><button id="m-share" type="button">${ic("share")} Share profile</button><button id="m-bg" type="button">${ic("sparkles")} Chat background</button><button id="m-report" type="button">${ic("flag")} Report</button><button id="m-block" type="button">${ic(blocked ? "check" : "ban")} ${blocked ? "Unblock" : "Block"}</button></div></div></div>
+          <div class="cm-menu-pop" id="pop">${can.ok ? `<button id="m-call-a" type="button">${ic("call")} Voice call</button><button id="m-call-v" type="button">${ic("video")} Video call</button>` : ""}<button id="m-profile" type="button">${ic("user")} View profile</button><button id="m-pic" type="button">${ic("image")} View profile picture</button><button id="m-share" type="button">${ic("share")} Share profile</button><button id="m-bg" type="button">${ic("sparkles")} Chat background</button><button id="m-report" type="button">${ic("flag")} Report</button><button id="m-block" type="button">${ic(blocked ? "check" : "ban")} ${blocked ? "Unblock" : "Block"}</button></div></div></div>
       <div class="cm-msgs" id="msgs"><div class="cm-empty">${exists ? "Loading..." : "Say hello 👋 Ask a study doubt or share notes."}</div></div>
       ${can.ok ? `<div class="cm-pend" id="pend" hidden></div>
         <div class="cm-compose ig" id="compose">
@@ -150,6 +150,8 @@
     if (can.ok) {
       $("call-a").addEventListener("click", () => CALL.startCall(otherUid, "audio", prof));
       $("call-v").addEventListener("click", () => CALL.startCall(otherUid, "video", prof));
+      $("m-call-a").addEventListener("click", () => { $("pop").classList.remove("open"); CALL.startCall(otherUid, "audio", prof); });
+      $("m-call-v").addEventListener("click", () => { $("pop").classList.remove("open"); CALL.startCall(otherUid, "video", prof); });
     }
     $("menu").addEventListener("click", e => { e.stopPropagation(); $("pop").classList.toggle("open"); });
     $("m-block").addEventListener("click", async () => {
@@ -624,7 +626,7 @@
 
   protectPage(async (user, demo) => {
     me = user; setTimeout(runSched, 1500);
-    import("./accounts-ui.js?v=20").then(m => {
+    import("./accounts-ui.js?v=21").then(m => {
       const nm = m.currentAccountName(); if (nm) $("accname").textContent = nm;
       $("accbtn").addEventListener("click", m.openAccountSheet);
     });
@@ -638,6 +640,6 @@
     } catch (e) { $("list").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; }
   });
 </script>
-<script type="module" src="layout.js?v=20"></script>
+<script type="module" src="layout.js?v=21"></script>
 </body>
 </html>

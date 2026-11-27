@@ -1645,3 +1645,47 @@ body.msg-page .cm-chat.cm-chat.in-conv{top:var(--app-top,0px);height:var(--app-h
 .sh-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px 8px}
 .sh-grid a,.sh-grid button{display:flex;flex-direction:column;align-items:center;gap:6px;background:none;border:0;padding:0;color:var(--text);font:inherit;font-size:.82rem;text-decoration:none;cursor:pointer}
 .sh-grid i{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;font-style:normal;font-weight:800}
+
+/* v21: share sheet (profile = app grid, reels = people + app row) and bigger 3-dot menu */
+.cm-modal.sheet.sh-ov{align-items:end}
+.sh-card{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;padding:10px 20px calc(20px + env(safe-area-inset-bottom))!important;background:var(--bg2)}
+.sh-grab{display:block;width:44px;height:5px;border-radius:3px;background:var(--border);margin:2px auto 12px}
+.sh-h{font-size:1.35rem!important;font-weight:700;letter-spacing:0;margin:4px 0 18px!important}
+.sh-h .cm-x{font-size:1.4rem;padding:4px 8px;color:var(--muted)}
+.sh-apps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px 6px}
+.sh-apps button{display:flex;flex-direction:column;align-items:center;gap:8px;background:none;border:0;padding:0;color:var(--text);font:inherit;font-size:.9rem;font-weight:500;cursor:pointer;min-width:0}
+.sh-apps button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sh-apps i{width:58px;height:58px;border-radius:50%;display:grid;place-items:center;color:#fff;font-style:normal}
+.sh-apps i svg{width:28px;height:28px;display:block}
+.sh-apps button:active i{transform:scale(.93)}
+/* reels: people on top, apps as one scrolling row at the bottom */
+.sh-card.with-people{padding-top:10px}
+.sh-card.with-people .sh-apps{display:flex;gap:18px;overflow-x:auto;padding:14px 2px 2px;margin-top:6px;border-top:1px solid var(--border);scrollbar-width:none}
+.sh-card.with-people .sh-apps::-webkit-scrollbar{display:none}
+.sh-card.with-people .sh-apps button{flex:0 0 84px}
+.sh-search{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:16px;padding:0 14px;margin-bottom:14px;color:var(--muted)}
+.sh-search .vi svg{width:20px;height:20px}
+.sh-search input{flex:1;min-width:0;background:none;border:0;outline:0;color:var(--text);font:inherit;font-size:1rem;padding:13px 0}
+.sh-people{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px 8px;max-height:36vh;overflow-y:auto;padding:2px 0 14px}
+.sh-p{display:flex;flex-direction:column;align-items:center;gap:7px;background:none;border:0;color:var(--text);font:inherit;cursor:pointer;min-width:0}
+.sh-av{position:relative;display:block;width:76px;height:76px}
+.sh-av .avatar{width:76px;height:76px;border-radius:50%;font-size:1.8rem;object-fit:cover;display:grid;place-items:center}
+.sh-av .avatar .vi svg{width:34px;height:34px}
+.sh-av em{position:absolute;right:-2px;bottom:-2px;width:24px;height:24px;border-radius:50%;background:#3b82f6;border:2px solid var(--bg2);display:none;place-items:center;color:#fff}
+.sh-av em svg{width:13px;height:13px}
+.sh-p.on em{display:grid}
+.sh-p.on .sh-av .avatar{outline:3px solid #3b82f6;outline-offset:2px}
+.sh-nm{font-size:.9rem;font-weight:500;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sh-note{grid-column:1/-1;text-align:center;color:var(--muted);padding:18px 6px;font-size:.95rem}
+.sh-sendbar{display:flex;gap:10px;align-items:center;padding:4px 0 14px}
+.sh-sendbar[hidden]{display:none}
+.sh-sendbar input{flex:1;min-width:0;background:var(--card);border:1px solid var(--border);border-radius:16px;color:var(--text);font:inherit;font-size:1rem;padding:12px 14px;outline:0}
+.sh-go{display:flex;align-items:center;gap:8px;background:#3b82f6;color:#fff;border:0;border-radius:16px;padding:12px 18px;font:inherit;font-weight:700;font-size:1rem;cursor:pointer}
+.sh-go svg{width:18px;height:18px}
+.sh-go:disabled{opacity:.6}
+.reels-body .sh-card,.sh-ov{z-index:400}
+/* bigger 3-dot menu in chat / profile */
+.cm-menu-pop{min-width:215px;padding:10px;border-radius:22px;top:112%}
+.cm-menu-pop button{padding:15px 16px;font-size:1.06rem;font-weight:500;gap:14px;border-radius:15px;white-space:nowrap;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif}
+.cm-menu-pop button .vi svg{width:23px;height:23px}
+@media(max-width:480px){.cm-menu-pop{min-width:min(230px,78vw)}}
