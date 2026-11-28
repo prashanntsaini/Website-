@@ -58,7 +58,7 @@
     <h1 class="msg-title">💬 Messages</h1>
     <div class="cm-chat" id="chat">
       <aside class="cm-side">
-        <div class="ig-lhead"><a class="ig-hb" href="index.html" aria-label="Home"><span class="vi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></span></a><h2><button class="ig-acc" id="accbtn" type="button" aria-label="Switch account"><span id="accname">Messages</span><span class="vi ig-acc-ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></button></h2><button class="ig-hb" id="newchat" type="button" aria-label="New chat"></button></div>
+        <div class="ig-lhead"><a class="ig-hb" href="index.html" aria-label="Home"><span class="vi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></span></a><h2><button class="ig-acc" id="accbtn" type="button" aria-label="Switch account"><span id="accname">Messages</span><span class="vi ig-acc-ch"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span></button></h2><button class="ig-hb" id="newgroup" type="button" aria-label="New group" title="New group"></button><button class="ig-hb" id="newchat" type="button" aria-label="New chat"></button></div>
         <div class="ig-lsearch"><input class="cm-search" id="nq" type="search" placeholder="Search students to chat" maxlength="40" autocomplete="off"></div>
         <div class="cm-list" id="nres" style="padding-bottom:0"></div>
         <div class="cm-list" id="list"><div class="skel"></div></div></aside>
@@ -77,10 +77,12 @@
   const { esc, F } = C;
   const ic = n => window.ic ? window.ic(n) : "";
   const profCache = {};
-  let me, myProf, chats = [], cur = null /* {uid, prof, cid} */, unsub = null, msgs = [], lastSend = 0, pendFile = null, sending = false;
+  let me, myProf, chats = [], cur = null /* {uid, prof, cid, group?, chat?} */, unsub = null, unsubG = null, msgs = [], lastSend = 0, pendFile = null, sending = false, replyTo = null, hidden = {}, gInfoPaint = null, lastTap = { id: "", t: 0 };
   const attCache = {};      // message id -> attachment html (so a re-render does not reload the file)
   initLightbox();
   $("newchat").innerHTML = ic("pencil");
+  $("newgroup").innerHTML = ic("users");
+  $("newgroup").addEventListener("click", () => newGroup());
   $("newchat").addEventListener("click", () => { $("nq").focus(); $("nq").scrollIntoView({ block: "nearest" }); });
   const backIc = '<span class="vi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></span>';
 
@@ -103,41 +105,93 @@
   if (window.visualViewport) { visualViewport.addEventListener("resize", fitChat); visualViewport.addEventListener("scroll", fitChat); }
   addEventListener("resize", fitChat);
   const sepFmt = ms => { const d = new Date(ms), t = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }); return d.toDateString() === new Date().toDateString() ? "Today " + t : d.toLocaleDateString([], { day: "numeric", month: "short" }) + ", " + t; };
+  const firstName = n => String(n || "").trim().split(/\s+/)[0] || "Someone";
+  const chatHidden = c => { const h = hidden[c.id]; return !!(h && h.clearedAt && h.clearedAt >= (c.lastTs || 0)); };
   async function loadList() {
-    try { chats = await C.listChats(me.uid); } catch (e) { $("list").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; return; }
-    const ps = await Promise.all(chats.map(c => C.getProfile(C.otherOf(c, me.uid)).catch(() => null)));
+    try { chats = (await C.listChats(me.uid)).filter(c => !chatHidden(c)); } catch (e) { $("list").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; return; }
+    const ps = await Promise.all(chats.map(c => C.isGroup(c) ? { name: c.name || "Group", group: true } : C.getProfile(C.otherOf(c, me.uid)).catch(() => null)));
+    const lp = await Promise.all(chats.map(c => C.isGroup(c) && c.lastFrom && c.lastFrom !== me.uid && !c.lastSys ? C.getProfile(c.lastFrom).catch(() => null) : null));
     $("list").innerHTML = chats.length ? chats.map((c, i) => {
-      const o = C.otherOf(c, me.uid), p = ps[i] || { name: "Student" }; profCache[o] = p;
+      const g = C.isGroup(c), o = g ? c.id : C.otherOf(c, me.uid), p = ps[i] || { name: "Student" }; profCache[o] = p;
       const un = C.isUnread(c, me.uid) && !(cur && cur.uid === o);
-      return `<div class="cm-row ${cur && cur.uid === o ? "on" : ""} ${un ? "unread" : ""}" data-open="${esc(o)}"><span class="lp" data-lp="${esc(o)}">${C.avatarHtml(p, "sm")}</span><div class="grow"><b>${esc(p.name)}${C.tk(o)}</b><small data-keep>${c.lastFrom === me.uid ? "You: " : ""}${esc(c.lastText || "")}</small></div><span class="cm-time">${ago(c.lastTs)}</span>${un ? '<span class="cm-dot"></span>' : ""}</div>`;
-    }).join("") : `<div class="empty">No conversations yet.</div>`;
+      const pre = c.lastFrom === me.uid && !c.lastSys ? "You: " : (g && lp[i] ? firstName(lp[i].name) + ": " : "");
+      const ava = g ? `<span class="lp">${C.groupAvatarHtml(p, "sm")}</span>` : `<span class="lp" data-lp="${esc(o)}">${C.avatarHtml(p, "sm")}</span>`;
+      return `<div class="cm-row ${cur && cur.uid === o ? "on" : ""} ${un ? "unread" : ""}" data-open="${esc(o)}">${ava}<div class="grow"><b>${esc(p.name)}${g ? "" : C.tk(o)}</b><small data-keep>${pre}${esc(c.lastText || "")}</small></div><span class="cm-time">${ago(c.lastTs)}</span>${un ? '<span class="cm-dot"></span>' : ""}</div>`;
+    }).join("") : `<div class="empty">No conversations yet. Tap the people icon to make a group.</div>`;
+  }
+
+  function closeConv() {
+    $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); fitChat();
+    if (unsub) { unsub(); unsub = null; } if (unsubG) { unsubG(); unsubG = null; }
+    stopBg(); $("conv").classList.remove("has-bg"); $("conv").style.background = ""; cur = null; replyTo = null; gInfoPaint = null; UP.refresh(); loadList();
+  }
+  const isMember = (c, u) => !!c && (c.participants || []).includes(u);
+  const groupSub = c => (c.participants || []).length + " people";
+  const groupMenu = c => `<button id="g-info" type="button">${ic("users")} Group info</button>${(c.admins || []).includes(me.uid) && (c.participants || []).length < C.GROUP_MAX ? `<button id="g-add" type="button">${ic("plus")} Add people</button>` : ""}<button id="m-bg" type="button">${ic("sparkles")} Chat background</button><button id="m-clear" type="button">${ic("trash")} Delete chat for me</button><button id="g-leave" type="button">${ic("logout")} Leave group</button>`;
+  function paintGroupHead() {
+    if (!cur || !cur.group) return;
+    const n = $("g-name"), sb = $("g-sub"), pop = $("pop"), av = $("g-ava");
+    if (n) n.textContent = cur.prof.name; if (sb) sb.textContent = groupSub(cur.chat); if (av) av.innerHTML = C.groupAvatarHtml(cur.prof, "sm");
+    if (pop) pop.innerHTML = groupMenu(cur.chat);
+    if (gInfoPaint) gInfoPaint();
+  }
+  function watchGroup(gid) {
+    if (unsubG) unsubG();
+    unsubG = C.A.fsWatchDoc(["chats", gid], d => {
+      if (!cur || cur.cid !== gid) return;
+      if (!d || !isMember(d, me.uid)) { C.toast("You are no longer in this group.", 3500); closeConv(); return; }
+      cur.chat = d; cur.prof = { name: d.name || "Group", group: true }; profCache[gid] = cur.prof;
+      d.participants.filter(u => !profCache[u]).forEach(u => C.getProfile(u).then(p => { if (p) { profCache[u] = p; paintMsgs(); paintGroupHead(); } }).catch(() => {}));
+      paintGroupHead();
+    }, () => {});
   }
 
   async function open(otherUid) {
     if (unsub) { unsub(); unsub = null; }
+    if (unsubG) { unsubG(); unsubG = null; }
+    const isG = /^g_/.test(otherUid);
+    replyTo = null; gInfoPaint = null;
     // the chat covers the whole screen straight away; the details are filled in as they arrive
     $("chat").classList.add("in-conv"); document.body.classList.add("msg-in-conv");
     stopBg(); $("conv").classList.remove("has-bg"); $("conv").style.background = "";
     $("conv").innerHTML = `<div class="cm-conv-head ig-head"><button class="ig-hb cm-back" id="back0" type="button" aria-label="Back">${backIc}</button></div><div class="cm-msgs"><div class="cm-empty">Opening chat...</div></div>`;
-    $("back0").addEventListener("click", () => { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); stopBg(); cur = null; UP.refresh(); loadList(); });
-    const prof = await C.getProfile(otherUid, true).catch(() => profCache[otherUid] || null);
-    if (!prof) { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); C.toast("This student has no community profile."); return; }
+    $("back0").addEventListener("click", closeConv);
+    let prof, chatDoc = null;
+    if (isG) {
+      chatDoc = await C.A.fsGetPath(["chats", otherUid]).catch(() => null);
+      if (!chatDoc || !isMember(chatDoc, me.uid)) { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); C.toast("You are not in this group."); return; }
+      await Promise.all(chatDoc.participants.map(u => C.getProfile(u).then(p => { if (p) profCache[u] = p; }).catch(() => {})));
+      prof = { name: chatDoc.name || "Group", group: true };
+    } else {
+      prof = await C.getProfile(otherUid, true).catch(() => profCache[otherUid] || null);
+      if (!prof) { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); C.toast("This student has no community profile."); return; }
+    }
     profCache[otherUid] = prof;
-    cur = { uid: otherUid, prof, cid: C.chatId(me.uid, otherUid) };
+    cur = { uid: otherUid, prof, cid: isG ? otherUid : C.chatId(me.uid, otherUid), group: isG, chat: chatDoc };
     msgs = []; watchBg();
-    const [blocked, exists] = await Promise.all([C.isBlocked(me.uid, otherUid), C.chatExists(cur.cid)]);
-    const can = blocked ? { ok: false, why: "You blocked this student." } : await C.canMessage(me.uid, otherUid, prof).catch(() => ({ ok: true }));
+    let blocked = false, exists = true, can = { ok: true };
+    if (!isG) {
+      const r = await Promise.all([C.isBlocked(me.uid, otherUid), C.chatExists(cur.cid)]); blocked = r[0]; exists = r[1];
+      can = blocked ? { ok: false, why: "You blocked this student." } : await C.canMessage(me.uid, otherUid, prof).catch(() => ({ ok: true }));
+    }
     fitChat();
     const pl = encodeURIComponent(otherUid);
-    $("conv").innerHTML = `
-      <div class="cm-conv-head ig-head"><button class="ig-hb cm-back" id="back" type="button" aria-label="Back">${backIc}</button>
+    const head = isG
+      ? `<div class="cm-conv-head ig-head"><button class="ig-hb cm-back" id="back" type="button" aria-label="Back">${backIc}</button>
+        <a class="ig-ava lp" id="g-ava" href="#" aria-label="Group info">${C.groupAvatarHtml(prof, "sm")}</a>
+        <a class="grow ig-who lp" id="g-who" href="#"><b id="g-name">${esc(prof.name)}</b><small id="g-sub">${groupSub(chatDoc)}</small></a>
+        <div class="cm-menu"><button class="ig-hb" id="menu" type="button" aria-label="More options">${ic("more")}</button>
+          <div class="cm-menu-pop" id="pop">${groupMenu(chatDoc)}</div></div></div>`
+      : `<div class="cm-conv-head ig-head"><button class="ig-hb cm-back" id="back" type="button" aria-label="Back">${backIc}</button>
         <a class="ig-ava lp" data-lp="__cur" href="profile.html?u=${pl}">${C.avatarHtml(prof, "sm")}</a>
         <a class="grow ig-who lp" data-lp="__cur" href="profile.html?u=${pl}"><b>${esc(prof.name)}${C.tk(cur.uid)}</b><small>View profile</small></a>
         ${can.ok ? `<button class="ig-hb" id="call-a" type="button" aria-label="Voice call" title="Voice call">${ic("call")}</button><button class="ig-hb" id="call-v" type="button" aria-label="Video call" title="Video call">${ic("video")}</button>` : ""}
         <div class="cm-menu"><button class="ig-hb" id="menu" type="button" aria-label="More options">${ic("more")}</button>
-          <div class="cm-menu-pop" id="pop">${can.ok ? `<button id="m-call-a" type="button">${ic("call")} Voice call</button><button id="m-call-v" type="button">${ic("video")} Video call</button>` : ""}<button id="m-profile" type="button">${ic("user")} View profile</button><button id="m-pic" type="button">${ic("image")} View profile picture</button><button id="m-share" type="button">${ic("share")} Share profile</button><button id="m-bg" type="button">${ic("sparkles")} Chat background</button><button id="m-report" type="button">${ic("flag")} Report</button><button id="m-block" type="button">${ic(blocked ? "check" : "ban")} ${blocked ? "Unblock" : "Block"}</button></div></div></div>
+          <div class="cm-menu-pop" id="pop">${can.ok ? `<button id="m-call-a" type="button">${ic("call")} Voice call</button><button id="m-call-v" type="button">${ic("video")} Video call</button>` : ""}<button id="m-profile" type="button">${ic("user")} View profile</button><button id="m-pic" type="button">${ic("image")} View profile picture</button><button id="m-share" type="button">${ic("share")} Share profile</button><button id="m-bg" type="button">${ic("sparkles")} Chat background</button><button id="m-clear" type="button">${ic("trash")} Delete chat for me</button><button id="m-report" type="button">${ic("flag")} Report</button><button id="m-block" type="button">${ic(blocked ? "check" : "ban")} ${blocked ? "Unblock" : "Block"}</button></div></div></div>`;
+    $("conv").innerHTML = `
+      ${head}
       <div class="cm-msgs" id="msgs"><div class="cm-empty">${exists ? "Loading..." : "Say hello 👋 Ask a study doubt or share notes."}</div></div>
-      ${can.ok ? `<div class="cm-pend" id="pend" hidden></div>
+      ${can.ok ? `<div class="mx-replybar" id="replybar" hidden></div><div class="cm-pend" id="pend" hidden></div>
         <div class="cm-compose ig" id="compose">
           <button class="ig-cam" id="cam" type="button" aria-label="Take a photo">${ic("camera")}</button>
           <textarea id="txt" maxlength="1000" placeholder="Message..." rows="1" enterkeyhint="send"></textarea>
@@ -147,28 +201,41 @@
           <input type="file" id="file" hidden><input type="file" id="file-gal" accept="image/*,video/*" hidden><input type="file" id="file-cam" accept="image/*" capture="environment" hidden>
         </div>`
                : `<div class="cm-compose"><div class="cm-msg" style="margin:0;flex:1;text-align:center">${esc(can.why || "You cannot message this student.")}</div></div>`}`;
-    $("back").addEventListener("click", () => { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); fitChat(); if (unsub) { unsub(); unsub = null; } stopBg(); $("conv").classList.remove("has-bg"); $("conv").style.background = ""; cur = null; UP.refresh(); loadList(); });
-    if (can.ok) {
-      $("call-a").addEventListener("click", () => CALL.startCall(otherUid, "audio", prof));
-      $("call-v").addEventListener("click", () => CALL.startCall(otherUid, "video", prof));
-      $("m-call-a").addEventListener("click", () => { $("pop").classList.remove("open"); CALL.startCall(otherUid, "audio", prof); });
-      $("m-call-v").addEventListener("click", () => { $("pop").classList.remove("open"); CALL.startCall(otherUid, "video", prof); });
-    }
+    $("back").addEventListener("click", closeConv);
     $("menu").addEventListener("click", e => { e.stopPropagation(); $("pop").classList.toggle("open"); });
-    $("m-block").addEventListener("click", async () => {
-      $("pop").classList.remove("open");
-      try {
-        if (blocked) { await C.unblockUser(me.uid, otherUid); C.toast("Unblocked", 2000); }
-        else if (confirm("Block " + prof.name + "? They will not be able to message or follow you.")) { await C.blockUser(me.uid, otherUid); C.toast("Blocked", 2000); }
-        else return;
-        open(otherUid);
-      } catch (e) { C.toast(C.errText(e), 6000); }
-    });
-    $("m-report").addEventListener("click", () => { $("pop").classList.remove("open"); report(); });
-    $("m-profile").addEventListener("click", () => { location.href = "profile.html?u=" + pl; });
-    $("m-pic").addEventListener("click", () => { $("pop").classList.remove("open"); C.viewPhoto(prof); });
-    $("m-share").addEventListener("click", () => { $("pop").classList.remove("open"); C.shareProfile(prof, otherUid); });
-    $("m-bg").addEventListener("click", () => { $("pop").classList.remove("open"); openBg(); });
+    const closePop = () => { const p = $("pop"); if (p) p.classList.remove("open"); };
+    if (isG) {
+      const info = e => { e.preventDefault(); openGroupInfo(); };
+      $("g-ava").addEventListener("click", info); $("g-who").addEventListener("click", info);
+      $("pop").addEventListener("click", e => {
+        const b = e.target.closest("button"); if (!b) return; closePop();
+        if (b.id === "g-info") openGroupInfo(); else if (b.id === "g-add") addPeople(); else if (b.id === "m-bg") openBg();
+        else if (b.id === "m-clear") clearChat(); else if (b.id === "g-leave") leaveNow();
+      });
+      watchGroup(cur.cid);
+    } else {
+      if (can.ok) {
+        $("call-a").addEventListener("click", () => CALL.startCall(otherUid, "audio", prof));
+        $("call-v").addEventListener("click", () => CALL.startCall(otherUid, "video", prof));
+        $("m-call-a").addEventListener("click", () => { closePop(); CALL.startCall(otherUid, "audio", prof); });
+        $("m-call-v").addEventListener("click", () => { closePop(); CALL.startCall(otherUid, "video", prof); });
+      }
+      $("m-block").addEventListener("click", async () => {
+        closePop();
+        try {
+          if (blocked) { await C.unblockUser(me.uid, otherUid); C.toast("Unblocked", 2000); }
+          else if (confirm("Block " + prof.name + "? They will not be able to message or follow you.")) { await C.blockUser(me.uid, otherUid); C.toast("Blocked", 2000); }
+          else return;
+          open(otherUid);
+        } catch (e) { C.toast(C.errText(e), 6000); }
+      });
+      $("m-report").addEventListener("click", () => { closePop(); report(); });
+      $("m-profile").addEventListener("click", () => { location.href = "profile.html?u=" + pl; });
+      $("m-pic").addEventListener("click", () => { closePop(); C.viewPhoto(prof); });
+      $("m-share").addEventListener("click", () => { closePop(); C.shareProfile(prof, otherUid); });
+      $("m-bg").addEventListener("click", () => { closePop(); openBg(); });
+      $("m-clear").addEventListener("click", () => { closePop(); clearChat(); });
+    }
     applyBg();
     if (can.ok) {
       $("send").addEventListener("click", send);
@@ -188,12 +255,13 @@
     loadList();
   }
 
+  const visible = m => { const h = cur && hidden[cur.cid]; if (!h) return true; if (h.ids && h.ids[m.id]) return false; return !(h.clearedAt && (m.ts || 0) <= h.clearedAt); };
   function watch() {
     if (unsub) unsub();
     const cid = cur.cid;
     unsub = C.A.fsWatchCol(["chats", cid, "messages"], rows => {
       if (!cur || cur.cid !== cid) return;
-      msgs = rows.sort((a, b) => (a.ts || 0) - (b.ts || 0));
+      msgs = rows.filter(visible).sort((a, b) => (a.ts || 0) - (b.ts || 0));
       paintMsgs();
       C.markSeen(cid, me.uid);
     }, e => { const b = $("msgs"); if (b) b.innerHTML = `<div class="cm-empty">${esc(C.errText(e))}</div>`; });
@@ -244,7 +312,9 @@
   });
   // Photos, videos, APKs and files: the message is "sent" right away, the upload continues in the background (also across pages)
   function sendFileBg(text) {
-    UP.enqueue({ type: "chat", data: { cid: cur.cid, other: cur.uid, text }, file: pendFile }).then(() => { if (cur) paintMsgs(); });
+    const rp = replyPayload();
+    UP.enqueue({ type: "chat", data: { cid: cur.cid, other: cur.group ? "" : cur.uid, gid: cur.group ? cur.cid : "", text, ...(rp ? { reply: rp } : {}) }, file: pendFile }).then(() => { if (cur) paintMsgs(); });
+    clearReply();
   }
 
   function setPending(f) {
@@ -272,14 +342,30 @@
     if (a.kind === "audio") return `<audio class="cm-aud" controls preload="none" src="${u}"></audio>`;
     return `<a class="cm-file" href="${u}" download="${esc(a.name)}" target="_blank" rel="noopener">${ic("file")}<span><b data-keep>${esc(a.name)}</b><small>${F.fmtSize(a.size)} · Tap to download</small>${/\.apk$/i.test(a.name) ? "<small>APK files can install apps. Open only if you trust the sender.</small>" : ""}</span></a>`;
   };
+  const REACT_EMO = ["❤️", "😂", "😮", "😢", "🙏", "👍"];
+  const SAFE_COVER = /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/;
+  const nameOf = uid => uid === me.uid ? "You" : ((profCache[uid] && profCache[uid].name) || "Student");
+  const previewOf = m => m.text ? m.text : m.share ? (m.share.k === "reel" ? "Reel" : "Link") : m.att ? F.attLabel(m.att) : "Message";
+  const scopeOfChat = () => cur && cur.group ? { type: "post" } : { type: "chat", cid: cur && cur.cid };
+  // a reel sent in a chat: cover picture + owner + caption, tap to open the reel (like Instagram)
+  function reelCardHtml(sh) {
+    if (!sh || sh.k !== "reel" || !/^[A-Za-z0-9_-]{1,80}$/.test(String(sh.id || ""))) return "";
+    const media = sh.cover && SAFE_COVER.test(sh.cover) ? `<img src="${sh.cover}" alt="" loading="lazy">`
+      : (sh.vurl && C.STORAGE_HOST.test(sh.vurl)) ? `<video muted playsinline preload="metadata" src="${esc(sh.vurl)}#t=0.1"></video>` : `<span class="rc-ph"></span>`;
+    return `<a class="mx-reel" href="reels.html?reel=${encodeURIComponent(sh.id)}"><span class="rc-by"><b data-keep>${esc(sh.name || "Student")}</b></span><span class="rc-media">${media}<span class="rc-play">${ic("play")}</span><span class="rc-tag">${ic("film")} Reel</span></span>${sh.cap ? `<span class="rc-cap" data-keep>${esc(sh.cap)}</span>` : ""}</a>`;
+  }
   function bubble(m, i) {
     const prev = msgs[i - 1], next = msgs[i + 1], mine = m.from === me.uid, time = fmt(m.ts || Date.now());
     const sep = !prev || (m.ts - prev.ts) > 900000;
-    const same = x => x && x.from === m.from && !x.call && !m.call && Math.abs((x.ts || 0) - (m.ts || 0)) < 120000;
+    const sepHtml = sep ? `<div class="cm-sep">${sepFmt(m.ts || Date.now())}</div>` : "";
+    if (m.sys) return `${sepHtml}<div class="cm-sep mx-sys" data-keep>${esc(m.text)}</div>`;
+    const same = x => x && !x.sys && x.from === m.from && !x.call && !m.call && Math.abs((x.ts || 0) - (m.ts || 0)) < 120000;
     const gp = !sep && same(prev), gn = same(next) && (next.ts - m.ts) <= 900000;
     const pos = !gp && !gn ? "single" : !gp ? "first" : !gn ? "last" : "mid";
-    const av = (mine || m.call) ? "" : (pos === "single" || pos === "last") ? `<span class="cm-r-av lp" data-lp="__cur">${C.avatarHtml(cur.prof, "sm")}</span>` : `<span class="cm-r-av gap"></span>`;
-    const row = inner => `${sep ? `<div class="cm-sep">${sepFmt(m.ts || Date.now())}</div>` : ""}<div class="cm-r ${mine ? "mine" : "theirs"} ${pos} ${m.call ? "is-call" : ""}">${av}${inner}</div>`;
+    const sp = cur.group ? (profCache[m.from] || { name: "Student" }) : cur.prof;
+    const av = (mine || m.call) ? "" : (pos === "single" || pos === "last") ? `<span class="cm-r-av lp" ${cur.group ? "" : 'data-lp="__cur"'}>${C.avatarHtml(sp, "sm")}</span>` : `<span class="cm-r-av gap"></span>`;
+    const reacts = m.react ? Object.entries(m.react).filter(([, e]) => e) : [];
+    const row = inner => `${sepHtml}<div class="cm-r ${mine ? "mine" : "theirs"} ${pos} ${m.call ? "is-call" : ""} ${reacts.length && !m.deleted ? "has-react" : ""}" data-row="${esc(m.id)}">${av}${inner}</div>`;
     if (m.deleted) return row(`<div class="cm-bubble unsent ${mine ? "mine" : ""}">${mine ? "You unsent this message" : "This message was unsent"}</div>`);
     if (m.call) {
       const missed = m.call.status !== "completed";
@@ -290,8 +376,15 @@
       if (!attCache[m.id] && (m.att.store === "st" || m.att.store === "gif")) attCache[m.id] = attHtml(m.att, m.att.url);
       att = `<div class="cm-att" data-mid="${esc(m.id)}">${attCache[m.id] || `<div class="cm-att-load">${m.att.kind === "file" ? esc(m.att.name) : "Loading..."}</div>`}</div>`;
     }
-    const menu = mine ? `<button class="cm-bm" data-bm="${esc(m.id)}" aria-label="Message options" type="button">${ic("more")}</button><div class="cm-bpop" data-bpop="${esc(m.id)}"><button data-edit="${esc(m.id)}" type="button">${ic("pencil")} Edit</button><button data-unsend="${esc(m.id)}" type="button">${ic("trash")} Unsend</button></div>` : "";
-    return row(`<div class="cm-bubble ${mine ? "mine" : ""} ${m.att && !m.text ? "media" : ""}">${menu}${att}${m.text ? `<span>${esc(m.text)}</span>` : ""}<small>${time}${m.edited ? " · edited" : ""}</small></div>`);
+    const rc = {}; reacts.forEach(([, e]) => { rc[e] = (rc[e] || 0) + 1; });
+    const react = reacts.length ? `<button class="mx-react" data-react-chip="${esc(m.id)}" type="button" aria-label="See reactions">${Object.entries(rc).map(([e, n]) => esc(e) + (n > 1 ? `<i>${n}</i>` : "")).join("")}</button>` : "";
+    const quote = m.reply ? `<button class="mx-quote" data-qid="${esc(m.reply.id)}" type="button"><b data-keep>${esc(nameOf(m.reply.from))}</b><span data-keep>${esc(m.reply.t || "Message")}</span></button>` : "";
+    const fwd = m.fwd ? `<span class="mx-fwd">${ic("send")} Forwarded</span>` : "";
+    const who = cur.group && !mine && (pos === "single" || pos === "first") ? `<span class="mx-sn" data-keep>${esc(nameOf(m.from))}</span>` : "";
+    const card = m.share ? reelCardHtml(m.share) : "";
+    const more = `<button class="mx-more" data-more="${esc(m.id)}" type="button" aria-label="Message options">${ic("more")}</button>`;
+    const bub = `<div class="cm-bubble ${mine ? "mine" : ""} ${m.att && !m.text && !m.share ? "media" : ""} ${m.share ? "mx-cardb" : ""}">${who}${fwd}${quote}${att}${card}${m.text ? `<span>${esc(m.text)}</span>` : ""}<small>${time}${m.edited ? " · edited" : ""}</small>${react}</div>`;
+    return row(mine ? more + bub : bub + more);
   }
   function hydrateAtts() {
     const cid = cur && cur.cid;
@@ -302,7 +395,7 @@
         const el = document.querySelector(`.cm-att[data-mid="${CSS.escape(m.id)}"]`);
         if (el) { el.innerHTML = html; const box = $("msgs"); if (box && box.dataset.stick) setTimeout(() => { box.scrollTop = box.scrollHeight; }, 60); }
       };
-      F.fileUrl(m.att, { type: "chat", cid }).then(url => done(attHtml(m.att, url))).catch(() => done(`<div class="cm-att-load">This file is not available.</div>`));
+      F.fileUrl(m.att, cur && cur.group ? { type: "post" } : { type: "chat", cid }).then(url => done(attHtml(m.att, url))).catch(() => done(`<div class="cm-att-load">This file is not available.</div>`));
     });
   }
 
@@ -328,9 +421,26 @@
       } catch (e) { el.className = "cm-msg err"; el.textContent = e && e.code ? C.errText(e) : (e.message || "Could not edit."); go.disabled = false; }
     });
   }
-  async function unsendMsg(m) {
-    if (!confirm("Unsend this message? It will be removed for both of you.")) return;
-    try { await C.unsendMessage(cur.cid, m, msgs.length && msgs[msgs.length - 1].id === m.id); delete attCache[m.id]; loadList(); }
+  async function delEveryone(m) {
+    try { await C.unsendMessage(cur.cid, m, !!(msgs.length && msgs[msgs.length - 1].id === m.id), !!cur.group); delete attCache[m.id]; loadList(); }
+    catch (e) { C.toast(C.errText(e), 6000); }
+  }
+  async function delForMe(m) {
+    try {
+      await C.hideMessage(me.uid, cur.cid, m.id);
+      const h = hidden[cur.cid] || (hidden[cur.cid] = { ids: {}, clearedAt: 0 }); (h.ids = h.ids || {})[m.id] = true;
+      msgs = msgs.filter(x => x.id !== m.id); paintMsgs(); C.toast("Deleted for you", 1800);
+    } catch (e) { C.toast(C.errText(e), 6000); }
+  }
+  function openDelete(m) {
+    const mine = m.from === me.uid, items = [];
+    if (mine) items.push(["Delete for everyone", () => delEveryone(m), true, "trash"]);
+    items.push(["Delete for you", () => delForMe(m), !mine, "trash"]);
+    sheetList("Delete message?", items, mine ? "Delete for everyone removes it for all people in this chat. Delete for you removes it only from your own chat." : "This removes the message only from your own chat. Other people still see it.");
+  }
+  async function clearChat() {
+    if (!cur || !confirm("Delete this chat for you? Other people keep their messages. New messages will show up again.")) return;
+    try { await C.clearChatForMe(me.uid, cur.cid); hidden[cur.cid] = { ids: (hidden[cur.cid] && hidden[cur.cid].ids) || {}, clearedAt: Date.now() }; C.toast("Chat deleted for you", 2000); closeConv(); }
     catch (e) { C.toast(C.errText(e), 6000); }
   }
 
@@ -351,8 +461,8 @@
         await C.ensureChat(me.uid, cur.uid);            // the chat must exist before the file is stored
         att = await F.uploadFile(pendFile, { type: "chat", cid: cur.cid }, setProgress);
       }
-      await C.sendMessage(me.uid, cur.uid, text, att);
-      ta.value = ""; pendFile = null; renderPend(); syncCompose();
+      await C.sendMessage(me.uid, cur.group ? null : cur.uid, text, att, sendOpts());
+      clearReply(); ta.value = ""; pendFile = null; renderPend(); syncCompose();
       if (!existed) { watch(); watchBg(); }
       loadList();
     } catch (e) {
@@ -393,7 +503,7 @@
           if (!/(^|\.)giphy\.com$/.test(host)) return;
           close();
           try {
-            await C.sendMessage(me.uid, cur.uid, "", { store: "gif", kind: "image", name: "GIF", url: g.full.url });
+            await C.sendMessage(me.uid, cur.group ? null : cur.uid, "", { store: "gif", kind: "image", name: "GIF", url: g.full.url }, sendOpts()); clearReply();
             loadList();
           } catch (err) { C.toast(C.errText(err) || "Could not send the GIF.", 5000); }
         };
@@ -416,7 +526,7 @@
     sSave(all.filter(x => x.at > Date.now()));
     for (const x of due) {
       try {
-        await C.sendMessage(me.uid, x.to, x.text, null);
+        await C.sendMessage(me.uid, x.group ? null : x.to, x.text, null, x.group ? { gid: x.to } : {});
         C.toast("Scheduled message sent to " + x.name, 3000);
       } catch (e) { C.toast("Scheduled message to " + x.name + " could not be sent.", 5000); }
     }
@@ -424,7 +534,7 @@
   }
   setInterval(runSched, 15000);
   function queueSched(text, at) {
-    const a = sLoad(); a.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), to: cur.uid, name: cur.prof.name, text, at }); sSave(a);
+    const a = sLoad(); a.push({ id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), to: cur.uid, group: !!cur.group, name: cur.prof.name, text, at }); sSave(a);
     const ta = $("txt"); if (ta && ta.value.trim() === text) { ta.value = ""; syncCompose(); }
     C.toast("Scheduled for " + new Date(at).toLocaleString([], { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }), 3000);
   }
@@ -605,7 +715,7 @@
     }
     try { localStorage.removeItem(BG_ONE()); } catch (e) {}      // a shared choice replaces my private one for this chat
     try {
-      await C.ensureChat(me.uid, cur.uid);
+      if (!cur.group) await C.ensureChat(me.uid, cur.uid);
       if (!bgUnsub) watchBg();
       await C.A.fsSetPath(bgPath(cur.cid), { ...obj, by: me.uid, ts: Date.now() }, false);
       sharedBg = { ...obj, by: me.uid, ts: Date.now() }; applyBg();
@@ -655,6 +765,191 @@
     });
   }
 
+  /* ---------- message actions (long-press / more button / right-click): react, reply, forward, copy, edit, delete ---------- */
+  function sheetList(title, items, sub) {
+    const md = document.createElement("div"); md.className = "cm-modal sheet mx-act";
+    md.innerHTML = `<div class="cm-card mx-card"><span class="sh-grab"></span>${title ? `<h2 class="mx-h">${esc(title)}</h2>` : ""}${sub ? `<p class="mx-sub">${esc(sub)}</p>` : ""}<div class="mx-list">${items.map((it, i) => `<button type="button" data-i="${i}" class="${it[2] ? "danger" : ""}">${it[3] ? ic(it[3]) : ""}<span>${esc(it[0])}</span></button>`).join("")}</div><button class="btn btn-ghost mx-cancel" type="button">Cancel</button></div>`;
+    md.addEventListener("click", e => { if (e.target === md || e.target.closest(".mx-cancel")) return md.remove(); const b = e.target.closest("[data-i]"); if (!b) return; md.remove(); items[+b.dataset.i][1](); });
+    document.body.appendChild(md); return md;
+  }
+  const replyPayload = () => replyTo ? { id: replyTo.id, from: replyTo.from, t: String(replyTo.t || "Message").slice(0, 100) } : null;
+  const sendOpts = () => ({ ...(cur && cur.group ? { gid: cur.cid } : {}), ...(replyTo ? { reply: replyPayload() } : {}) });
+  function renderReplyBar() {
+    const b = $("replybar"); if (!b) return;
+    if (!replyTo) { b.hidden = true; b.innerHTML = ""; return; }
+    b.hidden = false;
+    b.innerHTML = `<span class="mx-rb-ic">${ic("chat")}</span><span class="grow"><b data-keep>Replying to ${esc(nameOf(replyTo.from))}</b><small data-keep>${esc(replyTo.t)}</small></span><button type="button" id="rb-x" class="cm-x2" aria-label="Cancel reply">✕</button>`;
+    $("rb-x").addEventListener("click", clearReply);
+  }
+  function setReply(m) {
+    if (!$("txt")) return C.toast("You cannot reply in this chat.", 2500);
+    replyTo = { id: m.id, from: m.from, t: previewOf(m) }; renderReplyBar(); $("txt").focus();
+  }
+  function clearReply() { replyTo = null; renderReplyBar(); }
+  function jumpTo(id) {
+    const r = document.querySelector(`[data-row="${CSS.escape(id)}"]`);
+    if (!r) return C.toast("That message is not in this chat any more.", 2200);
+    r.scrollIntoView({ block: "center", behavior: "smooth" }); r.classList.add("mx-flash"); setTimeout(() => r.classList.remove("mx-flash"), 1400);
+  }
+  async function doReact(m, emoji) {
+    const before = m.react || {}, now = before[me.uid] || "";
+    m.react = { ...before, [me.uid]: now === emoji ? "" : emoji }; paintMsgs();      // shows at once; the live update confirms it
+    try { await C.reactMessage(cur.cid, { id: m.id, react: before }, me.uid, emoji); }
+    catch (e) { m.react = before; paintMsgs(); C.toast(C.errText(e), 4000); }
+  }
+  const copyText = t => { try { navigator.clipboard.writeText(t).then(() => C.toast("Copied", 1500)).catch(() => window.prompt("Copy this text:", t)); } catch (e) { window.prompt("Copy this text:", t); } };
+  function openActions(m) {
+    if (!m || m.deleted || m.sys || m.call || !cur) return;
+    const mine = m.from === me.uid, my = (m.react && m.react[me.uid]) || "", canReply = !!$("txt");
+    const md = document.createElement("div"); md.className = "cm-modal sheet mx-act";
+    md.innerHTML = `<div class="cm-card mx-card"><span class="sh-grab"></span>
+      <div class="mx-emo">${REACT_EMO.map(e => `<button type="button" data-e="${e}" class="${my === e ? "on" : ""}" aria-label="React ${e}">${e}</button>`).join("")}</div>
+      <div class="mx-list">
+        ${canReply ? `<button type="button" data-a="reply">${ic("chat")}<span>Reply</span></button>` : ""}
+        <button type="button" data-a="fwd">${ic("send")}<span>Forward</span></button>
+        ${m.text ? `<button type="button" data-a="copy">${ic("copy")}<span>Copy</span></button>` : ""}
+        ${mine && m.text && !m.share && canReply ? `<button type="button" data-a="edit">${ic("pencil")}<span>Edit</span></button>` : ""}
+        <button type="button" data-a="del" class="danger">${ic("trash")}<span>Delete</span></button>
+        ${!mine && !cur.group ? `<button type="button" data-a="report">${ic("flag")}<span>Report</span></button>` : ""}
+      </div><button class="btn btn-ghost mx-cancel" type="button">Cancel</button></div>`;
+    md.addEventListener("click", e => {
+      if (e.target === md || e.target.closest(".mx-cancel")) return md.remove();
+      const em = e.target.closest("[data-e]"); if (em) { md.remove(); doReact(m, em.dataset.e); return; }
+      const b = e.target.closest("[data-a]"); if (!b) return; md.remove();
+      const a = b.dataset.a;
+      if (a === "reply") setReply(m); else if (a === "fwd") forwardMsg(m); else if (a === "copy") copyText(m.text);
+      else if (a === "edit") editMsg(m); else if (a === "del") openDelete(m); else if (a === "report") report();
+    });
+    document.body.appendChild(md);
+  }
+  function openReactions(m) {
+    const rows = Object.entries(m.react || {}).filter(([, e]) => e);
+    if (!rows.length) return;
+    const md = document.createElement("div"); md.className = "cm-modal sheet mx-act";
+    md.innerHTML = `<div class="cm-card mx-card"><span class="sh-grab"></span><h2 class="mx-h">Reactions</h2><div class="mx-list">${rows.map(([u, e]) => `<button type="button" data-ru="${esc(u)}" data-re="${esc(e)}"><span class="mx-ra">${C.avatarHtml(profCache[u] || { name: "Student" }, "sm")}</span><span>${esc(nameOf(u))}${u === me.uid ? " · tap to remove" : ""}</span><em class="mx-re">${esc(e)}</em></button>`).join("")}</div><button class="btn btn-ghost mx-cancel" type="button">Close</button></div>`;
+    md.addEventListener("click", e => {
+      if (e.target === md || e.target.closest(".mx-cancel")) return md.remove();
+      const b = e.target.closest("[data-ru]"); if (b && b.dataset.ru === me.uid) { md.remove(); doReact(m, b.dataset.re); }
+    });
+    document.body.appendChild(md);
+  }
+  // Forward to one or more chats / groups. Files that live in the database are copied into the new chat.
+  async function forwardMsg(m) {
+    const r = await C.pickPeople({ heading: "Forward to", groups: true, button: "Forward", min: 1 });
+    if (!r) return;
+    let ok = 0, fail = "";
+    for (const t of r.picked) {
+      try {
+        const gid = t.group ? t.id : "";
+        if (!gid) { const c = await C.canMessage(me.uid, t.id, t.prof); if (!c.ok) { fail = c.why; continue; } }
+        let att = m.att || null;
+        if (att && att.store === "fs") {
+          const url = await F.fileUrl(att, scopeOfChat()), blob = await (await fetch(url)).blob();
+          const file = new File([blob], att.name || "file", { type: att.mime || blob.type });
+          if (!gid) await C.ensureChat(me.uid, t.id);
+          att = await F.uploadFile(file, gid ? { type: "post", uid: me.uid } : { type: "chat", cid: C.chatId(me.uid, t.id) });
+        }
+        await C.sendMessage(me.uid, gid ? null : t.id, m.text || "", att, { ...(gid ? { gid } : {}), fwd: true, ...(m.share ? { share: m.share } : {}) });
+        ok++;
+      } catch (e) { fail = (e && e.code ? C.errText(e) : e.message) || "Could not forward."; }
+    }
+    if (ok && m.from === me.uid && m.att && m.att.store === "st") C.markForwarded(cur.cid, m);
+    if (ok) C.toast("Forwarded to " + ok + (ok > 1 ? " chats" : " chat"), 2500);
+    if (fail) C.toast(fail, 5000);
+    loadList();
+  }
+
+  /* ---------- group chats ---------- */
+  async function allowedMembers(picked) {
+    const ok = [], bad = [];
+    for (const p of picked) { const c = await C.canMessage(me.uid, p.id, p.prof).catch(() => ({ ok: true })); (c.ok ? ok : bad).push(p); }
+    if (bad.length) C.toast(bad.map(p => p.name).join(", ") + (bad.length > 1 ? " do" : " does") + " not accept messages from you, so could not be added.", 6000);
+    return ok;
+  }
+  async function newGroup() {
+    const r = await C.pickPeople({ heading: "New group", button: "Create", min: 2, needName: true, top: `<div class="cm-field mx-gname"><input id="pk-name" maxlength="40" placeholder="Group name" autocomplete="off"></div>` });
+    if (!r) return;
+    const ok = await allowedMembers(r.picked);
+    if (ok.length < 2) return C.toast("A group needs at least 2 other people who accept your messages.", 5000);
+    try {
+      const gid = await C.createGroup(me.uid, r.name, ok.map(p => ({ uid: p.id, name: p.name })), myProf.name);
+      await loadList(); open(gid);
+    } catch (e) { C.toast(e && e.code ? C.errText(e) : (e.message || "Could not create the group."), 6000); }
+  }
+  async function addPeople() {
+    if (!cur || !cur.group) return;
+    const r = await C.pickPeople({ heading: "Add people", exclude: cur.chat.participants, button: "Add", min: 1 });
+    if (!r) return;
+    const ok = await allowedMembers(r.picked); if (!ok.length) return;
+    try { await C.addMembers(cur.cid, cur.chat, me.uid, myProf.name, ok.map(p => ({ uid: p.id, name: p.name }))); C.toast("Added", 1800); }
+    catch (e) { C.toast(e && e.code ? C.errText(e) : (e.message || "Could not add."), 6000); }
+  }
+  async function leaveNow() {
+    if (!cur || !confirm("Leave this group? You will not get new messages from it.")) return;
+    try { await C.leaveGroup(cur.cid, cur.chat, me.uid, myProf.name); C.toast("You left the group", 2000); closeConv(); }
+    catch (e) { C.toast(C.errText(e), 6000); }
+  }
+  function openGroupInfo() {
+    if (!cur || !cur.group) return;
+    const md = document.createElement("div"); md.className = "cm-modal";
+    const paint = () => {
+      const c = cur.chat, adm = (c.admins || []).includes(me.uid);
+      md.innerHTML = `<div class="cm-card mx-ginfo"><h2>Group info<button class="cm-x" aria-label="Close">✕</button></h2>
+        <div class="mx-gtop">${C.groupAvatarHtml(c, "")}${adm ? `<div class="cm-field" style="margin:0;flex:1"><input id="gi-name" maxlength="40" value="${esc(c.name)}" aria-label="Group name"></div><button class="btn btn-gold" id="gi-save" type="button">Save</button>` : `<b class="grow">${esc(c.name)}</b>`}</div>
+        <p class="mx-sub">${groupSub(c)}${adm ? " · you are an admin" : ""}</p>
+        ${adm && c.participants.length < C.GROUP_MAX ? `<button class="btn btn-ghost" id="gi-add" type="button">${ic("plus")} Add people</button>` : ""}
+        <div class="mx-mem">${c.participants.map(u => { const p = profCache[u] || { name: "Student" }, isA = (c.admins || []).includes(u); return `<div class="mx-mrow"><span class="lp">${C.avatarHtml(p, "sm")}</span><div class="grow"><b data-keep>${u === me.uid ? "You" : esc(p.name)}</b></div>${isA ? `<span class="mx-badge">Admin</span>` : ""}${adm && u !== me.uid ? `<button class="mx-mm" data-mm="${esc(u)}" type="button" aria-label="Manage ${esc(p.name)}">${ic("more")}</button>` : ""}</div>`; }).join("")}</div>
+        <div class="cm-msg" id="gi-m"></div>
+        <button class="btn btn-ghost mx-danger" id="gi-leave" type="button">${ic("logout")} Leave group</button></div>`;
+    };
+    const close = () => { gInfoPaint = null; md.remove(); };
+    gInfoPaint = () => { if (md.isConnected) paint(); };
+    paint();
+    md.addEventListener("click", async e => {
+      if (e.target === md || e.target.closest(".cm-x")) return close();
+      const msg = t => { const el = md.querySelector("#gi-m"); if (el) { el.className = "cm-msg err"; el.textContent = t; } };
+      if (e.target.closest("#gi-save")) {
+        const nm = md.querySelector("#gi-name").value.trim();
+        if (nm === cur.chat.name) return;
+        try { await C.renameGroup(cur.cid, me.uid, myProf.name, nm); } catch (x) { msg(x && x.code ? C.errText(x) : x.message); }
+        return;
+      }
+      if (e.target.closest("#gi-add")) { addPeople(); return; }
+      if (e.target.closest("#gi-leave")) { close(); leaveNow(); return; }
+      const mm = e.target.closest("[data-mm]");
+      if (mm) {
+        const u = mm.dataset.mm, nm = (profCache[u] && profCache[u].name) || "Student", isA = (cur.chat.admins || []).includes(u);
+        sheetList(nm, [
+          [isA ? "Remove as admin" : "Make admin", () => C.setGroupAdmin(cur.cid, cur.chat, u, !isA).catch(x => C.toast(C.errText(x), 5000)), false, "badge"],
+          ["Remove from group", () => C.removeMember(cur.cid, cur.chat, me.uid, myProf.name, u, nm).catch(x => C.toast(C.errText(x), 5000)), true, "ban"]
+        ]);
+      }
+    });
+    document.body.appendChild(md);
+  }
+
+  /* long-press / right-click on a message opens the same menu; swipe a message sideways to reply (touch) */
+  C.onLongPress(document, ".cm-r[data-row] .cm-bubble", el => { const r = el.closest("[data-row]"); openActions(msgs.find(x => x.id === r.dataset.row)); });
+  document.addEventListener("contextmenu", e => { const b = e.target.closest && e.target.closest(".cm-r[data-row] .cm-bubble"); if (!b) return; e.preventDefault(); openActions(msgs.find(x => x.id === b.closest("[data-row]").dataset.row)); });
+  let sw = null;
+  document.addEventListener("touchstart", e => {
+    const r = e.target.closest && e.target.closest(".cm-r[data-row]");
+    if (!r || e.touches.length !== 1 || e.target.closest("video,audio,input,textarea")) { sw = null; return; }
+    sw = { r, x: e.touches[0].clientX, y: e.touches[0].clientY, dx: 0, lock: false };
+  }, { passive: true });
+  document.addEventListener("touchmove", e => {
+    if (!sw) return;
+    const t = e.touches[0], dx = t.clientX - sw.x, dy = t.clientY - sw.y;
+    if (!sw.lock) { if (Math.abs(dy) > 12 && Math.abs(dy) > Math.abs(dx)) { sw = null; return; } if (Math.abs(dx) > 12) sw.lock = true; else return; }
+    sw.dx = Math.max(-80, Math.min(80, dx)); sw.r.style.transform = `translateX(${sw.dx}px)`;
+  }, { passive: true });
+  document.addEventListener("touchend", () => {
+    if (!sw) return; const { r, dx, lock } = sw; sw = null;
+    r.style.transition = "transform .2s"; r.style.transform = ""; setTimeout(() => { r.style.transition = ""; }, 230);
+    if (lock && Math.abs(dx) >= 56) { const m = msgs.find(x => x.id === r.dataset.row); if (m && !m.deleted && !m.sys && !m.call) setReply(m); }
+  }, { passive: true });
+  document.addEventListener("touchcancel", () => { if (sw) { sw.r.style.transform = ""; sw = null; } }, { passive: true });
+
   C.onLongPress(document, "[data-lp]", el => { const id = el.dataset.lp; C.viewPhoto(id === "__cur" ? (cur && cur.prof) : profCache[id]); });
   C.onLongPress(document, "#send", () => openSendMenu());
 
@@ -662,12 +957,21 @@
     const cb = e.target.closest("[data-callback]");
     if (cb && cur) { CALL.startCall(cur.uid, cb.dataset.callback, cur.prof); return; }
     const bub = e.target.closest(".cm-bubble");
-    if (bub && !e.target.closest("a,button,video,audio,img,.cm-bpop")) bub.classList.toggle("showt");
-    const bm = e.target.closest("[data-bm]");
-    document.querySelectorAll(".cm-bpop.open").forEach(p => { if (!bm || p.dataset.bpop !== bm.dataset.bm) p.classList.remove("open"); });
-    if (bm) { e.stopPropagation(); const p = document.querySelector(`.cm-bpop[data-bpop="${CSS.escape(bm.dataset.bm)}"]`); if (p) p.classList.toggle("open"); return; }
-    const ed = e.target.closest("[data-edit]"), un = e.target.closest("[data-unsend]");
-    if (ed || un) { const m = msgs.find(x => x.id === (ed || un).dataset[ed ? "edit" : "unsend"]); document.querySelectorAll(".cm-bpop.open").forEach(p => p.classList.remove("open")); if (m) (ed ? editMsg(m) : unsendMsg(m)); return; }
+    if (bub && !e.target.closest("a,button,video,audio,img")) {
+      bub.classList.toggle("showt");
+      const rw = bub.closest("[data-row]");
+      if (rw) {                                   // double tap = heart (like Instagram)
+        const now = Date.now();
+        if (lastTap.id === rw.dataset.row && now - lastTap.t < 320) { lastTap = { id: "", t: 0 }; const m = msgs.find(x => x.id === rw.dataset.row); if (m && !m.deleted && !m.sys && !m.call) doReact(m, "❤️"); }
+        else lastTap = { id: rw.dataset.row, t: now };
+      }
+    }
+    const mo = e.target.closest("[data-more]");
+    if (mo) { e.stopPropagation(); openActions(msgs.find(x => x.id === mo.dataset.more)); return; }
+    const qb = e.target.closest("[data-qid]");
+    if (qb) { jumpTo(qb.dataset.qid); return; }
+    const rch = e.target.closest("[data-react-chip]");
+    if (rch) { const m = msgs.find(x => x.id === rch.dataset.reactChip); if (m) openReactions(m); return; }
     const pop = $("pop"); if (pop && !e.target.closest(".cm-menu")) pop.classList.remove("open");
     const r = e.target.closest("[data-open]"); if (r) { open(r.dataset.open).catch(err => C.toast(C.errText(err) || "Could not open this chat.", 5000)); $("nq").value = ""; $("nres").innerHTML = ""; }
   });
@@ -681,6 +985,7 @@
     if (demo || C.A.isDemo()) { $("list").innerHTML = `<div class="empty">Messages need a real account (not demo mode).</div>`; return; }
     try {
       myProf = (await C.ensureMyProfile(user)).profile;
+      hidden = await C.hiddenAll(user.uid);
       await loadList();
       const to = new URLSearchParams(location.search).get("to");
       if (to && to !== user.uid) await open(to).catch(err => C.toast(C.errText(err) || "Could not open this chat.", 5000));

@@ -325,6 +325,7 @@ export async function listChats(me) {
   return rows.filter(c => c.lastTs > 0).sort((a, b) => b.lastTs - a.lastTs);
 }
 export const otherOf = (chat, me) => chat.participants.find(u => u !== me);
+export const isGroup = c => !!(c && c.group);
 export const isUnread = (chat, me) => chat.lastFrom && chat.lastFrom !== me && chat.lastTs > (chat["seen_" + me] || 0);
 export async function unreadCount(me) { try { return (await listChats(me)).filter(c => isUnread(c, me)).length; } catch (e) { return 0; } }
 export async function chatExists(cid) { try { return !!(await A.fsGetPath(["chats", cid])); } catch (e) { return false; } }
@@ -334,17 +335,26 @@ export async function ensureChat(me, other) {
   if (!(await chatExists(cid))) await A.fsSetPath(["chats", cid], { participants: parts, lastTs: 0 }, false);
   return cid;
 }
-// text and/or one attachment (att comes from F.uploadFile)
+// What a shared card is called in the chat list: "Reel from Aman"
+export const shareLabel = sh => !sh ? "" : sh.k === "reel" ? "Reel" + (sh.name ? " from " + sh.name : "") : "Shared a link";
+// text and/or one attachment (att comes from F.uploadFile) and/or a shared card (reel).
+// o.gid = send into a group chat instead of a 1:1 chat; o.reply = { id, from, t, k }; o.fwd = forwarded; o.sys = group notice
 export async function sendMessage(me, other, text, att, o = {}) {
-  const cid = chatId(me, other);
+  const gid = o.gid || "", cid = gid || chatId(me, other);
   text = String(text || "").trim().slice(0, 1000);
-  if (!text && !att) return cid;
-  await ensureChat(me, other);
+  if (!text && !att && !o.share) return cid;
+  if (!gid) await ensureChat(me, other);
   const id = o.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)), now = o.ts || Date.now();   // id / ts: so a message sent in the background keeps its place and is never doubled
-  const msg = { from: me, to: other, text, ts: now };
+  const msg = { from: me, text, ts: now };
+  if (!gid) msg.to = other;
   if (att) msg.att = att;
+  if (o.share) msg.share = o.share;
+  if (o.reply) msg.reply = o.reply;
+  if (o.fwd) msg.fwd = true;
+  if (o.sys) msg.sys = true;
   await A.fsSetPath(["chats", cid, "messages", id], msg, false);
-  await A.fsSetPath(["chats", cid], { lastText: (text || F.attLabel(att)).slice(0, 80), lastFrom: me, lastTs: Date.now(), ["seen_" + me]: Date.now() });
+  const last = text || (o.share ? shareLabel(o.share) : F.attLabel(att));
+  await A.fsSetPath(["chats", cid], { lastText: String(last).slice(0, 80), lastFrom: me, lastSys: !!o.sys, lastTs: Date.now(), ["seen_" + me]: Date.now() });
   return cid;
 }
 // Edit my own message (text / caption only)
@@ -355,22 +365,159 @@ export async function editMessage(cid, m, newText, isLast) {
   if (isLast) await A.fsSetPath(["chats", cid], { lastText: (newText || F.attLabel(m.att)).slice(0, 80) }).catch(() => {});
   return newText;
 }
-// Unsend my own message: the text and the attached file are removed for both people
-export async function unsendMessage(cid, m, isLast) {
-  await A.fsSetPath(["chats", cid, "messages", m.id], { deleted: true, text: "", att: null, edited: false });
-  if (m.att) F.deleteFile(m.att, { type: "chat", cid });
+// Delete for everyone ("unsend"): the text, the attached file and the shared card are removed for everybody in the chat.
+// A forwarded copy never deletes the file it shares with the original message.
+export async function unsendMessage(cid, m, isLast, group) {
+  await A.fsSetPath(["chats", cid, "messages", m.id], { deleted: true, text: "", att: null, share: null, reply: null, edited: false });
+  if (m.att && !m.fwd && !m.fwdc) F.deleteFile(m.att, group ? { type: "post", uid: m.from } : { type: "chat", cid });
   if (isLast) await A.fsSetPath(["chats", cid], { lastText: "Message unsent" }).catch(() => {});
+}
+// Marks my own message as "has been forwarded": its file is then kept even if I unsend it
+export const markForwarded = (cid, m) => A.fsSetPath(["chats", cid, "messages", m.id], { fwdc: true }).catch(() => {});
+// Reaction (emoji) on any message of a chat I am in. Tapping the same emoji again removes it.
+export async function reactMessage(cid, m, me, emoji) {
+  const now = (m.react && m.react[me]) || "", next = now === emoji ? "" : emoji;
+  await A.fsSetPath(["chats", cid, "messages", m.id], { react: { [me]: next } });
+  return next;
+}
+// Delete for me: kept in users/{me}/hidden/{chatId} (ids of hidden messages + the time the chat was cleared). The other person is not affected.
+export async function hiddenAll(me) {
+  try { const rows = await A.fsListPath(["users", me, "hidden"]); const o = {}; rows.forEach(r => { o[r.id] = { ids: r.ids || {}, clearedAt: +r.clearedAt || 0 }; }); return o; } catch (e) { return {}; }
+}
+export const hideMessage = (me, cid, id) => A.fsSetPath(["users", me, "hidden", cid], { ids: { [id]: true } });
+export const clearChatForMe = (me, cid) => A.fsSetPath(["users", me, "hidden", cid], { clearedAt: Date.now() });
+
+/* ---------- group chats ----------
+   chats/g_xxxx: { group: true, name, participants: [uid...], admins: [uid...], createdBy, lastText, lastFrom, lastTs, seen_<uid> }
+   Messages live in chats/g_xxxx/messages like a normal chat (no "to" field). Notices ("Aman added Ravi") are messages with sys: true. */
+export const GROUP_MAX = 30;
+const GCOL = [["#6d7cff", "#a06bff"], ["#17c3b2", "#227c9d"], ["#ff9966", "#ff5e62"], ["#4facfe", "#00c6fb"], ["#f6b93b", "#e55039"], ["#ee0979", "#ff6a00"], ["#654ea3", "#eaafc8"], ["#11998e", "#38ef7d"]];
+export function groupAvatarHtml(g, cls = "") {
+  const n = String((g && g.name) || "Group"); let h = 0; for (const ch of n) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const c = GCOL[h % GCOL.length];
+  return `<span class="avatar vec grp ${cls}" style="background:linear-gradient(135deg,${c[0]},${c[1]})">${window.ic ? window.ic("users") : ""}</span>`;
+}
+const newGid = () => "g_" + Array.from(crypto.getRandomValues(new Uint8Array(10)), b => b.toString(16).padStart(2, "0")).join("");
+const gNotice = (gid, me, text) => sendMessage(me, null, text, null, { gid, sys: true });
+export async function createGroup(me, name, members, myName) {
+  name = String(name || "").trim().slice(0, 40);
+  if (!name) throw new Error("Give the group a name.");
+  const uids = [...new Set([me, ...members.map(m => m.uid)])];
+  if (uids.length < 3) throw new Error("Add at least 2 people to make a group.");
+  if (uids.length > GROUP_MAX) throw new Error("A group can have up to " + GROUP_MAX + " people.");
+  const gid = newGid();
+  await A.fsSetPath(["chats", gid], { group: true, name, participants: uids, admins: [me], createdBy: me, lastTs: 0 }, false);
+  await gNotice(gid, me, (myName || "Someone") + " created the group");
+  return gid;
+}
+export async function renameGroup(gid, me, myName, name) {
+  name = String(name || "").trim().slice(0, 40);
+  if (!name) throw new Error("The group needs a name.");
+  await A.fsSetPath(["chats", gid], { name });
+  await gNotice(gid, me, (myName || "Someone") + " renamed the group to \u201c" + name + "\u201d");
+  return name;
+}
+export async function addMembers(gid, chat, me, myName, members) {
+  const uids = [...new Set([...chat.participants, ...members.map(m => m.uid)])];
+  if (uids.length > GROUP_MAX) throw new Error("A group can have up to " + GROUP_MAX + " people.");
+  await A.fsSetPath(["chats", gid], { participants: uids });
+  await gNotice(gid, me, (myName || "Someone") + " added " + members.map(m => m.name || "a student").join(", "));
+  return uids;
+}
+export async function removeMember(gid, chat, me, myName, uid, theirName) {
+  await A.fsSetPath(["chats", gid], { participants: chat.participants.filter(u => u !== uid), admins: (chat.admins || []).filter(u => u !== uid) });
+  await gNotice(gid, me, (myName || "Someone") + " removed " + (theirName || "a student"));
+}
+export async function setGroupAdmin(gid, chat, uid, on) {
+  const cur = chat.admins || [];
+  await A.fsSetPath(["chats", gid], { admins: on ? [...new Set([...cur, uid])] : cur.filter(u => u !== uid) });
+}
+export async function leaveGroup(gid, chat, me, myName) {
+  await gNotice(gid, me, (myName || "Someone") + " left");              // while I am still in the group
+  const rest = chat.participants.filter(u => u !== me);
+  const data = { participants: rest };
+  if ((chat.admins || []).includes(me) && rest.length) { const adm = (chat.admins || []).filter(u => u !== me); data.admins = adm.length ? adm : [rest[0]]; }
+  await A.fsSetPath(["chats", gid], data);
+}
+
+/* ---------- people picker (Forward, New group, Add people) ----------
+   pickPeople({ heading, groups, exclude, button, min, top, needName, note }) -> Promise<{ picked: [{ id, group, name, prof }], note, name } | null> */
+export function pickPeople(o = {}) {
+  return new Promise(async resolve => {
+    const meUser = A.currentUser && A.currentUser();
+    if (!meUser) return resolve(null);
+    const exclude = new Set([meUser.uid, ...(o.exclude || [])]);
+    const picked = new Map();
+    let people = [], extra = [], finished = false, token = 0, st;
+    document.querySelectorAll(".pk-ov").forEach(x => x.remove());
+    const md = document.createElement("div");
+    md.className = "cm-modal sheet sh-ov pk-ov";
+    md.innerHTML = `<div class="cm-card sh-card with-people"><span class="sh-grab"></span>
+      <h2 class="sh-h">${esc(o.heading || "Select")}<button class="cm-x" type="button" aria-label="Close">\u2715</button></h2>
+      ${o.top || ""}
+      <div class="sh-search">${window.ic ? window.ic("search") : ""}<input type="text" id="pk-q" placeholder="Search people" autocomplete="off" aria-label="Search people"></div>
+      <div class="sh-people" id="pk-people"><div class="sh-note">Loading...</div></div>
+      <div class="sh-sendbar" hidden>${o.note ? `<input type="text" id="pk-note" maxlength="200" placeholder="Write a message..." aria-label="Message">` : ""}<button type="button" class="sh-go">${LOGO.send}<span>${esc(o.button || "Send")}</span></button></div></div>`;
+    const done = v => { if (finished) return; finished = true; md.remove(); document.removeEventListener("keydown", key); resolve(v); };
+    const key = e => { if (e.key === "Escape") done(null); };
+    document.addEventListener("keydown", key);
+    const label = () => { const b = md.querySelector(".sh-sendbar"); b.hidden = !picked.size; b.querySelector(".sh-go span").textContent = (o.button || "Send") + (picked.size > 1 ? " (" + picked.size + ")" : ""); };
+    const draw = () => {
+      const q = (md.querySelector("#pk-q").value || "").trim().toLowerCase(), box = md.querySelector("#pk-people");
+      const rows = [...people.filter(p => !q || String(p.name || "").toLowerCase().includes(q)), ...extra.filter(p => !people.some(x => x.id === p.id))];
+      box.innerHTML = rows.length ? rows.map(p => `<button type="button" class="sh-p ${picked.has(p.id) ? "on" : ""}" data-u="${esc(p.id)}"><span class="sh-av">${p.group ? groupAvatarHtml(p, "") : avatarHtml(p, "")}<em>${LOGO.check}</em></span><span class="sh-nm">${esc(p.name || "Student")}</span></button>`).join("")
+        : `<div class="sh-note">${people.length || q ? "No one found" : "Search a student by name or username."}</div>`;
+      label();
+    };
+    md.addEventListener("click", e => {
+      if (e.target === md || e.target.closest(".cm-x")) return done(null);
+      const pp = e.target.closest(".sh-p");
+      if (pp) {
+        const id = pp.dataset.u, p = [...people, ...extra].find(x => x.id === id);
+        if (picked.has(id)) picked.delete(id); else if (p) picked.set(id, p);
+        draw(); return;
+      }
+      if (e.target.closest(".sh-go")) {
+        const min = o.min || 1, nm = md.querySelector("#pk-name"), name = nm ? nm.value.trim() : "";
+        if (o.needName && !name) { toast("Give the group a name first.", 3000); if (nm) nm.focus(); return; }
+        if (picked.size < min) return toast("Pick at least " + min + (min > 1 ? " people." : " person."), 3000);
+        const note = md.querySelector("#pk-note");
+        done({ picked: [...picked.values()].map(p => ({ id: p.id, group: !!p.group, name: p.name || "Student", prof: p })), note: note ? note.value.trim() : "", name });
+      }
+    });
+    md.addEventListener("input", e => {
+      if (!e.target.closest(".sh-search")) return;
+      draw();
+      clearTimeout(st); const q = e.target.value.trim(), my = ++token;
+      if (q.length < 2 || o.noSearch) { extra = []; return; }
+      st = setTimeout(async () => {
+        try { const r = await searchStudents(q); if (my !== token || finished) return; extra = r.filter(p => !exclude.has(p.id)); draw(); } catch (x) {}
+      }, 320);
+    });
+    document.body.appendChild(md);
+    try {
+      const [chats, fol] = await Promise.all([listChats(meUser.uid).catch(() => []), A.fsWhere("follows", [[ "follower", "==", meUser.uid ]]).catch(() => [])]);
+      const ids = [], groups = [];
+      chats.forEach(c => { if (isGroup(c)) { if (o.groups) groups.push({ id: c.id, name: c.name, group: true }); return; } const x = otherOf(c, meUser.uid); if (x && !exclude.has(x) && !ids.includes(x)) ids.push(x); });
+      fol.filter(f => f.status === "accepted").forEach(f => { if (f.target && !exclude.has(f.target) && !ids.includes(f.target)) ids.push(f.target); });
+      const profs = await profilesOf(ids, 40);
+      people = [...groups, ...profs.map((p, i) => ({ ...p, id: ids[i] }))];
+    } catch (e) { people = []; }
+    if (!finished) draw();
+  });
 }
 
 /* ---------- posts & reels ---------- */
 // posts/{id}: { uid, kind: "post" | "reel", caption, media: attachment | null, ts, edited? }   likes: posts/{id}/likes/{uid}
-export async function createPost(me, { kind, caption, file, media: pre }, onProgress, signal, o = {}) {
+export async function createPost(me, { kind, caption, file, media: pre, cover }, onProgress, signal, o = {}) {
   caption = String(caption || "").trim().slice(0, 500);
   if (!file && !pre && !caption) throw new Error("Add a photo, a video or some text.");
   const media = pre ? pre : file ? await F.uploadFile(file, { type: "post", uid: me.uid }, onProgress, signal) : null;
   if (signal && signal.aborted) { F.deleteFile(media, { type: "post", uid: me.uid }); throw { code: "storage/canceled" }; }
   const id = o.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
-  await A.fsSetPath(["posts", id], { uid: me.uid, kind, caption, media, ts: o.ts || Date.now() }, false);
+  const doc = { uid: me.uid, kind, caption, media, ts: o.ts || Date.now() };
+  if (cover && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(cover) && cover.length <= 60000) doc.cover = cover;     // small picture shown when the reel is shared in a chat
+  await A.fsSetPath(["posts", id], doc, false);
   return id;
 }
 export async function listPosts(uid, kind) {
@@ -392,6 +539,20 @@ export const likePost = (id, me) => A.fsSetPath(["posts", id, "likes", me], { ui
 export const unlikePost = (id, me) => A.fsDeletePath(["posts", id, "likes", me]);
 
 
+/* ---------- reel card (what a shared reel looks like in a chat: cover picture + owner + caption, like Instagram) ----------
+   message.share = { k: "reel", id, uid, name, cap, cover, vurl }.  cover = small JPEG saved with the reel; old reels have none, so the
+   chat shows the first frame of the video (vurl) instead. */
+export const STORAGE_HOST = /^https:\/\/(firebasestorage\.googleapis\.com|storage\.googleapis\.com|[a-z0-9-]+\.firebasestorage\.app)\//i;
+export async function reelCard(p) {
+  if (!p) return null;
+  let name = "";
+  try { const pr = await getProfile(p.uid); name = (pr && pr.name) || ""; } catch (e) {}
+  const card = { k: "reel", id: String(p.id), uid: p.uid, name: name.slice(0, 40), cap: String(p.caption || "").slice(0, 120), cover: "", vurl: "" };
+  if (p.cover && /^data:image\/jpeg;base64,[A-Za-z0-9+/=]+$/.test(p.cover) && p.cover.length <= 60000) card.cover = p.cover;
+  if (p.media && p.media.store === "st" && STORAGE_HOST.test(p.media.url || "") && String(p.media.url).length <= 600) card.vurl = p.media.url;
+  return card;
+}
+
 /* ---------- comments, reposts, saved (reel viewer) ---------- */
 // posts/{id}/comments/{cid}: { uid, text, ts }    posts/{id}/reposts/{uid}    users/{me}/saved/{postId}
 // A repost is a copy of the post document under my account (id rp_<originalId>_<myUid>) with repostOf set; it shares the original media.
@@ -409,7 +570,7 @@ export const repostId = (p, me) => "rp_" + (p.repostOf || p.id) + "_" + me;
 export async function repost(me, p) {
   const oid = p.repostOf || p.id;
   await A.fsSetPath(["posts", oid, "reposts", me], { uid: me });
-  try { await A.fsSetPath(["posts", repostId(p, me)], { uid: me, kind: p.kind, caption: p.caption || "", media: p.media || null, repostOf: oid, ts: Date.now() }, false); }
+  try { await A.fsSetPath(["posts", repostId(p, me)], { uid: me, kind: p.kind, caption: p.caption || "", media: p.media || null, ...(p.cover ? { cover: p.cover } : {}), repostOf: oid, ts: Date.now() }, false); }
   catch (e) { if (!(e && e.code === "permission-denied")) throw e; }      // already reposted
 }
 export async function unrepost(me, p) {
@@ -523,8 +684,8 @@ export async function shareSheet(o) {
     const box = md.querySelector("#sh-people"); if (!box) return;
     q = (q || "").trim().toLowerCase();
     const rows = people.filter(p => !q || String(p.name || "").toLowerCase().includes(q));
-    box.innerHTML = rows.length ? rows.map(p => `<button type="button" class="sh-p ${picked.has(p.uid) ? "on" : ""}" data-u="${esc(p.uid)}"><span class="sh-av">${avatarHtml(p, "")}<em>${LOGO.check}</em></span><span class="sh-nm">${esc(p.name || "Student")}</span></button>`).join("")
-      : `<div class="sh-note">${people.length ? "No one found" : "Follow students or start a chat to send them this directly."}</div>`;
+    box.innerHTML = rows.length ? rows.map(p => `<button type="button" class="sh-p ${picked.has(p.uid) ? "on" : ""}" data-u="${esc(p.uid)}"><span class="sh-av">${p.group ? groupAvatarHtml(p, "") : avatarHtml(p, "")}<em>${LOGO.check}</em></span><span class="sh-nm">${esc(p.name || "Student")}</span></button>`).join("")
+      : `<div class="sh-note">${people.length ? "No one found" : "Follow students or start a chat to send this directly."}</div>`;
     const b = bar(); if (b) { b.hidden = !picked.size; b.querySelector(".sh-go span").textContent = picked.size > 1 ? "Send (" + picked.size + ")" : "Send"; }
   };
   md.addEventListener("click", async e => {
@@ -534,13 +695,14 @@ export async function shareSheet(o) {
     const go = e.target.closest(".sh-go");
     if (go) {
       go.disabled = true;
-      const note = md.querySelector(".sh-sendbar input").value.trim(), msg = (note ? note + "\n" : "") + (text ? text + " " : "") + link;
+      const note = md.querySelector(".sh-sendbar input").value.trim(), msg = o.card ? note : (note ? note + "\n" : "") + (text ? text + " " : "") + link;
       let ok = 0, fail = "";
       for (const [uid, p] of picked) {
         try {
+          if (p.group) { await sendMessage(meUser.uid, null, msg.slice(0, 1000), null, { gid: uid, ...(o.card ? { share: o.card } : {}) }); ok++; continue; }
           const c = await canMessage(meUser.uid, uid, p);
           if (!c.ok) { fail = c.why; continue; }
-          await sendMessage(meUser.uid, uid, msg.slice(0, 1000), null); ok++;
+          await sendMessage(meUser.uid, uid, msg.slice(0, 1000), null, o.card ? { share: o.card } : {}); ok++;
         } catch (x) { fail = errText(x); }
       }
       if (ok) toast("Sent to " + ok + (ok > 1 ? " people" : " person"), 3000);
@@ -559,10 +721,11 @@ export async function shareSheet(o) {
     try {
       const [chats, fol] = await Promise.all([listChats(meUser.uid).catch(() => []), A.fsWhere("follows", [["follower", "==", meUser.uid]]).catch(() => [])]);
       const ids = [];
-      chats.forEach(c => { const o = otherOf(c, meUser.uid); if (o && !ids.includes(o)) ids.push(o); });
+      const groups = [];
+      chats.forEach(c => { if (isGroup(c)) { groups.push({ uid: c.id, name: c.name, group: true }); return; } const x = otherOf(c, meUser.uid); if (x && !ids.includes(x)) ids.push(x); });
       fol.filter(f => f.status === "accepted").forEach(f => { if (f.target && !ids.includes(f.target)) ids.push(f.target); });
       const profs = await profilesOf(ids, 30);
-      people = profs.map((p, i) => ({ ...p, uid: ids[i] }));
+      people = [...groups, ...profs.map((p, i) => ({ ...p, uid: ids[i] }))];
     } catch (e) { people = []; }
     if (md.isConnected) draw("");
   }

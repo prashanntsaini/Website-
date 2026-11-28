@@ -133,17 +133,46 @@ service cloud.firestore {
       allow create: if signedIn() && request.resource.data.blocker == request.auth.uid
           && id == request.auth.uid + "_" + request.resource.data.blocked;
     }
-    match /chats/{cid} {                    // cid = smallerUid_largerUid
+    match /chats/{cid} {                    // 1:1 chat: cid = smallerUid_largerUid.  Group chat: cid = g_xxxx (group == true)
+      function isGroupChat() { return resource.data.get("group", false) == true; }
       allow read: if signedIn() && (resource == null || request.auth.uid in resource.data.participants);
-      allow create: if signedIn()
-          && request.resource.data.participants.size() == 2
-          && request.auth.uid in request.resource.data.participants
-          && request.resource.data.participants[0] < request.resource.data.participants[1]
-          && cid == request.resource.data.participants[0] + "_" + request.resource.data.participants[1]
-          && !blockedEither(request.resource.data.participants);
+      allow create: if signedIn() && (
+          ( request.resource.data.get("group", false) != true
+            && request.resource.data.participants.size() == 2
+            && request.auth.uid in request.resource.data.participants
+            && request.resource.data.participants[0] < request.resource.data.participants[1]
+            && cid == request.resource.data.participants[0] + "_" + request.resource.data.participants[1]
+            && !blockedEither(request.resource.data.participants) )
+          || ( request.resource.data.get("group", false) == true
+            && cid.matches("g_[0-9a-f]{20}")
+            && request.auth.uid in request.resource.data.participants
+            && request.resource.data.participants.size() >= 3 && request.resource.data.participants.size() <= 30
+            && request.resource.data.admins == [request.auth.uid]
+            && request.resource.data.createdBy == request.auth.uid
+            && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40 ) );
+      // 1) any member: last message / seen markers. Members, admins and the name cannot change here.
       allow update: if signedIn() && request.auth.uid in resource.data.participants
           && request.resource.data.participants == resource.data.participants
-          && !blockedEither(resource.data.participants);
+          && request.resource.data.get("admins", []) == resource.data.get("admins", [])
+          && request.resource.data.get("name", "") == resource.data.get("name", "")
+          && (isGroupChat() || !blockedEither(resource.data.participants));
+      // 2) group admins: rename, add / remove people, make / remove admins
+      allow update: if signedIn() && isGroupChat() && request.auth.uid in resource.data.admins
+          && request.resource.data.get("group", false) == true
+          && request.resource.data.createdBy == resource.data.createdBy
+          && request.resource.data.participants.size() >= 1 && request.resource.data.participants.size() <= 30
+          && request.resource.data.admins.size() >= 1
+          && request.resource.data.admins.hasOnly(request.resource.data.participants)
+          && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 40;
+      // 3) any member: leave the group (remove only myself)
+      allow update: if signedIn() && isGroupChat() && request.auth.uid in resource.data.participants
+          && !(request.auth.uid in request.resource.data.participants)
+          && request.resource.data.participants.size() == resource.data.participants.size() - 1
+          && request.resource.data.participants.hasOnly(resource.data.participants)
+          && request.resource.data.name == resource.data.name
+          && (request.resource.data.admins == resource.data.admins
+              || (request.auth.uid in resource.data.admins && request.resource.data.admins.size() >= 1
+                  && request.resource.data.admins.hasOnly(request.resource.data.participants)));
       allow delete: if false;
       match /messages/{mid} {
         function chat() { return get(/databases/$(database)/documents/chats/$(cid)).data; }
@@ -155,16 +184,26 @@ service cloud.firestore {
         allow read: if signedIn() && request.auth.uid in chat().participants;
         allow create: if signedIn()
             && request.resource.data.from == request.auth.uid
-            && request.resource.data.to in chat().participants && request.resource.data.to != request.auth.uid
+            && request.auth.uid in chat().participants
             && request.resource.data.text is string && request.resource.data.text.size() <= 1000
-            && (request.resource.data.text.size() > 0 || request.resource.data.get("att", null) != null)
+            && (request.resource.data.text.size() > 0 || request.resource.data.get("att", null) != null || request.resource.data.get("share", null) != null)
             && (request.resource.data.get("att", null) == null || request.resource.data.att is map)
-            && !blockedEither(chat().participants)
-            && dmAllowed(request.resource.data.to, request.auth.uid);
-        // edit or unsend: only the sender, only these fields
+            && (request.resource.data.get("share", null) == null || request.resource.data.share is map)
+            && (request.resource.data.get("reply", null) == null || request.resource.data.reply is map)
+            && ( chat().get("group", false) == true
+                 || ( request.resource.data.to in chat().participants && request.resource.data.to != request.auth.uid
+                      && !blockedEither(chat().participants)
+                      && dmAllowed(request.resource.data.to, request.auth.uid) ) );
+        // edit, delete for everyone ("unsend") or mark as forwarded: only the sender, only these fields
         allow update: if signedIn() && resource.data.from == request.auth.uid
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["text", "edited", "editedAt", "deleted", "att", "updatedAt"])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["text", "edited", "editedAt", "deleted", "att", "share", "reply", "fwdc", "updatedAt"])
             && request.resource.data.text is string && request.resource.data.text.size() <= 1000;
+        // reaction: any member of the chat, and only their own entry in "react"
+        allow update: if signedIn() && request.auth.uid in chat().participants
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(["react", "updatedAt"])
+            && request.resource.data.get("react", {}).diff(resource.data.get("react", {})).affectedKeys().hasOnly([request.auth.uid])
+            && request.resource.data.get("react", {})[request.auth.uid] is string
+            && request.resource.data.get("react", {})[request.auth.uid].size() <= 8;
         allow delete: if signedIn() && resource.data.from == request.auth.uid;
       }
       match /bg/{bid} {                    // shared chat background (bg/current): both people see the same wallpaper
@@ -173,7 +212,7 @@ service cloud.firestore {
         allow create, update: if signedIn() && request.auth.uid in bgPeople()
             && request.resource.data.by == request.auth.uid
             && (!("v" in request.resource.data) || (request.resource.data.v is string && request.resource.data.v.size() <= 900000))
-            && !blockedEither(bgPeople());
+            && (get(/databases/$(database)/documents/chats/$(cid)).data.get("group", false) == true || !blockedEither(bgPeople()));
         allow delete: if false;
       }
       match /files/{fid} {                 // attachment pieces (used when Firebase Storage is not enabled)

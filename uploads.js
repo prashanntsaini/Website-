@@ -76,15 +76,16 @@ async function runJob(job, onP, signal) {
   const rec = job.rec, [C, F] = await libs();
   const file = job.file;
   if (rec.type === "chat") {
-    const scope = { type: "chat", cid: rec.data.cid };
-    await C.ensureChat(rec.uid, rec.data.other);
+    const gid = rec.data.gid || "";                                       // group chat: files go to the posts area (readable by every member), no 1:1 chat to create
+    const scope = gid ? { type: "post", uid: rec.uid } : { type: "chat", cid: rec.data.cid };
+    if (!gid) await C.ensureChat(rec.uid, rec.data.other);
     let att = rec.att;
     if (!att) {
       att = await F.uploadFile(file, scope, onP, signal);
       if (signal.aborted) { F.deleteFile(att, scope); throw canceled(); }
       rec.att = att; await saveRec(rec);                        // if the page changes now, the file is not uploaded twice
     }
-    try { await C.sendMessage(rec.uid, rec.data.other, rec.data.text, att, { id: rec.id, ts: rec.created }); }
+    try { await C.sendMessage(rec.uid, gid ? null : rec.data.other, rec.data.text, att, { id: rec.id, ts: rec.created, ...(gid ? { gid } : {}), ...(rec.data.reply ? { reply: rec.data.reply } : {}) }); }
     catch (e) { if (e && e.code === "permission-denied") { F.deleteFile(att, scope); rec.att = null; await saveRec(rec); } throw e; }
   } else if (rec.type === "post") {
     const scope = { type: "post", uid: rec.uid };
@@ -94,7 +95,9 @@ async function runJob(job, onP, signal) {
       if (signal.aborted) { F.deleteFile(media, scope); throw canceled(); }
       rec.att = media; await saveRec(rec);
     }
-    await C.createPost({ uid: rec.uid }, { kind: rec.data.kind, caption: rec.data.caption, media }, null, null, { id: rec.id, ts: rec.created });
+    let cover = rec.cover;                                                  // reels get a small cover picture (shown when the reel is shared in a chat)
+    if (cover === undefined) { cover = (rec.data.kind === "reel" && file) ? await F.videoCover(file).catch(() => "") : ""; rec.cover = cover; await saveRec(rec); }
+    await C.createPost({ uid: rec.uid }, { kind: rec.data.kind, caption: rec.data.caption, media, cover }, null, null, { id: rec.id, ts: rec.created });
   }
 }
 async function notify(kind, job, err) {

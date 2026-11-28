@@ -45,6 +45,30 @@ export function videoDuration(file) {
   });
 }
 
+// A small cover picture (JPEG data URL, under ~45 KB) taken from the first moments of a video. Used when a reel is shared in a chat.
+export function videoCover(file, max = 360) {
+  return new Promise(res => {
+    const v = document.createElement("video"), u = URL.createObjectURL(file);
+    let fin = false;
+    const end = d => { if (fin) return; fin = true; clearTimeout(tm); try { URL.revokeObjectURL(u); } catch (e) {} res(d || ""); };
+    const tm = setTimeout(() => end(""), 9000);
+    v.muted = true; v.playsInline = true; v.preload = "auto"; v.src = u;
+    v.onerror = () => end("");
+    v.onloadeddata = () => { try { v.currentTime = Math.min(0.6, (v.duration || 1) / 4); } catch (e) { end(""); } };
+    v.onseeked = () => {
+      try {
+        const w = v.videoWidth, h = v.videoHeight; if (!w || !h) return end("");
+        const sc = Math.min(1, max / Math.max(w, h)), c = document.createElement("canvas");
+        c.width = Math.max(1, Math.round(w * sc)); c.height = Math.max(1, Math.round(h * sc));
+        c.getContext("2d").drawImage(v, 0, 0, c.width, c.height);
+        let q = .72, d = c.toDataURL("image/jpeg", q);
+        while (d.length > 45000 && q > .35) { q -= .1; d = c.toDataURL("image/jpeg", q); }
+        end(d.length <= 60000 ? d : "");
+      } catch (e) { end(""); }
+    };
+  });
+}
+
 async function prepare(file) {
   if (BLOCKED.test(file.name || "")) throw new Error("This file type is not allowed (" + (file.name.match(/\.\w+$/) || [""])[0] + ").");
   if (kindOf(file) === "image" && !/gif/.test(file.type)) {            // photos are resized on the device first
