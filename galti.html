@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="clean-url.js?v=25"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>गलती कार्ड | Gyaan Hub</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#5a4bda">
+<link rel="stylesheet" href="style.css?v=25">
+<script src="site-config.js?v=25"></script>
+<script src="theme.js?v=25"></script>
+<script src="ads.js?v=25"></script>
+<script src="icons.js?v=25"></script>
+</head>
+<body>
+<main class="container" style="padding:20px 16px 110px;max-width:640px">
+  <p><a href="dashboard.html">‹ Dashboard</a></p>
+  <h1>📌 गलती कार्ड</h1><p id="info"></p><div id="box"></div>
+</main>
+<script src="site-config.js?v=25"></script><script src="theme.js?v=25"></script><script src="icons.js?v=25"></script>
+<script type="module">
+  import { protectPage } from "./auth.js?v=25";
+  import { load, dueCards, showCard } from "./galti.js?v=26";
+  const info = document.getElementById("info"), box = document.getElementById("box");
+  let queue = [];
+  function next() {
+    const c = queue.shift();
+    if (c) return showCard(box, c, next);
+    const total = Object.keys(load()).length, due = dueCards().length;
+    info.textContent = total ? `कुल ${total} कार्ड, आज के ${due}` : "अभी कोई कार्ड नहीं। कोई टेस्ट दीजिए, गलत सवाल यहाँ आ जाएँगे।";
+    box.innerHTML = total ? '<button class="btn btn-gold btn-block">अभ्यास शुरू करें</button>' : "";
+    if (total) box.firstChild.onclick = () => { queue = dueCards(); if (!queue.length) queue = Object.values(load()); next(); };
+  }
+  protectPage(next);
+</script>
+<script type="module" src="layout.js?v=25"></script>
+</body></html>

@@ -304,5 +304,10 @@
   });
 </script>
 <script type="module" src="layout.js?v=25"></script>
+<script type="module">
+  import { load, dueCards } from "./galti.js?v=26";
+  const m = document.querySelector("main .container") || document.querySelector(".container");
+  if (m) m.insertAdjacentHTML("afterbegin", `<a class="btn btn-gold btn-block" style="margin:12px 0" href="galti.html">📌 गलती कार्ड (आज के ${dueCards().length})</a><a class="btn btn-ghost btn-block" style="margin:0 0 12px" href="rapid.html">⚡ रैपिड फायर खेलें</a>`);
+</script>
 </body>
 </html>

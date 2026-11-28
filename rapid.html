@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script src="clean-url.js?v=25"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>रैपिड फायर | Gyaan Hub</title>
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta name="theme-color" content="#5a4bda">
+<link rel="stylesheet" href="style.css?v=25">
+<script src="site-config.js?v=25"></script>
+<script src="theme.js?v=25"></script>
+<script src="ads.js?v=25"></script>
+<script src="icons.js?v=25"></script>
+</head>
+<body>
+<main class="container" style="padding:20px 16px 110px;max-width:640px;text-align:center">
+  <p style="text-align:left"><a href="dashboard.html">‹ Dashboard</a></p>
+  <h1>⚡ रैपिड फायर</h1><p id="top">60 सेकंड, लगातार सही जवाब पर ज़्यादा पॉइंट 🔥</p>
+  <div id="box" style="text-align:left"></div>
+</main>
+<script src="site-config.js?v=25"></script><script src="theme.js?v=25"></script><script src="icons.js?v=25"></script>
+<script type="module">
+  import { protectPage, fsList } from "./auth.js?v=25";
+  import { imgHtml, hydrate } from "./media.js?v=25";
+  import { addWrong } from "./galti.js?v=26";
+  const $ = id => document.getElementById(id), box = $("box"), top_ = $("top");
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  let all = [], queue, score, combo, end, timer, cur;
+  const best = () => { try { return +localStorage.getItem("gyaan_rapid_best") || 0; } catch (e) { return 0; } };
+  const status = () => top_.textContent = `⏱ ${Math.max(0, Math.ceil((end - Date.now()) / 1000))}s · ⭐ ${score} · 🔥 ${combo}`;
+  function menu(msg) {
+    box.innerHTML = `${msg || ""}<p style="text-align:center">🏆 आपका सबसे अच्छा: ${best()}</p><button class="btn btn-gold btn-block" id="go">खेलें</button>`;
+    $("go").onclick = start;
+  }
+  function start() {
+    queue = [...all]; for (let i = queue.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [queue[i], queue[j]] = [queue[j], queue[i]]; }
+    score = 0; combo = 0; end = Date.now() + 60000;
+    timer = setInterval(() => { status(); if (Date.now() >= end) over(); }, 250);
+    next();
+  }
+  function next() {
+    cur = queue.pop(); if (!cur) return over();
+    status();
+    box.innerHTML = `<div class="panel"><div class="qtext">${esc(cur.q)}</div>${imgHtml(cur.img, "", "Question")}${cur.opts.map((o, j) => `<button class="opt" data-j="${j}">${esc(o)}${imgHtml((cur.optImgs || [])[j], "", "Option")}</button>`).join("")}</div>`;
+    hydrate(box);
+    let done = false;
+    box.querySelectorAll(".opt").forEach(b => b.onclick = () => {
+      if (done || Date.now() >= end) return; done = true;
+      const j = +b.dataset.j, ok = j === cur.ans;
+      box.querySelectorAll(".opt")[cur.ans].classList.add("good");
+      if (ok) { combo++; score += 10 * Math.min(combo, 5); }
+      else { combo = 0; b.classList.add("bad"); addWrong([cur], [j]); }
+      status();
+      const shown = box.firstChild;
+      setTimeout(() => { if (shown.isConnected) next(); }, 700);
+    });
+  }
+  function over() {
+    clearInterval(timer);
+    const record = score > best();
+    if (record) { try { localStorage.setItem("gyaan_rapid_best", score); } catch (e) {} }
+    const text = `मैंने Gyaan Hub रैपिड फायर में ${score} पॉइंट बनाए ⚡ हरा कर दिखाओ! ${location.href.split("?")[0]}`;
+    top_.textContent = "खेल खत्म!";
+    menu(`<h2 style="text-align:center">${record ? "🎉 नया रिकॉर्ड! " : ""}⭐ ${score}</h2><a class="btn btn-ghost btn-block" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(text)}">दोस्त को चैलेंज भेजें</a>`);
+  }
+  protectPage(async () => {
+    box.textContent = "सवाल लोड हो रहे हैं…";
+    try {
+      all = (await fsList("tests")).filter(t => t.active !== false && Array.isArray(t.questions)).flatMap(t => t.questions);
+      if (all.length) menu(); else box.textContent = "अभी कोई सवाल नहीं है।";
+    } catch (e) { box.textContent = "सवाल लोड नहीं हुए। पेज दोबारा खोलें।"; }
+  });
+</script>
+<script type="module" src="layout.js?v=25"></script>
+</body></html>

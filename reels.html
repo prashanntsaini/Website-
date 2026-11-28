@@ -130,6 +130,7 @@
 <script type="module">
   import { protectPage } from "./auth.js?v=25";
   import * as C from "./community.js?v=25";
+  import { onReel } from "./galti.js?v=26";
   const $ = id => document.getElementById(id);
   const { esc } = C;
   const ic = (n, c) => window.ic ? window.ic(n, c) : "";
@@ -273,6 +274,7 @@
     const el = feed.querySelector(`.rv-item[data-i="${i}"]`), v = el && el.querySelector("video");
     if (v) { v.currentTime = 0; if (v.src) play(v); }
     watchAround(i);
+    onReel(items[i].id);
     // keep the address in sync so the link can be shared / reloaded
     try { const u = new URL(location.href); u.searchParams.set("reel", items[i].id); history.replaceState(null, "", u); } catch (e) {}
   }
