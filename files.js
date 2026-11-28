@@ -6,8 +6,8 @@
 //  2) Firestore chunks  (automatic fallback if Storage is not available): the file is cut into ~600 KB pieces and saved
 //     as database documents. Works on the free plan, but only for files up to MAX_FALLBACK_MB.
 // The same Firebase project / keys as the rest of the site are used. Nothing new to configure in the code.
-import { getFbApp, fsSetPath, fsGetPath, fsDeletePath, currentUser } from "./auth.js?v=25";
-import { compressImage } from "./media.js?v=25";
+import { getFbApp, fsSetPath, fsGetPath, fsDeletePath, currentUser } from "./auth.js?v=29";
+import { compressImage } from "./media.js?v=29";
 
 export const MAX_STORAGE_MB = 50;      // per file, when Firebase Storage works
 export const MAX_FALLBACK_MB = 10;     // per file, when files are saved in the database
@@ -55,13 +55,14 @@ async function prepare(file) {
   return { blob: file, name: file.name || "file", mime: file.type || "application/octet-stream", kind: kindOf(file) };
 }
 
-async function toStorage(p, scope, onProgress) {
+async function toStorage(p, scope, onProgress, signal) {
   const u = currentUser();
   const m = await import(STORAGE_SDK);
   const st = m.getStorage(getFbApp());
   st.maxUploadRetryTime = 20000; st.maxOperationRetryTime = 20000;
   const fid = rid(), path = storagePath(scope, fid, p.name), r = m.ref(st, path);
   const task = m.uploadBytesResumable(r, p.blob, { contentType: p.mime, customMetadata: { by: u ? u.uid : "" } });
+  if (signal) { if (signal.aborted) task.cancel(); else signal.addEventListener("abort", () => { try { task.cancel(); } catch (e) {} }, { once: true }); }
   await new Promise((res, rej) => {
     let last = -1, stall;
     const arm = () => { clearTimeout(stall); stall = setTimeout(() => { try { task.cancel(); } catch (e) {} rej({ code: "storage/stalled" }); }, 25000); };
@@ -79,12 +80,13 @@ const readB64 = blob => new Promise((res, rej) => {
   fr.onerror = () => rej(new Error("Could not read the file."));
   fr.readAsDataURL(blob);
 });
-async function toChunks(p, scope, onProgress) {
+async function toChunks(p, scope, onProgress, signal) {
   const u = currentUser(), b64 = await readB64(p.blob), fid = rid(), n = Math.max(1, Math.ceil(b64.length / CHUNK));
   let done = 0;
   const jobs = Array.from({ length: n }, (_, i) => i);
   const worker = async () => {
     while (jobs.length) {
+      if (signal && signal.aborted) throw { code: "storage/canceled" };
       const i = jobs.shift();
       await fsSetPath(chunkPath(scope, fid, i), { d: b64.slice(i * CHUNK, (i + 1) * CHUNK), n: i, by: u.uid }, false);
       done++; if (onProgress) onProgress(done / n);
@@ -95,17 +97,17 @@ async function toChunks(p, scope, onProgress) {
 }
 
 // Uploads one file and returns the "attachment" object that is saved inside the message / post.
-export async function uploadFile(file, scope, onProgress) {
+export async function uploadFile(file, scope, onProgress, signal) {
   if (!currentUser()) throw new Error("Please sign in again.");
   const p = await prepare(file), mb = p.blob.size / 1048576;
   if (!p.blob.size) throw new Error("This file is empty.");
   const base = { kind: p.kind, name: p.name, size: p.blob.size, mime: p.mime };
   if (!storageDead() && mb <= MAX_STORAGE_MB) {
-    try { return { ...base, ...(await toStorage(p, scope, onProgress)) }; }
+    try { return { ...base, ...(await toStorage(p, scope, onProgress, signal)) }; }
     catch (e) { if (e && e.code === "storage/canceled") throw e; markDead(); }   // Storage not enabled / blocked -> use the database instead
   }
   if (mb > MAX_FALLBACK_MB) throw new Error(`This file is ${fmtSize(p.blob.size)}. Files above ${MAX_FALLBACK_MB} MB need Firebase Storage to be enabled (README > "Photos, videos and files"). Please send a smaller file.`);
-  return { ...base, ...(await toChunks(p, scope, onProgress)) };
+  return { ...base, ...(await toChunks(p, scope, onProgress, signal)) };
 }
 
 // Returns a URL you can put in <img>, <video> or <a href>.

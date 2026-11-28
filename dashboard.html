@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=25"></script>
+  <script src="clean-url.js?v=29"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dashboard | Gyaan Hub</title>
@@ -27,11 +27,11 @@
 <meta name="twitter:title" content="Dashboard | Gyaan Hub">
 <meta name="twitter:description" content="Your study library: notes, previous year papers and video lectures, all in one place.">
 <meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
-<link rel="stylesheet" href="style.css?v=25">
-<script src="site-config.js?v=25"></script>
-<script src="theme.js?v=25"></script>
-<script src="ads.js?v=25"></script>
-<script src="icons.js?v=25"></script>
+<link rel="stylesheet" href="style.css?v=29">
+<script src="site-config.js?v=29"></script>
+<script src="theme.js?v=29"></script>
+<script src="ads.js?v=29"></script>
+<script src="icons.js?v=29"></script>
 </head>
 <body>
 <header class="nav">
@@ -75,11 +75,11 @@
 </main>
 
 <script type="module">
-  import { protectPage, logout, fsListFresh, cacheGet, listProgress, toMs } from "./auth.js?v=25";
-  import { materials as sample, iconFor } from "./materials.js?v=25";
-  import { getPrefs } from "./prefs.js?v=25";
-  import { t, applyI18n } from "./i18n.js?v=25";
-  import { isSafeUrl } from "./player-utils.js?v=25";
+  import { protectPage, logout, fsListFresh, cacheGet, listProgress, toMs } from "./auth.js?v=29";
+  import { materials as sample, iconFor } from "./materials.js?v=29";
+  import { getPrefs } from "./prefs.js?v=29";
+  import { t, applyI18n } from "./i18n.js?v=29";
+  import { isSafeUrl } from "./player-utils.js?v=29";
 
   let materials = sample, tests = [];
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -303,11 +303,15 @@
     applyI18n();
   });
 </script>
-<script type="module" src="layout.js?v=25"></script>
+<script type="module" src="layout.js?v=29"></script>
 <script type="module">
-  import { load, dueCards } from "./galti.js?v=26";
+  import { dueCards } from "./galti.js?v=29";
+  import { mountTodayCard } from "./stats.js?v=29";
   const m = document.querySelector("main .container") || document.querySelector(".container");
-  if (m) m.insertAdjacentHTML("afterbegin", `<a class="btn btn-gold btn-block" style="margin:12px 0" href="galti.html">📌 गलती कार्ड (आज के ${dueCards().length})</a><a class="btn btn-ghost btn-block" style="margin:0 0 12px" href="rapid.html">⚡ रैपिड फायर खेलें</a>`);
+  if (m) {
+    m.insertAdjacentHTML("afterbegin", `<div id="gs-host"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 0 12px"><a class="btn btn-gold" href="galti.html">📌 Mistake Cards (${dueCards().length} due)</a><a class="btn btn-ghost" href="rapid.html">⚡ Rapid Fire</a></div>`);
+    mountTodayCard(document.getElementById("gs-host"));
+  }
 </script>
 </body>
 </html>

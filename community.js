@@ -1,9 +1,9 @@
 // Gyaan Hub - Student Community (profiles, follow, rank, messages, block / report)
 // Uses the SAME Firebase project and helpers as the rest of the site (auth.js). No new keys, no new services.
-import * as A from "./auth.js?v=25";
-import { squareAvatar } from "./media.js?v=25";
-import * as F from "./files.js?v=25";
-import * as S from "./sub.js?v=25";
+import * as A from "./auth.js?v=29";
+import { squareAvatar } from "./media.js?v=29";
+import * as F from "./files.js?v=29";
+import * as S from "./sub.js?v=29";
 
 export { A, squareAvatar, F, S };
 export const tk = S.tk;                 // blue tick placeholder: ${C.tk(uid)} next to a name
@@ -335,16 +335,16 @@ export async function ensureChat(me, other) {
   return cid;
 }
 // text and/or one attachment (att comes from F.uploadFile)
-export async function sendMessage(me, other, text, att) {
+export async function sendMessage(me, other, text, att, o = {}) {
   const cid = chatId(me, other);
   text = String(text || "").trim().slice(0, 1000);
   if (!text && !att) return cid;
   await ensureChat(me, other);
-  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8), now = Date.now();
+  const id = o.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 8)), now = o.ts || Date.now();   // id / ts: so a message sent in the background keeps its place and is never doubled
   const msg = { from: me, to: other, text, ts: now };
   if (att) msg.att = att;
   await A.fsSetPath(["chats", cid, "messages", id], msg, false);
-  await A.fsSetPath(["chats", cid], { lastText: (text || F.attLabel(att)).slice(0, 80), lastFrom: me, lastTs: now, ["seen_" + me]: now });
+  await A.fsSetPath(["chats", cid], { lastText: (text || F.attLabel(att)).slice(0, 80), lastFrom: me, lastTs: Date.now(), ["seen_" + me]: Date.now() });
   return cid;
 }
 // Edit my own message (text / caption only)
@@ -364,12 +364,13 @@ export async function unsendMessage(cid, m, isLast) {
 
 /* ---------- posts & reels ---------- */
 // posts/{id}: { uid, kind: "post" | "reel", caption, media: attachment | null, ts, edited? }   likes: posts/{id}/likes/{uid}
-export async function createPost(me, { kind, caption, file }, onProgress) {
+export async function createPost(me, { kind, caption, file, media: pre }, onProgress, signal, o = {}) {
   caption = String(caption || "").trim().slice(0, 500);
-  if (!file && !caption) throw new Error("Add a photo, a video or some text.");
-  const media = file ? await F.uploadFile(file, { type: "post", uid: me.uid }, onProgress) : null;
-  const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
-  await A.fsSetPath(["posts", id], { uid: me.uid, kind, caption, media, ts: Date.now() }, false);
+  if (!file && !pre && !caption) throw new Error("Add a photo, a video or some text.");
+  const media = pre ? pre : file ? await F.uploadFile(file, { type: "post", uid: me.uid }, onProgress, signal) : null;
+  if (signal && signal.aborted) { F.deleteFile(media, { type: "post", uid: me.uid }); throw { code: "storage/canceled" }; }
+  const id = o.id || (Date.now().toString(36) + Math.random().toString(36).slice(2, 8));
+  await A.fsSetPath(["posts", id], { uid: me.uid, kind, caption, media, ts: o.ts || Date.now() }, false);
   return id;
 }
 export async function listPosts(uid, kind) {

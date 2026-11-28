@@ -2,7 +2,7 @@
 const KEY = "gyaan_prefs";
 export const DEFAULTS = {
   theme: "light",         // dark | light | system
-  lang: "en",             // en | hi
+  lang: "en",             // English only
   emailResults: true,     // e-mail me my test result
   newAlerts: true,        // show "NEW" badges + banner for new study material
   speed: 1,               // default playback speed

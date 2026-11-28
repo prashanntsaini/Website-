@@ -1,45 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=25"></script>
+  <script src="clean-url.js?v=29"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>रैपिड फायर | Gyaan Hub</title>
+<title>Rapid Fire | Gyaan Hub</title>
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="48x48" href="favicon-48.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="site.webmanifest">
 <meta name="theme-color" content="#5a4bda">
-<link rel="stylesheet" href="style.css?v=25">
-<script src="site-config.js?v=25"></script>
-<script src="theme.js?v=25"></script>
-<script src="ads.js?v=25"></script>
-<script src="icons.js?v=25"></script>
+<link rel="stylesheet" href="style.css?v=29">
+<script src="site-config.js?v=29"></script>
+<script src="theme.js?v=29"></script>
+<script src="ads.js?v=29"></script>
+<script src="icons.js?v=29"></script>
 </head>
 <body>
 <main class="container" style="padding:20px 16px 110px;max-width:640px;text-align:center">
   <p style="text-align:left"><a href="dashboard.html">‹ Dashboard</a></p>
-  <h1>⚡ रैपिड फायर</h1><p id="top">60 सेकंड, लगातार सही जवाब पर ज़्यादा पॉइंट 🔥</p>
+  <h1>⚡ Rapid Fire</h1><p id="top">60 seconds. Answer in a row to build a combo and score more points 🔥</p>
+  <div class="rf-bar" id="bar" hidden><i></i></div>
   <div id="box" style="text-align:left"></div>
 </main>
-<script src="site-config.js?v=25"></script><script src="theme.js?v=25"></script><script src="icons.js?v=25"></script>
+<script src="site-config.js?v=29"></script><script src="theme.js?v=29"></script><script src="icons.js?v=29"></script>
 <script type="module">
-  import { protectPage, fsList } from "./auth.js?v=25";
-  import { imgHtml, hydrate } from "./media.js?v=25";
-  import { addWrong } from "./galti.js?v=26";
-  const $ = id => document.getElementById(id), box = $("box"), top_ = $("top");
+  import { protectPage, fsList } from "./auth.js?v=29";
+  import { imgHtml, hydrate } from "./media.js?v=29";
+  import { addWrong } from "./galti.js?v=29";
+  import { logAnswer } from "./stats.js?v=29";
+  const $ = id => document.getElementById(id), box = $("box"), top_ = $("top"), bar = $("bar");
   const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-  let all = [], queue, score, combo, end, timer, cur;
+  const TIME = 60000, HKEY = "gyaan_rapid_hist";
+  let all = [], queue, score, combo, bestCombo, right, wrongs, end, timer, cur, sound = true;
   const best = () => { try { return +localStorage.getItem("gyaan_rapid_best") || 0; } catch (e) { return 0; } };
-  const status = () => top_.textContent = `⏱ ${Math.max(0, Math.ceil((end - Date.now()) / 1000))}s · ⭐ ${score} · 🔥 ${combo}`;
+  const history = () => { try { return JSON.parse(localStorage.getItem(HKEY)) || []; } catch (e) { return []; } };
+  const pushHist = h => { try { localStorage.setItem(HKEY, JSON.stringify([h, ...history()].slice(0, 5))); } catch (e) {} };
+  const beep = ok => {                      // tiny sound effect, no audio files needed
+    if (!sound) return;
+    try {
+      const A = window.AudioContext || window.webkitAudioContext; if (!A) return;
+      const c = beep.c || (beep.c = new A()), o = c.createOscillator(), g = c.createGain();
+      o.frequency.value = ok ? 760 : 200; o.type = ok ? "sine" : "square"; g.gain.value = .06;
+      o.connect(g); g.connect(c.destination); o.start(); o.stop(c.currentTime + (ok ? .09 : .18));
+    } catch (e) {}
+  };
+  const status = () => {
+    const left = Math.max(0, end - Date.now());
+    top_.textContent = `⏱ ${Math.ceil(left / 1000)}s · ⭐ ${score} · 🔥 ${combo}${combo >= 3 ? " · x" + Math.min(combo, 5) : ""}`;
+    bar.firstChild.style.transform = `scaleX(${left / TIME})`;
+  };
   function menu(msg) {
-    box.innerHTML = `${msg || ""}<p style="text-align:center">🏆 आपका सबसे अच्छा: ${best()}</p><button class="btn btn-gold btn-block" id="go">खेलें</button>`;
-    $("go").onclick = start;
+    bar.hidden = true;
+    const h = history();
+    box.innerHTML = `${msg || ""}<p style="text-align:center">🏆 Your best: ${best()}</p>
+      ${h.length ? `<h3 style="margin:14px 0 6px">Recent games</h3><ul class="rf-hist">${h.map(x => `<li><b>⭐ ${x.score}</b><span>${x.right} correct · ${x.acc}% · best combo ${x.combo}</span></li>`).join("")}</ul>` : ""}
+      <button class="btn btn-gold btn-block" id="go">${msg ? "Play again" : "Play"}</button>
+      <label style="display:flex;justify-content:center;gap:8px;margin-top:12px;color:var(--muted);font-size:.9rem"><input type="checkbox" id="snd" ${sound ? "checked" : ""}> Sound effects</label>`;
+    $("go").onclick = start; $("snd").onchange = e => { sound = e.target.checked; };
   }
   function start() {
     queue = [...all]; for (let i = queue.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [queue[i], queue[j]] = [queue[j], queue[i]]; }
-    score = 0; combo = 0; end = Date.now() + 60000;
+    score = 0; combo = 0; bestCombo = 0; right = 0; wrongs = []; end = Date.now() + TIME;
+    bar.hidden = false;
     timer = setInterval(() => { status(); if (Date.now() >= end) over(); }, 250);
     next();
   }
@@ -53,8 +77,9 @@
       if (done || Date.now() >= end) return; done = true;
       const j = +b.dataset.j, ok = j === cur.ans;
       box.querySelectorAll(".opt")[cur.ans].classList.add("good");
-      if (ok) { combo++; score += 10 * Math.min(combo, 5); }
-      else { combo = 0; b.classList.add("bad"); addWrong([cur], [j]); }
+      if (ok) { combo++; right++; bestCombo = Math.max(bestCombo, combo); score += 10 * Math.min(combo, 5); }
+      else { combo = 0; b.classList.add("bad"); addWrong([cur], [j]); wrongs.push({ q: cur, picked: j }); if (navigator.vibrate) navigator.vibrate(60); }
+      logAnswer(ok); beep(ok);
       status();
       const shown = box.firstChild;
       setTimeout(() => { if (shown.isConnected) next(); }, 700);
@@ -62,19 +87,26 @@
   }
   function over() {
     clearInterval(timer);
+    const total = right + wrongs.length, acc = total ? Math.round(right / total * 100) : 0;
     const record = score > best();
     if (record) { try { localStorage.setItem("gyaan_rapid_best", score); } catch (e) {} }
-    const text = `मैंने Gyaan Hub रैपिड फायर में ${score} पॉइंट बनाए ⚡ हरा कर दिखाओ! ${location.href.split("?")[0]}`;
-    top_.textContent = "खेल खत्म!";
-    menu(`<h2 style="text-align:center">${record ? "🎉 नया रिकॉर्ड! " : ""}⭐ ${score}</h2><a class="btn btn-ghost btn-block" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(text)}">दोस्त को चैलेंज भेजें</a>`);
+    if (total) pushHist({ score, right, acc, combo: bestCombo });
+    const text = `I scored ${score} points in Gyaan Hub Rapid Fire ⚡ Can you beat me? ${location.href.split("?")[0]}`;
+    top_.textContent = "Game over!";
+    const review = wrongs.length ? `<h3 style="margin:14px 0 6px">Review your mistakes (saved to Mistake Cards)</h3>${wrongs.map(w => `<div class="rf-wrong"><b>${esc(w.q.q)}</b><small>Your answer: ${esc(w.q.opts[w.picked])}</small><br><small class="ok">Correct: ${esc(w.q.opts[w.q.ans])}</small></div>`).join("")}` : "";
+    menu(`<h2 style="text-align:center">${record ? "🎉 New record! " : ""}⭐ ${score}</h2>
+      <div class="rf-stats"><div><b>${right}</b><small>Correct</small></div><div><b>${acc}%</b><small>Accuracy</small></div><div><b>${bestCombo}</b><small>Best combo</small></div></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px"><button class="btn btn-ghost" id="sh">Share score</button><a class="btn btn-ghost" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(text)}">Challenge on WhatsApp</a></div>${review}`);
+    const sh = $("sh");
+    if (sh) sh.onclick = async () => { try { if (navigator.share) await navigator.share({ title: "Gyaan Hub Rapid Fire", text }); else { await navigator.clipboard.writeText(text); sh.textContent = "Copied!"; } } catch (e) {} };
   }
   protectPage(async () => {
-    box.textContent = "सवाल लोड हो रहे हैं…";
+    box.textContent = "Loading questions…";
     try {
       all = (await fsList("tests")).filter(t => t.active !== false && Array.isArray(t.questions)).flatMap(t => t.questions);
-      if (all.length) menu(); else box.textContent = "अभी कोई सवाल नहीं है।";
-    } catch (e) { box.textContent = "सवाल लोड नहीं हुए। पेज दोबारा खोलें।"; }
+      if (all.length) menu(); else box.textContent = "No questions available yet.";
+    } catch (e) { box.textContent = "Could not load questions. Please reload the page."; }
   });
 </script>
-<script type="module" src="layout.js?v=25"></script>
+<script type="module" src="layout.js?v=29"></script>
 </body></html>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=25"></script>
+  <script src="clean-url.js?v=29"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Settings | Gyaan Hub</title>
@@ -27,10 +27,10 @@
 <meta name="twitter:title" content="Settings | Gyaan Hub">
 <meta name="twitter:description" content="Manage your Gyaan Hub account, privacy and preferences.">
 <meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
-<link rel="stylesheet" href="style.css?v=25">
-<script src="site-config.js?v=25"></script>
-<script src="theme.js?v=25"></script>
-<script src="icons.js?v=25"></script>
+<link rel="stylesheet" href="style.css?v=29">
+<script src="site-config.js?v=29"></script>
+<script src="theme.js?v=29"></script>
+<script src="icons.js?v=29"></script>
 </head>
 <body class="st-page">
 <header class="nav">
@@ -57,7 +57,7 @@
       </div></section>
 
       <section class="st-sec"><h3 data-i18n="set.grpUse">How you use Gyaan Hub</h3><div class="st-list">
-        <a class="st-item" href="#appearance" data-q="appearance & language"><span class="st-ic"><span class="vi" data-ic="sparkles"></span></span><span class="t"><span data-i18n="set.appearance">Appearance & language</span><small id="v-appearance"></small></span><span class="chev"><span class="vi" data-ic="chevron"></span></span></a>
+        <a class="st-item" href="#appearance" data-q="appearance & language"><span class="st-ic"><span class="vi" data-ic="sparkles"></span></span><span class="t"><span data-i18n="set.appearance">Appearance</span><small id="v-appearance"></small></span><span class="chev"><span class="vi" data-ic="chevron"></span></span></a>
         <a class="st-item" href="#notifications" data-q="notifications"><span class="st-ic"><span class="vi" data-ic="bell"></span></span><span class="t"><span data-i18n="set.notifications">Notifications</span></span><span class="chev"><span class="vi" data-ic="chevron"></span></span></a>
         <a class="st-item" href="#player" data-q="player settings"><span class="st-ic"><span class="vi" data-ic="play"></span></span><span class="t"><span data-i18n="set.player">Player settings</span></span><span class="chev"><span class="vi" data-ic="chevron"></span></span></a>
         <a class="st-item" href="#data" data-q="download & data usage"><span class="st-ic"><span class="vi" data-ic="download"></span></span><span class="t"><span data-i18n="set.data">Download & data usage</span></span><span class="chev"><span class="vi" data-ic="chevron"></span></span></a>
@@ -155,7 +155,7 @@
     <div class="st-view" data-view="appearance" hidden>
     <!-- Appearance -->
     <div class="panel">
-      <h2 data-i18n="set.appearance">Appearance &amp; language</h2>
+      <h2 data-i18n="set.appearance">Appearance</h2>
       <div class="set-row">
         <div class="grow"><b data-i18n="set.theme">Theme</b></div>
         <div class="seg" id="theme-seg">
@@ -163,10 +163,6 @@
           <button data-v="light" data-i18n="set.light">Light</button>
           <button data-v="system" data-i18n="set.system">System</button>
         </div>
-      </div>
-      <div class="set-row">
-        <div class="grow"><b data-i18n="set.lang">Language</b><small data-i18n="set.langHint">Changes menus and main screens.</small></div>
-        <select data-pref="lang" aria-label="Language"><option value="en">English</option><option value="hi">हिन्दी</option></select>
       </div>
     </div>
 
@@ -250,12 +246,12 @@
 
 <script type="module">
   import { protectPage, logout, friendly, currentUser, isDemo, hasPassword, isGoogleUser, setDisplayName, saveUserDoc,
-           listDevices, sessionReady, removeDevice, logoutOthers, logoutEverywhere, deviceId, changePassword, changeEmail, deleteAccount, exportData, toMs, withdrawConsent } from "./auth.js?v=25";
-  import { getPrefs, savePrefs } from "./prefs.js?v=25";
-  import { t, applyI18n, lang } from "./i18n.js?v=25";
-  import { squareAvatar } from "./media.js?v=25";
-  import * as SUB from "./sub.js?v=25";
-  import { loadSite } from "./auth.js?v=25";
+           listDevices, sessionReady, removeDevice, logoutOthers, logoutEverywhere, deviceId, changePassword, changeEmail, deleteAccount, exportData, toMs, withdrawConsent } from "./auth.js?v=29";
+  import { getPrefs, savePrefs } from "./prefs.js?v=29";
+  import { t, applyI18n, lang } from "./i18n.js?v=29";
+  import { squareAvatar } from "./media.js?v=29";
+  import * as SUB from "./sub.js?v=29";
+  import { loadSite } from "./auth.js?v=29";
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -354,13 +350,13 @@
   let devCache = null;
   const ago = ms => {
     if (!ms) return "-";
-    const s = Math.round((Date.now() - ms) / 1000), rtf = new Intl.RelativeTimeFormat(lang() === "hi" ? "hi" : "en", { numeric: "auto" });
-    if (s < 90) return lang() === "hi" ? "अभी" : "Just now";
+    const s = Math.round((Date.now() - ms) / 1000), rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+    if (s < 90) return "Just now";
     if (s < 3600) return rtf.format(-Math.round(s / 60), "minute");
     if (s < 86400) return rtf.format(-Math.round(s / 3600), "hour");
     return rtf.format(-Math.round(s / 86400), "day");
   };
-  const when = ms => ms ? new Date(ms).toLocaleString(lang() === "hi" ? "hi-IN" : undefined, { dateStyle: "medium", timeStyle: "short" }) : "-";
+  const when = ms => ms ? new Date(ms).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "-";
   function renderDevices(list) {
     const box = $("dev-list");
     if (!list) return;
@@ -373,7 +369,7 @@
       return `<div class="dev"><div class="di">${icon}</div>
         <div class="dt"><b>${esc(d.browser || "Browser")} · ${esc(d.os || "")}${mine ? `<span class="pill-sm">${t("set.thisDevice")}</span>` : ""}${stale ? '<span class="pill-sm warn">30d+</span>' : ""}</b>
           <small>${esc(d.type || "")}${loc ? " · 📍 " + esc(loc) : ""}${d.ipMasked ? " · " + esc(d.ipMasked) : ""}</small>
-          <small>${t("set.lastActive")}: ${mine ? (lang() === "hi" ? "अभी" : "Now") : esc(ago(last))} · ${t("set.signedIn")}: ${esc(when(toMs(d.loginAt)))}</small></div>
+          <small>${t("set.lastActive")}: ${mine ? "Now" : esc(ago(last))} · ${t("set.signedIn")}: ${esc(when(toMs(d.loginAt)))}</small></div>
         ${mine ? "" : `<button class="btn btn-ghost btn-sm" data-rm="${esc(d.id)}">${t("set.logoutDevice")}</button>`}</div>`;
     }).join("");
   }
@@ -427,7 +423,7 @@
       <div class="stack" style="max-width:none">
         <input id="d-conf" placeholder="${t("set.deleteConfirm")}" autocomplete="off">
         ${pw ? `<input id="d-pw" type="password" placeholder="${t("set.confirmPw")}" autocomplete="current-password">` : `<p class="note">A Google window will ask you to confirm it is you.</p>`}
-        <div class="acts"><button class="btn btn-danger" id="d-go">${t("set.deleteBtn")}</button><button class="btn btn-ghost" id="d-cancel">${lang() === "hi" ? "रद्द करें" : "Cancel"}</button></div>
+        <div class="acts"><button class="btn btn-danger" id="d-go">${t("set.deleteBtn")}</button><button class="btn btn-ghost" id="d-cancel">${"Cancel"}</button></div>
         <div class="inline-msg" id="d-msg"></div></div></div>`;
     document.body.appendChild(bg);
     const msg = x => { const m = bg.querySelector("#d-msg"); m.className = "inline-msg err"; m.textContent = x; };
@@ -471,7 +467,7 @@
   });
   function paintVals() {
     const p = getPrefs();
-    $("v-appearance").textContent = t("set." + (p.theme === "light" ? "light" : p.theme === "system" ? "system" : "dark")) + " · " + (p.lang === "hi" ? "हिन्दी" : "English");
+    $("v-appearance").textContent = t("set." + (p.theme === "light" ? "light" : p.theme === "system" ? "system" : "dark")) + " · " + "English";
   }
   $("theme-seg").addEventListener("click", paintVals);
   document.querySelectorAll("[data-pref=lang]").forEach(el => el.addEventListener("change", paintVals));
@@ -487,7 +483,7 @@
     $("st-none").hidden = any;
   });
   $("st-logout").addEventListener("click", logout);
-  $("st-accounts").addEventListener("click", () => import("./accounts-ui.js?v=25").then(m => m.openAccountSheet()));
+  $("st-accounts").addEventListener("click", () => import("./accounts-ui.js?v=29").then(m => m.openAccountSheet()));
 
   /* ---------- page start ---------- */
   $("s-logout").addEventListener("click", logout);
@@ -569,6 +565,6 @@
   applyI18n();
   route();
 </script>
-<script type="module" src="layout.js?v=25"></script>
+<script type="module" src="layout.js?v=29"></script>
 </body>
 </html>

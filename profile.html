@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=25"></script>
+  <script src="clean-url.js?v=29"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile | Gyaan Hub</title>
@@ -32,15 +32,15 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=25">
-<link rel="modulepreload" href="community.js?v=25">
-<link rel="modulepreload" href="media.js?v=25">
-<link rel="modulepreload" href="files.js?v=25">
-<link rel="modulepreload" href="player-utils.js?v=25">
-<link rel="stylesheet" href="style.css?v=25">
-<script src="site-config.js?v=25"></script>
-<script src="theme.js?v=25"></script>
-<script src="icons.js?v=25"></script>
+<link rel="modulepreload" href="auth.js?v=29">
+<link rel="modulepreload" href="community.js?v=29">
+<link rel="modulepreload" href="media.js?v=29">
+<link rel="modulepreload" href="files.js?v=29">
+<link rel="modulepreload" href="player-utils.js?v=29">
+<link rel="stylesheet" href="style.css?v=29">
+<script src="site-config.js?v=29"></script>
+<script src="theme.js?v=29"></script>
+<script src="icons.js?v=29"></script>
 </head>
 <body class="pf-page">
 <header class="nav">
@@ -58,9 +58,10 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=25";
-  import * as C from "./community.js?v=25";
-  import { initLightbox } from "./media.js?v=25";
+  import { protectPage } from "./auth.js?v=29";
+  import * as C from "./community.js?v=29";
+  import * as UP from "./uploads.js?v=29";
+  import { initLightbox } from "./media.js?v=29";
   initLightbox();
   const $ = id => document.getElementById(id);
   const { esc } = C;
@@ -418,17 +419,28 @@
       prevUrl = URL.createObjectURL(f);
       q("c-prev").innerHTML = k === "video" ? `<video src="${prevUrl}" controls playsinline muted></video>` : `<img src="${prevUrl}" alt="">`;
     });
-    q("c-go").addEventListener("click", async () => {
+    q("c-go").addEventListener("click", () => {
       if (busy) return;
       if (reel && !file) return say(q("c-msg"), "Please choose a video first.", "err");
-      busy = true; q("c-go").disabled = true; say(q("c-msg"), "Uploading... please keep this window open.");
-      try {
-        await C.createPost(me, { kind, caption: q("c-cap").value, file }, p => { const b = q("c-bar"); b.hidden = false; b.firstElementChild.style.width = Math.round(p * 100) + "%"; });
-        if (prevUrl) URL.revokeObjectURL(prevUrl);
-        m.close(); tab = reel ? "reels" : "posts"; renderTab(); C.toast(reel ? "Reel uploaded" : "Post uploaded", 2500);
-      } catch (err) { say(q("c-msg"), err && err.code ? C.errText(err) : (err.message || "Could not upload."), "err"); q("c-go").disabled = false; busy = false; }
+      if (!file && !q("c-cap").value.trim()) return say(q("c-msg"), "Add a photo, a video or some text.", "err");
+      busy = true;
+      const caption = q("c-cap").value, f = file;
+      if (!f) {                                             // text-only post: nothing big to upload
+        q("c-go").disabled = true; say(q("c-msg"), "Posting...");
+        C.createPost(me, { kind, caption, file: null }).then(() => { m.close(); tab = "posts"; renderTab(); C.toast("Post uploaded", 2500); })
+          .catch(err => { say(q("c-msg"), err && err.code ? C.errText(err) : (err.message || "Could not post."), "err"); q("c-go").disabled = false; busy = false; });
+        return;
+      }
+      // photo / video: shared at once like Instagram. It uploads in the background (also when you change page) and the window closes right away
+      UP.enqueue({ type: "post", data: { kind, caption }, file: f });
+      if (prevUrl) URL.revokeObjectURL(prevUrl);
+      m.close();
     });
   }
+  window.addEventListener("gyaan-upload", e => {
+    const { type, job } = e.detail;
+    if (type === "done" && job.meta && job.meta.post && isMe) { try { tab = job.meta.kind === "reel" ? "reels" : "posts"; renderTab(); } catch (x) {} }
+  });
   function openEditPost(p) {
     const m = modal(`<h2>Edit caption<button class="cm-x" aria-label="Close">✕</button></h2>
       <div class="cm-field"><textarea id="p-cap" maxlength="500" rows="4"></textarea></div><div class="cm-msg" id="p-msg"></div>
@@ -649,6 +661,6 @@
     }
   });
 </script>
-<script type="module" src="layout.js?v=25"></script>
+<script type="module" src="layout.js?v=29"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=25"></script>
+  <script src="clean-url.js?v=29"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Messages | Gyaan Hub</title>
@@ -32,15 +32,15 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=25">
-<link rel="modulepreload" href="community.js?v=25">
-<link rel="modulepreload" href="media.js?v=25">
-<link rel="modulepreload" href="files.js?v=25">
-<link rel="modulepreload" href="player-utils.js?v=25">
-<link rel="stylesheet" href="style.css?v=25">
-<script src="site-config.js?v=25"></script>
-<script src="theme.js?v=25"></script>
-<script src="icons.js?v=25"></script>
+<link rel="modulepreload" href="auth.js?v=29">
+<link rel="modulepreload" href="community.js?v=29">
+<link rel="modulepreload" href="media.js?v=29">
+<link rel="modulepreload" href="files.js?v=29">
+<link rel="modulepreload" href="player-utils.js?v=29">
+<link rel="stylesheet" href="style.css?v=29">
+<script src="site-config.js?v=29"></script>
+<script src="theme.js?v=29"></script>
+<script src="icons.js?v=29"></script>
 </head>
 <body class="msg-page">
 <header class="nav">
@@ -68,10 +68,11 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=25";
-  import * as C from "./community.js?v=25";
-  import { initLightbox } from "./media.js?v=25";
-  import * as CALL from "./calls.js?v=25";
+  import { protectPage } from "./auth.js?v=29";
+  import * as C from "./community.js?v=29";
+  import { initLightbox } from "./media.js?v=29";
+  import * as CALL from "./calls.js?v=29";
+  import * as UP from "./uploads.js?v=29";
   const $ = id => document.getElementById(id);
   const { esc, F } = C;
   const ic = n => window.ic ? window.ic(n) : "";
@@ -118,7 +119,7 @@
     $("chat").classList.add("in-conv"); document.body.classList.add("msg-in-conv");
     stopBg(); $("conv").classList.remove("has-bg"); $("conv").style.background = "";
     $("conv").innerHTML = `<div class="cm-conv-head ig-head"><button class="ig-hb cm-back" id="back0" type="button" aria-label="Back">${backIc}</button></div><div class="cm-msgs"><div class="cm-empty">Opening chat...</div></div>`;
-    $("back0").addEventListener("click", () => { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); stopBg(); cur = null; loadList(); });
+    $("back0").addEventListener("click", () => { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); stopBg(); cur = null; UP.refresh(); loadList(); });
     const prof = await C.getProfile(otherUid, true).catch(() => profCache[otherUid] || null);
     if (!prof) { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); C.toast("This student has no community profile."); return; }
     profCache[otherUid] = prof;
@@ -146,7 +147,7 @@
           <input type="file" id="file" hidden><input type="file" id="file-gal" accept="image/*,video/*" hidden><input type="file" id="file-cam" accept="image/*" capture="environment" hidden>
         </div>`
                : `<div class="cm-compose"><div class="cm-msg" style="margin:0;flex:1;text-align:center">${esc(can.why || "You cannot message this student.")}</div></div>`}`;
-    $("back").addEventListener("click", () => { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); fitChat(); if (unsub) { unsub(); unsub = null; } stopBg(); $("conv").classList.remove("has-bg"); $("conv").style.background = ""; cur = null; loadList(); });
+    $("back").addEventListener("click", () => { $("chat").classList.remove("in-conv"); document.body.classList.remove("msg-in-conv"); fitChat(); if (unsub) { unsub(); unsub = null; } stopBg(); $("conv").classList.remove("has-bg"); $("conv").style.background = ""; cur = null; UP.refresh(); loadList(); });
     if (can.ok) {
       $("call-a").addEventListener("click", () => CALL.startCall(otherUid, "audio", prof));
       $("call-v").addEventListener("click", () => CALL.startCall(otherUid, "video", prof));
@@ -182,7 +183,7 @@
       $("txt").addEventListener("focus", () => setTimeout(() => { const b = $("msgs"); if (b) b.scrollTop = b.scrollHeight; }, 250));
       $("txt").addEventListener("paste", e => { const f = [...((e.clipboardData && e.clipboardData.files) || [])][0]; if (f) { e.preventDefault(); setPending(f); } });
     }
-    pendFile = null; syncCompose();
+    pendFile = null; syncCompose(); UP.refresh(); if (UP.forChat(cur.cid).length) paintMsgs();
     if (exists) watch();
     loadList();
   }
@@ -193,17 +194,59 @@
     unsub = C.A.fsWatchCol(["chats", cid, "messages"], rows => {
       if (!cur || cur.cid !== cid) return;
       msgs = rows.sort((a, b) => (a.ts || 0) - (b.ts || 0));
-      const box = $("msgs"); if (!box) return;
-      const atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 80;
-      box.innerHTML = msgs.length ? msgs.map((m, i) => bubble(m, i)).join("") : `<div class="cm-empty">Say hello 👋</div>`;
-      box.dataset.stick = (atEnd || msgs.length < 3) ? "1" : "";
-      if (atEnd || msgs.length < 3) box.scrollTop = box.scrollHeight;
-      hydrateAtts();
+      paintMsgs();
       C.markSeen(cid, me.uid);
     }, e => { const b = $("msgs"); if (b) b.innerHTML = `<div class="cm-empty">${esc(C.errText(e))}</div>`; });
   }
 
   /* ---------- attachments ---------- */
+  /* ---------- Instagram-style sending: the file shows in the chat at once, "Sending..." until it is delivered ---------- */
+  const pvUrl = {};
+  function pendBubbles() {
+    if (!cur) return "";
+    return UP.forChat(cur.cid).map(j => {
+      const f = j.meta.file, k = j.kind, pct = Math.round(j.progress * 100), failed = j.state === "failed";
+      pvUrl[j.id] = pvUrl[j.id] || URL.createObjectURL(f);
+      let thumb;
+      if (k === "image") thumb = `<img class="zoomable cm-img" src="${pvUrl[j.id]}" alt="">`;
+      else if (k === "video") thumb = `<div class="up-vid"><video class="cm-vid" muted playsinline preload="metadata" src="${pvUrl[j.id]}#t=0.1"></video><span class="up-play">${ic("play")}</span></div>`;
+      else thumb = `<div class="cm-file up-fcard">${ic("file")}<span><b data-keep>${esc(f.name)}</b><small>${F.fmtSize(f.size)}</small></span></div>`;
+      const retry = failed ? ` data-upact="retry" data-id="${j.id}"` : "";
+      return `<div class="cm-r mine single up-pend ${failed ? "failed" : ""}" data-pj="${j.id}"><div class="cm-bubble mine media"${retry}><div class="cm-att up-box">${thumb}${failed ? "" : `<span class="up-pbar"><i style="width:${pct}%"></i></span>`}</div>${j.meta.text ? `<span>${esc(j.meta.text)}</span>` : ""}<small class="up-st">${failed ? `<b class="up-bad">!</b> Not delivered · Tap to retry · <a href="#" data-upact="cancel" data-id="${j.id}">Delete</a>` : `<i class="up-spin"></i> Sending…`}</small></div></div>`;
+    }).join("");
+  }
+  function paintMsgs() {
+    const box = $("msgs"); if (!box) return;
+    const atEnd = box.scrollHeight - box.scrollTop - box.clientHeight < 80, pb = pendBubbles();
+    box.innerHTML = (msgs.length || pb) ? msgs.map((m, i) => bubble(m, i)).join("") + pb : `<div class="cm-empty">Say hello 👋</div>`;
+    box.dataset.stick = (atEnd || msgs.length < 3 || pb) ? "1" : "";
+    if (atEnd || msgs.length < 3 || pb) box.scrollTop = box.scrollHeight;
+    hydrateAtts();
+  }
+  UP.hideFilter.fn = j => !!(cur && j.meta && j.meta.cid === cur.cid);
+  UP.onChange((type, job) => {
+    if (type === "remove" && pvUrl[job.id]) { setTimeout(() => { URL.revokeObjectURL(pvUrl[job.id]); delete pvUrl[job.id]; }, 500); }
+    if (!job.meta || !cur || job.meta.cid !== cur.cid) return;
+    if (type === "progress") { const b = document.querySelector(`[data-pj="${job.id}"] .up-pbar i`); if (b) b.style.width = Math.round(job.progress * 100) + "%"; return; }
+    if (job.state !== "done") paintMsgs();
+  });
+  // when a file is delivered: show the real message (and start listening if this chat was brand new)
+  window.addEventListener("gyaan-upload", e => {
+    const { type, job } = e.detail; if (!job.meta || job.meta.type !== "chat") return;
+    if (type === "done") { if (cur && cur.cid === job.meta.cid && !unsub) { watch(); watchBg(); } loadList(); }
+    if (cur && cur.cid === job.meta.cid && type !== "fail") paintMsgs();
+  });
+  document.addEventListener("click", e => {
+    const b = e.target.closest("[data-upact]"); if (!b) return;
+    e.preventDefault(); e.stopPropagation();
+    const j = UP.list().find(x => x.id === b.dataset.id); if (!j) return;
+    if (b.dataset.upact === "retry") j.retry(); else j.cancel();
+  });
+  // Photos, videos, APKs and files: the message is "sent" right away, the upload continues in the background (also across pages)
+  function sendFileBg(text) {
+    UP.enqueue({ type: "chat", data: { cid: cur.cid, other: cur.uid, text }, file: pendFile }).then(() => { if (cur) paintMsgs(); });
+  }
+
   function setPending(f) {
     if (f.size > F.MAX_STORAGE_MB * 1048576) return C.toast("This file is too big. The limit is " + F.MAX_STORAGE_MB + " MB.", 5000);
     pendFile = f; renderPend(); $("txt").placeholder = "Add a caption (optional)..."; $("txt").focus();
@@ -294,6 +337,11 @@
   async function send() {
     const ta = $("txt"), text = ta.value.trim();
     if ((!text && !pendFile) || sending || Date.now() - lastSend < 800) return;
+    if (pendFile) {                                   // file: goes up in the background, the composer is free again at once
+      lastSend = Date.now(); sendFileBg(text);
+      ta.value = ""; pendFile = null; renderPend(); syncCompose();
+      return;
+    }
     lastSend = Date.now(); sending = true;
     const btn = $("send"); btn.disabled = true; $("attach").disabled = true;
     const existed = await C.chatExists(cur.cid);
@@ -626,7 +674,7 @@
 
   protectPage(async (user, demo) => {
     me = user; setTimeout(runSched, 1500);
-    import("./accounts-ui.js?v=25").then(m => {
+    import("./accounts-ui.js?v=29").then(m => {
       const nm = m.currentAccountName(); if (nm) $("accname").textContent = nm;
       $("accbtn").addEventListener("click", m.openAccountSheet);
     });
@@ -640,6 +688,6 @@
     } catch (e) { $("list").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; }
   });
 </script>
-<script type="module" src="layout.js?v=25"></script>
+<script type="module" src="layout.js?v=29"></script>
 </body>
 </html>

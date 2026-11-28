@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=25"></script>
+  <script src="clean-url.js?v=29"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Reels | Gyaan Hub</title>
@@ -32,13 +32,13 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=25">
-<link rel="modulepreload" href="community.js?v=25">
-<link rel="modulepreload" href="files.js?v=25">
-<link rel="stylesheet" href="style.css?v=25">
-<script src="site-config.js?v=25"></script>
-<script src="theme.js?v=25"></script>
-<script src="icons.js?v=25"></script>
+<link rel="modulepreload" href="auth.js?v=29">
+<link rel="modulepreload" href="community.js?v=29">
+<link rel="modulepreload" href="files.js?v=29">
+<link rel="stylesheet" href="style.css?v=29">
+<script src="site-config.js?v=29"></script>
+<script src="theme.js?v=29"></script>
+<script src="icons.js?v=29"></script>
 <style>
   html,body{height:100%;overflow:hidden;background:#000}
   body{background-image:none}
@@ -128,9 +128,9 @@
 </div>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=25";
-  import * as C from "./community.js?v=25";
-  import { onReel } from "./galti.js?v=26";
+  import { protectPage } from "./auth.js?v=29";
+  import * as C from "./community.js?v=29";
+  import { onReel } from "./galti.js?v=29";
   const $ = id => document.getElementById(id);
   const { esc } = C;
   const ic = (n, c) => window.ic ? window.ic(n, c) : "";
@@ -404,7 +404,7 @@
 
   protectPage(async u => {
     me = u;
-    import("./calls.js?v=25").then(m => m.initCalls(u)).catch(() => {});
+    import("./calls.js?v=29").then(m => m.initCalls(u)).catch(() => {});
     await loadFollowing();
     build("explore");
   });
