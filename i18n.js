@@ -1,5 +1,5 @@
 // Gyaan Hub - English UI text. Add more keys here; use data-i18n="key" in HTML or t("key") in JS.
-import { getPrefs } from "./prefs.js?v=29";
+import { getPrefs } from "./prefs.js?v=30";
 
 const D = {
   en: {

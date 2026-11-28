@@ -1,6 +1,6 @@
 /* Mistake Cards: wrong test questions come back after 1, 3 and 7 days. Saved on this device (localStorage). */
-import { imgHtml, hydrate } from "./media.js?v=29";
-import { logAnswer } from "./stats.js?v=29";
+import { imgHtml, hydrate } from "./media.js?v=30";
+import { logAnswer } from "./stats.js?v=30";
 const KEY = "gyaan_galti_v1", MKEY = "gyaan_galti_mastered", GAPS = [1, 3, 7], DAY = 864e5, EVERY = 10;
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 export const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } };

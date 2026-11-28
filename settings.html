@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=29"></script>
+  <script src="clean-url.js?v=30"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Settings | Gyaan Hub</title>
@@ -27,10 +27,10 @@
 <meta name="twitter:title" content="Settings | Gyaan Hub">
 <meta name="twitter:description" content="Manage your Gyaan Hub account, privacy and preferences.">
 <meta name="twitter:image" content="https://prashantsaini.runs-on.dev/og-image.png">
-<link rel="stylesheet" href="style.css?v=29">
-<script src="site-config.js?v=29"></script>
-<script src="theme.js?v=29"></script>
-<script src="icons.js?v=29"></script>
+<link rel="stylesheet" href="style.css?v=30">
+<script src="site-config.js?v=30"></script>
+<script src="theme.js?v=30"></script>
+<script src="icons.js?v=30"></script>
 </head>
 <body class="st-page">
 <header class="nav">
@@ -246,12 +246,12 @@
 
 <script type="module">
   import { protectPage, logout, friendly, currentUser, isDemo, hasPassword, isGoogleUser, setDisplayName, saveUserDoc,
-           listDevices, sessionReady, removeDevice, logoutOthers, logoutEverywhere, deviceId, changePassword, changeEmail, deleteAccount, exportData, toMs, withdrawConsent } from "./auth.js?v=29";
-  import { getPrefs, savePrefs } from "./prefs.js?v=29";
-  import { t, applyI18n, lang } from "./i18n.js?v=29";
-  import { squareAvatar } from "./media.js?v=29";
-  import * as SUB from "./sub.js?v=29";
-  import { loadSite } from "./auth.js?v=29";
+           listDevices, sessionReady, removeDevice, logoutOthers, logoutEverywhere, deviceId, changePassword, changeEmail, deleteAccount, exportData, toMs, withdrawConsent } from "./auth.js?v=30";
+  import { getPrefs, savePrefs } from "./prefs.js?v=30";
+  import { t, applyI18n, lang } from "./i18n.js?v=30";
+  import { squareAvatar } from "./media.js?v=30";
+  import * as SUB from "./sub.js?v=30";
+  import { loadSite } from "./auth.js?v=30";
 
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -483,7 +483,7 @@
     $("st-none").hidden = any;
   });
   $("st-logout").addEventListener("click", logout);
-  $("st-accounts").addEventListener("click", () => import("./accounts-ui.js?v=29").then(m => m.openAccountSheet()));
+  $("st-accounts").addEventListener("click", () => import("./accounts-ui.js?v=30").then(m => m.openAccountSheet()));
 
   /* ---------- page start ---------- */
   $("s-logout").addEventListener("click", logout);
@@ -565,6 +565,6 @@
   applyI18n();
   route();
 </script>
-<script type="module" src="layout.js?v=29"></script>
+<script type="module" src="layout.js?v=30"></script>
 </body>
 </html>

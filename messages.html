@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=29"></script>
+  <script src="clean-url.js?v=30"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
 <title>Messages | Gyaan Hub</title>
@@ -32,15 +32,15 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=29">
-<link rel="modulepreload" href="community.js?v=29">
-<link rel="modulepreload" href="media.js?v=29">
-<link rel="modulepreload" href="files.js?v=29">
-<link rel="modulepreload" href="player-utils.js?v=29">
-<link rel="stylesheet" href="style.css?v=29">
-<script src="site-config.js?v=29"></script>
-<script src="theme.js?v=29"></script>
-<script src="icons.js?v=29"></script>
+<link rel="modulepreload" href="auth.js?v=30">
+<link rel="modulepreload" href="community.js?v=30">
+<link rel="modulepreload" href="media.js?v=30">
+<link rel="modulepreload" href="files.js?v=30">
+<link rel="modulepreload" href="player-utils.js?v=30">
+<link rel="stylesheet" href="style.css?v=30">
+<script src="site-config.js?v=30"></script>
+<script src="theme.js?v=30"></script>
+<script src="icons.js?v=30"></script>
 </head>
 <body class="msg-page">
 <header class="nav">
@@ -68,11 +68,11 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=29";
-  import * as C from "./community.js?v=29";
-  import { initLightbox } from "./media.js?v=29";
-  import * as CALL from "./calls.js?v=29";
-  import * as UP from "./uploads.js?v=29";
+  import { protectPage } from "./auth.js?v=30";
+  import * as C from "./community.js?v=30";
+  import { initLightbox } from "./media.js?v=30";
+  import * as CALL from "./calls.js?v=30";
+  import * as UP from "./uploads.js?v=30";
   const $ = id => document.getElementById(id);
   const { esc, F } = C;
   const ic = n => window.ic ? window.ic(n) : "";
@@ -674,7 +674,7 @@
 
   protectPage(async (user, demo) => {
     me = user; setTimeout(runSched, 1500);
-    import("./accounts-ui.js?v=29").then(m => {
+    import("./accounts-ui.js?v=30").then(m => {
       const nm = m.currentAccountName(); if (nm) $("accname").textContent = nm;
       $("accbtn").addEventListener("click", m.openAccountSheet);
     });
@@ -688,6 +688,6 @@
     } catch (e) { $("list").innerHTML = `<div class="empty">${esc(C.errText(e))}</div>`; }
   });
 </script>
-<script type="module" src="layout.js?v=29"></script>
+<script type="module" src="layout.js?v=30"></script>
 </body>
 </html>

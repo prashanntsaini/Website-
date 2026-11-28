@@ -71,7 +71,7 @@ window.addEventListener("beforeunload", e => { if (jobs.some(j => !j.persisted &
 window.addEventListener("online", () => { jobs.filter(j => j.state === "failed" && j.offline).forEach(j => j.retry()); });
 
 /* ---------- what each kind of job does ---------- */
-const libs = () => Promise.all([import("./community.js?v=29"), import("./files.js?v=29")]);
+const libs = () => Promise.all([import("./community.js?v=30"), import("./files.js?v=30")]);
 async function runJob(job, onP, signal) {
   const rec = job.rec, [C, F] = await libs();
   const file = job.file;
@@ -99,7 +99,7 @@ async function runJob(job, onP, signal) {
 }
 async function notify(kind, job, err) {
   try {
-    const C = await import("./community.js?v=29"), post = job.rec.type === "post", reel = post && job.rec.data.kind === "reel";
+    const C = await import("./community.js?v=30"), post = job.rec.type === "post", reel = post && job.rec.data.kind === "reel";
     if (kind === "done") { if (post) C.toast(reel ? "Reel uploaded" : "Post uploaded", 2200); }
     else C.toast(err && err.code === "permission-denied" ? "This could not be sent. The student may not accept messages from you, or the updated Firestore/Storage rules are not published yet." : (err && err.code ? C.errText(err) : ((err && err.message) || "Upload failed")), 6500);
   } catch (e) {}
@@ -136,7 +136,7 @@ function drop(job) { const i = jobs.indexOf(job); if (i < 0) return; jobs.splice
 
 const kindOf = f => { const t = (f.type || "").toLowerCase(), n = (f.name || "").toLowerCase();
   return t.startsWith("image/") && !/svg/.test(t) ? "image" : (t.startsWith("video/") || /\.(mp4|webm|mov|m4v|3gp|mkv)$/.test(n)) ? "video" : (t.startsWith("audio/") || /\.(mp3|m4a|wav|ogg|aac|opus)$/.test(n)) ? "audio" : "file"; };
-async function currentUid() { try { const a = await import("./auth.js?v=29"); const u = a.currentUser(); return u ? u.uid : ""; } catch (e) { return ""; } }
+async function currentUid() { try { const a = await import("./auth.js?v=30"); const u = a.currentUser(); return u ? u.uid : ""; } catch (e) { return ""; } }
 
 function addJob(rec, file, state) {
   const job = {

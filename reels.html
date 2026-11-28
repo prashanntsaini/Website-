@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=29"></script>
+  <script src="clean-url.js?v=30"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Reels | Gyaan Hub</title>
@@ -32,13 +32,13 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=29">
-<link rel="modulepreload" href="community.js?v=29">
-<link rel="modulepreload" href="files.js?v=29">
-<link rel="stylesheet" href="style.css?v=29">
-<script src="site-config.js?v=29"></script>
-<script src="theme.js?v=29"></script>
-<script src="icons.js?v=29"></script>
+<link rel="modulepreload" href="auth.js?v=30">
+<link rel="modulepreload" href="community.js?v=30">
+<link rel="modulepreload" href="files.js?v=30">
+<link rel="stylesheet" href="style.css?v=30">
+<script src="site-config.js?v=30"></script>
+<script src="theme.js?v=30"></script>
+<script src="icons.js?v=30"></script>
 <style>
   html,body{height:100%;overflow:hidden;background:#000}
   body{background-image:none}
@@ -105,6 +105,27 @@
   .rv-sheet header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700}
   .rv-sheet .rl-list{flex:1;max-height:none;padding:12px 16px}
   .rv-sheet .rl-send{padding:10px 14px 12px;border-top:1px solid var(--border)}
+  /* v30 additions */
+  .rv-seg[hidden],.rv-title[hidden]{display:none}
+  .rv-prog{height:3px;transition:height .15s}
+  .rv-prog::after{content:"";position:absolute;left:0;right:0;top:-16px;bottom:-4px}
+  .rv-prog.drag,.rv-prog:hover{height:7px}
+  .rv-prog i{pointer-events:none}
+  .rv-seek{position:absolute;left:50%;bottom:calc(30px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:6;background:rgba(0,0,0,.6);color:#fff;border-radius:999px;padding:4px 12px;font-weight:700;font-size:15px;opacity:0;pointer-events:none;transition:.15s}
+  .rv-seek.show{opacity:1}
+  .rv-held .rv-rail,.rv-held .rv-info,.rv-held .rv-shade{opacity:0;transition:opacity .2s}
+  .rv-title{color:#fff;font-weight:700;font-size:17px;background:rgba(0,0,0,.4);backdrop-filter:blur(6px);border-radius:999px;padding:9px 18px;max-width:55vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .rv-opt{padding:6px 18px 14px;overflow:auto}
+  .rv-opt h4{margin:14px 0 8px;font-size:15px;letter-spacing:.04em;text-transform:uppercase;color:#98a0c8}
+  .rv-chips{display:flex;gap:8px;flex-wrap:wrap}
+  .rv-chips button{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.06);color:#fff;font:inherit;font-weight:600;padding:8px 16px;border-radius:999px;cursor:pointer}
+  .rv-chips button.on{background:#fff;color:#111;border-color:#fff}
+  .rv-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.08);color:#fff;font-weight:600;background:none;border-left:0;border-right:0;border-top:0;width:100%;font-size:17px;cursor:pointer;text-align:left;font-family:inherit}
+  .rv-sw{width:46px;height:28px;border-radius:999px;background:rgba(255,255,255,.2);position:relative;flex:none;transition:.2s}
+  .rv-sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}
+  .rv-sw.on{background:#2f6fe0}.rv-sw.on::after{left:21px}
+  .rv-up{position:absolute;left:50%;bottom:130px;transform:translateX(-50%);z-index:6;display:none}
+  .rv-sound{position:absolute;left:12px;bottom:calc(24px + env(safe-area-inset-bottom));display:none}
   @media (min-width:700px){ #feed{border-left:1px solid #1b1f33;border-right:1px solid #1b1f33} }
 </style>
 </head>
@@ -115,6 +136,7 @@
 <div class="rv-top">
   <button class="rv-ib" id="back" aria-label="Back"><span id="back-i"></span></button>
   <div class="rv-seg" id="seg"><button data-s="explore" class="on">Explore</button><button data-s="following">Following</button></div>
+  <div class="rv-title" id="ttl" hidden>Reels</div>
   <div style="display:flex;gap:8px">
     <button class="rv-ib" id="mute" aria-label="Sound"><span id="mute-i"></span></button>
     <a class="rv-ib" href="profile.html?tab=reels" aria-label="New reel" id="newreel"></a>
@@ -127,16 +149,35 @@
   <div class="rl-send"><input id="rl-ci" maxlength="300" placeholder="Add a comment..." autocomplete="off"><button class="btn btn-gold" id="csend">Post</button></div>
 </div>
 
+<div class="rv-sheet-bg" id="obg"></div>
+<div class="rv-sheet" id="osheet" role="dialog" aria-label="Options" style="height:auto;max-height:80dvh">
+  <header><span>Reel options</span><button class="rv-ib" id="ox" aria-label="Close" style="background:rgba(255,255,255,.1)"></button></header>
+  <div class="rv-opt">
+    <h4>Playback speed</h4>
+    <div class="rv-chips" id="spd"><button data-v="0.5">0.5×</button><button data-v="1" class="on">1×</button><button data-v="1.5">1.5×</button><button data-v="2">2×</button></div>
+    <h4>Viewing</h4>
+    <button class="rv-row" id="o-auto"><span>Auto-scroll to next reel</span><span class="rv-sw" id="sw-auto"></span></button>
+    <button class="rv-row" id="o-snd"><span>Sound on by default</span><span class="rv-sw" id="sw-snd"></span></button>
+    <h4>This reel</h4>
+    <button class="rv-row" id="o-copy"><span>Copy link</span><span data-ic="link"></span></button>
+    <button class="rv-row" id="o-prof"><span>Go to profile</span><span data-ic="user"></span></button>
+    <button class="rv-row" id="o-saved"><span>Saved posts</span><span data-ic="bookmark"></span></button>
+  </div>
+</div>
+
 <script type="module">
-  import { protectPage } from "./auth.js?v=29";
-  import * as C from "./community.js?v=29";
-  import { onReel } from "./galti.js?v=29";
+  import { protectPage } from "./auth.js?v=30";
+  import * as C from "./community.js?v=30";
+  import { onReel } from "./galti.js?v=30";
   const $ = id => document.getElementById(id);
   const { esc } = C;
   const ic = (n, c) => window.ic ? window.ic(n, c) : "";
   const params = new URLSearchParams(location.search);
   const feed = $("feed");
-  let me, segment = "explore", items = [], active = -1, savedSet = new Set(), muted = true, followRows = new Map(), cache = {};
+  const store = { get(k, d) { try { const v = localStorage.getItem("gh_rv_" + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem("gh_rv_" + k, JSON.stringify(v)); } catch (e) {} } };
+  const only = params.get("u");                       // opened from a profile: show that student's videos only, starting at the tapped one
+  let me, segment = "explore", items = [], active = -1, savedSet = new Set(), muted = !store.get("sound", false), followRows = new Map(), cache = {};
+  let autoNext = store.get("auto", false), speed = store.get("speed", 1);
   const meta = {};            // postId -> { likes, cm, rp }
   const videoUrl = {};        // postId -> url promise
 
@@ -153,7 +194,8 @@
   const paintMute = () => { $("mute-i").innerHTML = muted ? iMuted : iVol; };
   paintMute();
   $("back").onclick = () => { if (history.length > 1 && document.referrer.startsWith(location.origin)) history.back(); else location.href = "profile.html?tab=reels"; };
-  $("mute").onclick = () => { muted = !muted; paintMute(); document.querySelectorAll("#feed video").forEach(v => v.muted = muted); };
+  $("mute").onclick = () => { muted = !muted; store.set("sound", !muted); paintMute(); document.querySelectorAll("#feed video").forEach(v => v.muted = muted); };
+  if (only) { $("seg").hidden = true; $("ttl").hidden = false; }
 
   /* ---------- data ---------- */
   async function loadFollowing() {
@@ -169,6 +211,10 @@
     return [...ids];
   }
   async function fetchReels(seg) {
+    if (only) {
+      const all = await C.listPosts(only);
+      return all.filter(p => p.media && p.media.kind === "video").slice(0, 60);        // same order as the profile grid
+    }
     const uids = await candidateUids(seg);
     const lists = await Promise.all(uids.map(u => C.listPosts(u, "reel").then(r => r.slice(0, 8)).catch(() => [])));
     let rows = lists.flat().filter(p => p.media && p.media.kind === "video");
@@ -193,6 +239,7 @@
         <button class="rv-btn" data-act="repost" aria-label="Repost">${ic("repost")}<span data-n="rp">0</span></button>
         <button class="rv-btn" data-act="share" aria-label="Share">${ic("share")}<span>Share</span></button>
         <button class="rv-btn" data-act="save" aria-label="Save">${ic("bookmark")}<span>Save</span></button>
+        <button class="rv-btn" data-act="more" aria-label="More options">${ic("more") || "⋯"}</button>
       </div>
       <div class="rv-info">
         <div class="rv-by"><a class="rv-ava" href="profile.html?u=${encodeURIComponent(p.uid)}" aria-label="Profile">${C.avatarHtml(a)}</a>
@@ -200,7 +247,8 @@
           ${canFollow ? `<button class="rv-fol" data-act="follow" data-u="${esc(p.uid)}">Follow</button>` : ""}</div>
         ${p.caption ? `<div class="rv-cap" data-act="cap" data-keep>${esc(p.caption)}</div>` : ""}
       </div>
-      <div class="rv-prog"><i></i></div>
+      <div class="rv-seek" data-seek></div>
+      <div class="rv-prog" data-prog><i></i></div>
     </section>`;
   }
   async function build(seg) {
@@ -212,22 +260,27 @@
     let rows = [];
     try { rows = await fetchReels(seg); } catch (e) { feed.innerHTML = `<div class="rv-msg"><h2>Could not load reels</h2><p>${esc(C.errText(e))}</p></div>`; return; }
     const want = params.get("reel");
-    if (want && seg === "explore") {
+    if (want && only) {
+      if (!rows.some(r => r.id === want)) { const p = await C.A.fsGetPath(["posts", want]).catch(() => null); if (p && p.media && p.media.kind === "video") rows = [p, ...rows]; }
+    } else if (want && seg === "explore") {
       let p = rows.find(r => r.id === want) || await C.A.fsGetPath(["posts", want]).catch(() => null);
       if (p && p.media) rows = [p, ...rows.filter(r => r.id !== p.id)];
     }
     items = rows;
     if (!rows.length) {
-      feed.innerHTML = `<div class="rv-msg"><h2>${seg === "following" ? "No reels from people you follow" : "No reels yet"}</h2><p>${seg === "following" ? "Follow students from the Find people tab, or switch to Explore." : "Be the first, upload a short video."}</p><a class="btn btn-gold" href="profile.html?tab=reels">${ic("plus")} New reel</a></div>`;
+      feed.innerHTML = `<div class="rv-msg"><h2>${only ? "No videos yet" : seg === "following" ? "No reels from people you follow" : "No reels yet"}</h2><p>${seg === "following" ? "Follow students from the Find people tab, or switch to Explore." : "Be the first, upload a short video."}</p><a class="btn btn-gold" href="profile.html?tab=reels">${ic("plus")} New reel</a></div>`;
       return;
     }
     const authors = await C.profilesOf([...new Set(rows.map(r => r.uid))]);
     const am = Object.fromEntries(authors.map(a => [a.id, a]));
     savedSet = await C.savedIds(me.uid);
     feed.innerHTML = rows.map((r, i) => itemHtml(r, am[r.uid] || { name: "Student" }, i)).join("");
-    feed.scrollTop = 0;
+    let start = 0;
+    if (only && want) { const k = rows.findIndex(r => r.id === want); if (k > 0) start = k; }
+    if (only && rows[0]) { const a0 = am[only]; if (a0 && a0.name) $("ttl").textContent = a0.name; }
+    feed.scrollTop = start * feed.clientHeight;
     active = -1;
-    for (let k = 0; k <= AHEAD; k++) { ensureSrc(k); if (items[k]) watchMeta(items[k].id); }   // first reel + next 3 start loading right now
+    for (let k = start; k <= start + AHEAD; k++) { ensureSrc(k); if (items[k]) watchMeta(items[k].id); }   // first reel + next 3 start loading right now
     watcher.disconnect();
     feed.querySelectorAll(".rv-item").forEach(el => watcher.observe(el));
   }
@@ -250,6 +303,7 @@
       v.addEventListener("playing", () => { const s = el.querySelector(".rv-spin"); if (s) s.remove(); }, { once: true });
       v.addEventListener("waiting", () => { if (i === active && !el.querySelector(".rv-spin")) { const d = document.createElement("div"); d.className = "rv-spin"; el.insertBefore(d, el.querySelector(".rv-shade")); } });
       v.addEventListener("canplay", () => { const s = el.querySelector(".rv-spin"); if (s && i === active) s.remove(); });
+      v.addEventListener("ended", () => { if (autoNext && i === active && items[i + 1]) feed.scrollBy({ top: feed.clientHeight, behavior: "smooth" }); });
       v.addEventListener("timeupdate", () => { const b = el.querySelector(".rv-prog i"); if (b && v.duration) b.style.width = (v.currentTime / v.duration * 100) + "%"; });
       if (i === active) play(v);
     }).catch(() => { const s = el.querySelector(".rv-spin"); if (s) s.outerHTML = `<div class="rv-msg" style="z-index:1"><p>This reel is not available.</p></div>`; });
@@ -265,7 +319,7 @@
       if (k < i - 4 && v.getAttribute("src") && !v.src.startsWith("blob:")) { v.removeAttribute("src"); v.load(); delete v.dataset.src; }
     });
   }
-  function play(v) { v.muted = muted; const pr = v.play(); if (pr && pr.catch) pr.catch(() => { v.muted = true; muted = true; paintMute(); v.play().catch(() => {}); }); }
+  function play(v) { v.muted = muted; v.playbackRate = speed; v.loop = !autoNext; const pr = v.play(); if (pr && pr.catch) pr.catch(() => { v.muted = true; muted = true; paintMute(); v.play().catch(() => {}); }); }
   function setActive(i) {
     if (i === active) return;
     active = i;
@@ -273,6 +327,7 @@
     preloadAround(i);
     const el = feed.querySelector(`.rv-item[data-i="${i}"]`), v = el && el.querySelector("video");
     if (v) { v.currentTime = 0; if (v.src) play(v); }
+    const mv = feed.querySelector(".rv-held"); if (mv) mv.classList.remove("rv-held");
     watchAround(i);
     onReel(items[i].id);
     // keep the address in sync so the link can be shared / reloaded
@@ -347,11 +402,47 @@
   }
   function flash(el, html) { const s = el.querySelector("[data-state]"); s.innerHTML = html; s.classList.add("show"); setTimeout(() => s.classList.remove("show"), 420); }
 
+  // hold = pause (and hide the buttons), release = play; drag the bottom bar to scrub
+  let holdT = null, held = false, suppress = false;
+  feed.addEventListener("pointerdown", e => {
+    const t = e.target.closest('[data-act="tap"]'); if (!t) return;
+    const el = curItem(t), v = el.querySelector("video");
+    held = false; clearTimeout(holdT);
+    holdT = setTimeout(() => { held = true; if (v && !v.paused) { v.pause(); v.dataset.holdPaused = "1"; } el.classList.add("rv-held"); }, 280);
+  });
+  const endHold = () => {
+    clearTimeout(holdT);
+    if (!held) return;
+    suppress = true; setTimeout(() => { suppress = false; }, 350);
+    held = false;
+    feed.querySelectorAll(".rv-held").forEach(el => { el.classList.remove("rv-held"); const v = el.querySelector("video"); if (v && v.dataset.holdPaused) { delete v.dataset.holdPaused; play(v); } });
+  };
+  window.addEventListener("pointerup", endHold); window.addEventListener("pointercancel", endHold);
+  feed.addEventListener("contextmenu", e => { if (e.target.closest('[data-act="tap"]')) e.preventDefault(); });
+  const fmtT = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+  let scrub = null;
+  const scrubTo = e => {
+    const bar = scrub.bar, v = scrub.v, r = bar.getBoundingClientRect();
+    const k = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+    if (v.duration) { v.currentTime = k * v.duration; bar.querySelector("i").style.width = (k * 100) + "%"; const t = bar.parentElement.querySelector("[data-seek]"); t.textContent = fmtT(v.currentTime) + " / " + fmtT(v.duration); }
+  };
+  feed.addEventListener("pointerdown", e => {
+    const bar = e.target.closest("[data-prog]"); if (!bar) return;
+    const v = curItem(bar).querySelector("video"); if (!v || !v.duration) return;
+    e.preventDefault(); scrub = { bar, v, was: !v.paused }; v.pause(); bar.classList.add("drag"); bar.parentElement.querySelector("[data-seek]").classList.add("show");
+    try { bar.setPointerCapture(e.pointerId); } catch (x) {}
+    scrubTo(e);
+  });
+  feed.addEventListener("pointermove", e => { if (scrub) scrubTo(e); });
+  const endScrub = () => { if (!scrub) return; scrub.bar.classList.remove("drag"); scrub.bar.parentElement.querySelector("[data-seek]").classList.remove("show"); if (scrub.was) play(scrub.v); scrub = null; };
+  window.addEventListener("pointerup", endScrub); window.addEventListener("pointercancel", endScrub);
+
   // single tap = play / pause, double tap = like (like Instagram)
   let lastTap = 0, tapT = null;
   feed.addEventListener("click", async e => {
     const b = e.target.closest("[data-act]"); if (!b) return;
     const el = curItem(b), id = el.dataset.id, act = b.dataset.act;
+    if (act === "tap" && suppress) { suppress = false; return; }
     if (act === "tap") {
       const now = Date.now();
       if (now - lastTap < 300) { clearTimeout(tapT); lastTap = 0; burst(el, e.clientX, e.clientY); watchMeta(id); if (!(meta[id] && meta[id].likes.includes(me.uid))) toggleLike(id); return; }
@@ -364,12 +455,30 @@
     else if (act === "share") share(id);
     else if (act === "save") toggleSave(id);
     else if (act === "cap") b.classList.toggle("open");
+    else if (act === "more") openOpts(id);
     else if (act === "follow") {
       b.disabled = true;
       try { const p = items.find(x => x.id === id); const st = await C.follow(me.uid, await C.getProfile(me.uid), p.uid, await C.getProfile(p.uid)); followRows.set(p.uid, { status: st }); document.querySelectorAll(`[data-act="follow"][data-u="${CSS.escape(p.uid)}"]`).forEach(x => x.remove()); C.toast(st === "pending" ? "Follow request sent" : "Following", 2000); }
       catch (err) { b.disabled = false; C.toast(C.errText(err), 3500); }
     }
   });
+
+  /* ---------- options sheet: speed, auto-scroll, sound default, copy link ---------- */
+  let optId = null;
+  const paintOpts = () => {
+    document.querySelectorAll("#spd button").forEach(b => b.classList.toggle("on", +b.dataset.v === speed));
+    $("sw-auto").classList.toggle("on", autoNext); $("sw-snd").classList.toggle("on", !muted);
+  };
+  function openOpts(id) { optId = id; paintOpts(); $("obg").classList.add("open"); $("osheet").classList.add("open"); }
+  const closeOpts = () => { $("obg").classList.remove("open"); $("osheet").classList.remove("open"); };
+  $("obg").onclick = closeOpts; $("ox").onclick = closeOpts; $("ox").innerHTML = icon("x", "✕");
+  document.querySelectorAll("#osheet [data-ic]").forEach(s => { s.innerHTML = icon(s.dataset.ic, ""); });
+  $("spd").onclick = e => { const b = e.target.closest("button"); if (!b) return; speed = +b.dataset.v; store.set("speed", speed); document.querySelectorAll("#feed video").forEach(v => v.playbackRate = speed); paintOpts(); };
+  $("o-auto").onclick = () => { autoNext = !autoNext; store.set("auto", autoNext); document.querySelectorAll("#feed video").forEach(v => v.loop = !autoNext); paintOpts(); };
+  $("o-snd").onclick = () => { $("mute").click(); paintOpts(); };
+  $("o-copy").onclick = async () => { const link = new URL("reels?reel=" + encodeURIComponent(optId), location.href).href; try { await navigator.clipboard.writeText(link); C.toast("Link copied", 2000); } catch (e) { window.prompt("Copy this:", link); } closeOpts(); };
+  $("o-prof").onclick = () => { const p = items.find(x => x.id === optId); if (p) location.href = "profile.html?u=" + encodeURIComponent(p.uid); };
+  $("o-saved").onclick = () => { location.href = "profile.html?tab=saved"; };
 
   /* ---------- comments sheet ---------- */
   let sheetId = null;
@@ -388,7 +497,7 @@
   }
   const closeSheet = () => { $("sbg").classList.remove("open"); $("sheet").classList.remove("open"); sheetId = null; };
   $("sbg").onclick = closeSheet; $("sh-x").onclick = closeSheet;
-  document.addEventListener("keydown", e => { if (e.key === "Escape") closeSheet(); if (e.key === "ArrowDown" || e.key === "ArrowUp") { if (!$("sheet").classList.contains("open") && document.activeElement.tagName !== "INPUT") { e.preventDefault(); feed.scrollBy({ top: (e.key === "ArrowDown" ? 1 : -1) * feed.clientHeight, behavior: "smooth" }); } } if (e.key === " " && document.activeElement.tagName !== "INPUT") { e.preventDefault(); const v = feed.querySelector(`.rv-item[data-i="${active}"] video`); if (v) v.paused ? play(v) : v.pause(); } if (e.key.toLowerCase() === "m" && document.activeElement.tagName !== "INPUT") $("mute").click(); });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") { closeSheet(); closeOpts(); } if (e.key === "ArrowRight" || e.key === "ArrowLeft") { const v = feed.querySelector(`.rv-item[data-i="${active}"] video`); if (v && document.activeElement.tagName !== "INPUT") v.currentTime = Math.max(0, v.currentTime + (e.key === "ArrowRight" ? 5 : -5)); } if (e.key === "ArrowDown" || e.key === "ArrowUp") { if (!$("sheet").classList.contains("open") && document.activeElement.tagName !== "INPUT") { e.preventDefault(); feed.scrollBy({ top: (e.key === "ArrowDown" ? 1 : -1) * feed.clientHeight, behavior: "smooth" }); } } if (e.key === " " && document.activeElement.tagName !== "INPUT") { e.preventDefault(); const v = feed.querySelector(`.rv-item[data-i="${active}"] video`); if (v) v.paused ? play(v) : v.pause(); } if (e.key.toLowerCase() === "m" && document.activeElement.tagName !== "INPUT") $("mute").click(); });
   async function sendComment() {
     const i = $("rl-ci"); if (!sheetId || !i.value.trim()) return;
     try { const c = await C.addComment(sheetId, me.uid, i.value); i.value = ""; meta[sheetId].cm.push(c); paintMeta(sheetId); drawComments(); }
@@ -404,7 +513,7 @@
 
   protectPage(async u => {
     me = u;
-    import("./calls.js?v=29").then(m => m.initCalls(u)).catch(() => {});
+    import("./calls.js?v=30").then(m => m.initCalls(u)).catch(() => {});
     await loadFollowing();
     build("explore");
   });

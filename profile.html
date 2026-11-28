@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <script src="clean-url.js?v=29"></script>
+  <script src="clean-url.js?v=30"></script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Profile | Gyaan Hub</title>
@@ -32,15 +32,15 @@
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
 <link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
-<link rel="modulepreload" href="auth.js?v=29">
-<link rel="modulepreload" href="community.js?v=29">
-<link rel="modulepreload" href="media.js?v=29">
-<link rel="modulepreload" href="files.js?v=29">
-<link rel="modulepreload" href="player-utils.js?v=29">
-<link rel="stylesheet" href="style.css?v=29">
-<script src="site-config.js?v=29"></script>
-<script src="theme.js?v=29"></script>
-<script src="icons.js?v=29"></script>
+<link rel="modulepreload" href="auth.js?v=30">
+<link rel="modulepreload" href="community.js?v=30">
+<link rel="modulepreload" href="media.js?v=30">
+<link rel="modulepreload" href="files.js?v=30">
+<link rel="modulepreload" href="player-utils.js?v=30">
+<link rel="stylesheet" href="style.css?v=30">
+<script src="site-config.js?v=30"></script>
+<script src="theme.js?v=30"></script>
+<script src="icons.js?v=30"></script>
 </head>
 <body class="pf-page">
 <header class="nav">
@@ -58,10 +58,10 @@
 </main>
 
 <script type="module">
-  import { protectPage } from "./auth.js?v=29";
-  import * as C from "./community.js?v=29";
-  import * as UP from "./uploads.js?v=29";
-  import { initLightbox } from "./media.js?v=29";
+  import { protectPage } from "./auth.js?v=30";
+  import * as C from "./community.js?v=30";
+  import * as UP from "./uploads.js?v=30";
+  import { initLightbox } from "./media.js?v=30";
   initLightbox();
   const $ = id => document.getElementById(id);
   const { esc } = C;
@@ -296,6 +296,11 @@
       try { q = await C.A.fsGetPath(["posts", id]); if (q) { q.likes = await C.likesOf(id); postMap[id] = q; } } catch (e) {}
       if (!q) return C.toast("This post is not available.", 3000);
     }
+    if (q.media && q.media.kind === "video") {          // videos open in the full-screen swipe viewer (reels.html), like Instagram
+      const go = "reels?u=" + encodeURIComponent(q.uid) + "&reel=" + encodeURIComponent(q.id);
+      if (params.get("reel") === id) location.replace(go); else location.href = go;
+      return;
+    }
     if (!savedSet) savedSet = await C.savedIds(me.uid);
     cur = { p: q, cm: [], rp: [] };
     const m = modal(`<div class="rl-view"><button class="cm-x rl-close" aria-label="Close">✕</button>
@@ -305,7 +310,15 @@
       ${q.caption ? `<p class="pp-cap" data-keep>${esc(q.caption)}</p>` : ""}
       <div class="rl-cm" id="rl-cm" hidden><div id="rl-list" class="rl-list"></div>
         <div class="rl-send"><input id="rl-ci" maxlength="300" placeholder="Add a comment..." autocomplete="off"><button class="btn btn-gold" data-act="csend">Post</button></div></div></div>`);
-    cur.m = m; drawBar();
+    cur.m = m; m.el.classList.add("rl-full"); drawBar();
+    { // swipe down (or Esc) closes the full-screen viewer
+      let y0 = null, dy = 0; const card = m.el.firstElementChild;
+      card.addEventListener("touchstart", e => { y0 = e.touches[0].clientY; dy = 0; }, { passive: true });
+      card.addEventListener("touchmove", e => { if (y0 === null) return; dy = e.touches[0].clientY - y0; const l = curBox("rl-list"); if (dy > 0 && !(l && l.contains(e.target)) && card.scrollTop <= 0) card.style.transform = `translateY(${dy}px)`; }, { passive: true });
+      card.addEventListener("touchend", () => { if (y0 !== null && dy > 110) m.close(); else card.style.transform = ""; y0 = null; });
+      const esc = e => { if (e.key === "Escape") { document.removeEventListener("keydown", esc); m.close(); } };
+      document.addEventListener("keydown", esc);
+    }
     if (q.media) C.F.fileUrl(q.media, { type: "post" }).then(url => { const box = curBox("rl-box"); if (box) box.innerHTML = q.media.kind === "video" ? `<video controls autoplay loop playsinline src="${esc(url)}"></video>` : `<img class="zoomable" src="${esc(url)}" alt="">`; }).catch(() => { const box = curBox("rl-box"); if (box) box.innerHTML = `<div class="empty">This media is not available.</div>`; });
     const [cm, rp] = await Promise.all([C.commentsOf(q.id), C.repostsOf(q.repostOf || q.id)]);
     if (cur && cur.p === q) { cur.cm = cm; cur.rp = rp; drawBar(); drawComments(); }
@@ -345,7 +358,7 @@
     drawBar();
   }
   async function shareReel() {
-    const q = cur.p, link = new URL("profile?u=" + encodeURIComponent(q.uid) + "&reel=" + encodeURIComponent(q.id), location.href).href;
+    const q = cur.p, link = new URL((q.media && q.media.kind === "video" ? "reels" : "profile") + "?u=" + encodeURIComponent(q.uid) + "&reel=" + encodeURIComponent(q.id), location.href).href;
     return C.shareSheet({ heading: "Share", people: true, link, title: "Reel on Gyaan Hub", text: (q.caption || "").slice(0, 80) });
   }
   async function savedTab() {
@@ -378,8 +391,8 @@
       const likes = await Promise.all(rows.map(r => C.likesOf(r.id)));
       if (!box.isConnected) return;
       rows.forEach((r, i) => { postMap[r.id] = { ...r, likes: likes[i] }; });
-      box.className = "pf-grid";
-      box.innerHTML = rows.map(r => `<button class="pf-tile" data-act="openreel" data-id="${esc(r.id)}" data-pm="${esc(r.id)}" aria-label="Open ${r.kind}">${r.media ? "" : `<span data-keep>${esc((r.caption || "").slice(0, 80))}</span>`}${r.kind === "reel" ? `<i>${ic("film")}</i>` : ""}</button>`).join("");
+      box.className = "pf-grid" + (which === "reels" ? " pf-reels" : "");
+      box.innerHTML = rows.map((r, i) => `<button class="pf-tile ${r.media ? "" : "txt"}" data-act="openreel" data-id="${esc(r.id)}" data-pm="${esc(r.id)}" aria-label="Open ${r.kind}">${r.media ? "" : `<span data-keep>${esc((r.caption || "").slice(0, 120))}</span>`}${r.kind === "reel" || (r.media && r.media.kind === "video") ? `<i>${ic("film")}</i>` : ""}${which === "reels" ? `<em class="pf-lk">${ic("heart")}${likes[i].length}</em>` : ""}</button>`).join("");
       rows.forEach(r => {
         const t = box.querySelector(`[data-pm="${CSS.escape(r.id)}"]`); if (!t || !r.media) return;
         C.F.fileUrl(r.media, { type: "post" }).then(url => {
@@ -661,6 +674,6 @@
     }
   });
 </script>
-<script type="module" src="layout.js?v=29"></script>
+<script type="module" src="layout.js?v=30"></script>
 </body>
 </html>
